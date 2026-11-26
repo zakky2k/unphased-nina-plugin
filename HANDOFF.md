@@ -1055,9 +1055,11 @@ identity, with the previously agreed terminology, British spelling and the exist
   (4) with `System.IO` and `System.Windows.Shapes` both imported, bare `Path` is ambiguous — alias the shape one;
   (5) README prose is wrapped, so compare sentences with whitespace collapsed or the test asserts where lines break;
   (6) `PixelFormats.Pbgra32` is **blue first** — comparing index 0 against `Color.R` silently measures the wrong channel.
-- **State:** 108 tests green. Rendered and reviewed from the harness at 860 DIP. **Not deployed** — N.I.N.A. was running
-  (PID 25416) and `DeployPlugin` refuses while the app holds the DLL; **not committed** while the user reviews; **not
-  packaged, not re-tagged** — the 0.7.0.0 archive and its checksum are untouched, and any new release needs a new version.
+- **State:** 108 tests green. Rendered and reviewed from the harness at 860 DIP, and the user accepted the tagline-only
+  store line and the abbreviated panel button labels. **Committed as `59e4f30` and pushed.** **Not deployed** — N.I.N.A.
+  was running (PID 25416) and `DeployPlugin` refuses while the app holds the DLL, so the live plugin folder is still the
+  round-11 build; deploy as soon as N.I.N.A. is closed. **Not packaged, not re-tagged** — the 0.7.0.0 archive and its
+  checksum are untouched, and any new release needs a new version.
 
 
 
