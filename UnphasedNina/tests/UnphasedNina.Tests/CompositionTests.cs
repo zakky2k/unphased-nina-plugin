@@ -85,8 +85,7 @@ namespace Zakfo.Unphased.Tests {
             var fields = all.OfType<System.Windows.Controls.TextBox>().ToList();
             var buttons = all
                 .OfType<System.Windows.Controls.Primitives.ButtonBase>()
-                // A CheckBox is a ToggleButton is a ButtonBase; it has its own state instead
-                // of a command, and there should be none of them on this page at all.
+                // The chart defaults use switches with their own checked state.
                 .Where(b => b is not System.Windows.Controls.Primitives.ToggleButton)
                 .ToList();
             // The template is loaded without a DataContext, so the commands are still just
@@ -121,10 +120,10 @@ namespace Zakfo.Unphased.Tests {
                             ?.ParentBinding?.Path?.Path ?? string.Empty).Contains("Pick", StringComparison.Ordinal))
                         .All(b => b.Content is System.Windows.Controls.Border),
                     "a colour's button is its own swatch, not a decorative box beside a text field");
-                // Round 8, T5: a CheckBox is on or off, and a palette is neither - there are
-                // three of them and no way to have none. So the night switch is gone.
-                Assert.That(all.OfType<System.Windows.Controls.CheckBox>(), Is.Empty,
-                    "the night switch has been replaced by the three palette buttons");
+                var preset = all.OfType<System.Windows.Controls.ContentControl>().Single(control =>
+                    control.GetBindingExpression(System.Windows.Controls.ContentControl.ContentProperty)
+                        ?.ParentBinding?.Path?.Path == "Settings.ChartDefaults");
+                Assert.That(preset.ContentTemplate, Is.Not.Null, "the default visibility editor uses the chart element controls");
                 Assert.That(
                     buttons
                         .Where(b => (b.GetBindingExpression(System.Windows.Controls.Primitives.ButtonBase.CommandProperty)

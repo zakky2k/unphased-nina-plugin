@@ -218,6 +218,42 @@ namespace Zakfo.Unphased.Tests.Features.settings {
         }
 
         [Test]
+        public void SavedChartDefaultsAreIndependentOfTheLiveChartAndPersistAcrossRestarts() {
+            var profiles = ProfilesWithAstrometry(50.0875, 14.4213);
+            using var settings = new PluginSettings(profiles.Object);
+            settings.Initialize();
+            var original = settings.ChartDefaults.Value;
+            try {
+                settings.ChartDefaults.Value = ChartElements.Default;
+                var planner = new NightPlannerVM(settings);
+                settings.ChartDefaults.Groups.Single(group => group.Name == "Sun").Glyph.Enabled = false;
+                settings.ChartDefaults.CustomHorizon.Enabled = true;
+                var preset = (ChartElements.Default & ~ChartElements.SunGlyph) | ChartElements.CustomHorizon;
+
+                Assert.That(planner.VisibleChartElements, Is.EqualTo(ChartElements.Default));
+                planner.ShowAllChartElementsCommand.Execute(null);
+                Assert.That(planner.ChartElementOptions.All(option => option.Enabled), Is.True);
+                Assert.That(planner.ShowCustomHorizon, Is.True);
+                planner.HideAllChartElementsCommand.Execute(null);
+                Assert.That(planner.ChartElementOptions.All(option => !option.Enabled), Is.True);
+                Assert.That(planner.ShowCustomHorizon, Is.False);
+                Assert.That(settings.ChartDefaults.Value, Is.EqualTo(preset));
+                planner.ShowDefaultChartElementsCommand.Execute(null);
+                Assert.That(planner.VisibleChartElements, Is.EqualTo(preset));
+                Assert.That(planner.ShowCustomHorizon, Is.True);
+
+                using var reopened = new PluginSettings(profiles.Object);
+                reopened.Initialize();
+                Assert.That(reopened.ChartDefaults.Value, Is.EqualTo(preset));
+                var newPlanner = new NightPlannerVM(reopened);
+                Assert.That(newPlanner.VisibleChartElements, Is.EqualTo(preset));
+                Assert.That(newPlanner.ShowCustomHorizon, Is.True);
+            } finally {
+                settings.ChartDefaults.Value = original;
+            }
+        }
+
+        [Test]
         public void PickedChartColoursPersistAndResetToTheScheme() {
             // Same caveat as the palette test above: these settings live in the real
             // plugin options file, so the test leaves every role unpicked again.

@@ -109,7 +109,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 horizon = null;
                 profiles.Raise(service => service.HorizonChanged += null, EventArgs.Empty);
                 Assert.That(planner.CustomHorizonSamples, Is.Empty);
-                planner.ResetChartElementsCommand.Execute(null);
+                planner.ShowDefaultChartElementsCommand.Execute(null);
                 Assert.That(planner.ShowCustomHorizon, Is.False);
                 paths.Add(RenderWhilePagingGrowsTheWindow(profiles.Object));
             });

@@ -24,8 +24,10 @@ namespace Zakfo.Unphased.Features.planner {
         MoonLabel = 1 << 13,
         PlanetLabel = 1 << 14,
         TargetLabel = 1 << 15,
+        CustomHorizon = 1 << 16,
         Default = SunAltitude | MoonAltitude | Sunrise | Sunset | Moonrise | Moonset | SunGlyph | MoonGlyph
-            | PlanetAltitude | TargetAltitude | PlanetGlyph | TargetGlyph | SunLabel | MoonLabel | PlanetLabel | TargetLabel
+            | PlanetAltitude | TargetAltitude | PlanetGlyph | TargetGlyph | SunLabel | MoonLabel | PlanetLabel | TargetLabel,
+        All = Default | CustomHorizon
     }
 
     public sealed class ChartElementToggle : BaseINPC {
@@ -51,10 +53,11 @@ namespace Zakfo.Unphased.Features.planner {
 
     public sealed record ChartElementGroup(string Name, ChartElementToggle Curve, ChartElementToggle Glyph, ChartElementToggle Label);
 
-    public sealed partial class NightPlannerVM {
-        private IRelayCommand resetChartElements;
+    public sealed class ChartElementPreset : BaseINPC {
+        private ChartElements value = ChartElements.Default;
+        private bool applyingPreset;
 
-        public IReadOnlyList<ChartElementGroup> ChartElementGroups { get; } = new[] {
+        public IReadOnlyList<ChartElementGroup> Groups { get; } = new[] {
             Group("Sun", ChartElements.SunAltitude, ChartElements.SunGlyph, ChartElements.SunLabel),
             Group("Moon", ChartElements.MoonAltitude, ChartElements.MoonGlyph, ChartElements.MoonLabel),
             Group("Planets", ChartElements.PlanetAltitude, ChartElements.PlanetGlyph, ChartElements.PlanetLabel),
@@ -68,31 +71,69 @@ namespace Zakfo.Unphased.Features.planner {
             new(ChartElements.Moonset, "Moonset")
         };
 
+        public ChartElementToggle CustomHorizon { get; } = new(ChartElements.CustomHorizon, "Custom horizon");
+
+        internal IReadOnlyList<ChartElementToggle> Options { get; }
+
+        public ChartElementPreset() {
+            Options = Groups.SelectMany(group => new[] { group.Curve, group.Glyph, group.Label })
+                .Concat(RiseSetOptions).Append(CustomHorizon).ToArray();
+            foreach (var option in Options)
+                option.PropertyChanged += (_, _) => {
+                    if (applyingPreset) return;
+                    value = option.Enabled ? value | option.Element : value & ~option.Element;
+                    RaisePropertyChanged(nameof(Value));
+                };
+        }
+
+        internal ChartElements Value {
+            get => value;
+            set {
+                var flags = value & ChartElements.All;
+                if (this.value == flags) return;
+                this.value = flags;
+                applyingPreset = true;
+                try {
+                    foreach (var option in Options) option.Enabled = flags.HasFlag(option.Element);
+                } finally {
+                    applyingPreset = false;
+                }
+                RaisePropertyChanged();
+            }
+        }
+
         private static ChartElementGroup Group(string name, ChartElements curve, ChartElements glyph, ChartElements label) => new(
             name, new(curve, $"{name} altitude curves"), new(glyph, $"{name} scrub glyphs"), new(label, $"{name} scrub name labels"));
+    }
 
-        internal IReadOnlyList<ChartElementToggle> ChartElementOptions { get; private set; }
+    public sealed partial class NightPlannerVM {
+        public ChartElementPreset ChartVisibility { get; } = new();
+        private IRelayCommand showAllChartElements;
+        private IRelayCommand hideAllChartElements;
+        private IRelayCommand showDefaultChartElements;
 
-        internal ChartElements VisibleChartElements { get; private set; } = ChartElements.Default;
+        internal ChartElements VisibleChartElements => ChartVisibility.Value;
+        internal IReadOnlyList<ChartElementToggle> ChartElementOptions => ChartVisibility.Options;
 
-        public IRelayCommand ResetChartElementsCommand => resetChartElements ??= new RelayCommand(() => {
-            foreach (var option in ChartElementOptions)
-                option.Enabled = ChartElements.Default.HasFlag(option.Element);
-            ShowCustomHorizon = false;
-        });
+        public IRelayCommand ShowAllChartElementsCommand =>
+            showAllChartElements ??= new RelayCommand(() => ChartVisibility.Value = ChartElements.All);
+        public IRelayCommand HideAllChartElementsCommand =>
+            hideAllChartElements ??= new RelayCommand(() => ChartVisibility.Value = ChartElements.None);
+        public IRelayCommand ShowDefaultChartElementsCommand =>
+            showDefaultChartElements ??= new RelayCommand(() => ChartVisibility.Value = settings.ChartDefaults.Value);
 
         private void InitializeChartElements() {
-            ChartElementOptions = ChartElementGroups.SelectMany(group => new[] { group.Curve, group.Glyph, group.Label })
-                .Concat(RiseSetOptions).ToArray();
-            foreach (var option in ChartElementOptions)
-                option.PropertyChanged += (_, _) => {
-                    VisibleChartElements = option.Enabled
-                        ? VisibleChartElements | option.Element
-                        : VisibleChartElements & ~option.Element;
-                    RaisePropertyChanged(nameof(VisibleChartElements));
-                    if (option.Element is ChartElements.PlanetAltitude or ChartElements.TargetAltitude)
-                        RaisePropertyChanged(nameof(OverlayLegend));
-                };
+            ChartVisibility.CustomHorizon.PropertyChanged += (_, _) => OnCustomHorizonToggled();
+            var previous = VisibleChartElements;
+            ChartVisibility.PropertyChanged += (_, _) => {
+                var current = VisibleChartElements;
+                var changed = current ^ previous;
+                previous = current;
+                RaisePropertyChanged(nameof(VisibleChartElements));
+                if ((changed & (ChartElements.PlanetAltitude | ChartElements.TargetAltitude)) != 0)
+                    RaisePropertyChanged(nameof(OverlayLegend));
+            };
+            ChartVisibility.Value = settings.ChartDefaults.Value;
         }
     }
 }

@@ -179,7 +179,8 @@ namespace Zakfo.Unphased.Tests.Features.settings {
 
         [Test]
         public void EveryStrokeIsTwoUnitsWithRoundedCapsAndJoins() {
-            var paths = Flatten(OptionsPage()).OfType<ShapePath>().ToList();
+            var paths = Flatten(OptionsPage()).OfType<Viewbox>()
+                .SelectMany(icon => ((Canvas)icon.Child).Children.OfType<ShapePath>()).ToList();
             Assert.That(paths, Has.Count.EqualTo(11), "four strokes for darkness, four for the Moon, three for the calendar");
 
             foreach (var path in paths) {

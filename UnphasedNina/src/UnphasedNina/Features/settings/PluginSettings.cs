@@ -71,6 +71,9 @@ namespace Zakfo.Unphased.Features.settings {
         // means "follow the scheme", which for the sun and the moon is the live N.I.N.A.
         // theme brush, and for the horizon is the plugin's own green.
         private string sunColor = string.Empty, moonColor = string.Empty, horizonColor = string.Empty;
+        public ChartElementPreset ChartDefaults { get; } = new();
+
+        private void OnChartDefaultsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs args) => SaveGlobal();
 
         [ImportingConstructor]
         public PluginSettings(IProfileService profiles) {
@@ -102,12 +105,16 @@ namespace Zakfo.Unphased.Features.settings {
                     sunColor = ReadHex(doc, "sunColor");
                     moonColor = ReadHex(doc, "moonColor");
                     horizonColor = ReadHex(doc, "horizonColor");
+                    if (doc.RootElement.TryGetProperty("chartDefaults", out var defaults) && defaults.ValueKind == JsonValueKind.Number
+                        && defaults.TryGetInt32(out int flags) && flags >= 0)
+                        ChartDefaults.Value = (ChartElements)flags;
                 } catch (JsonException) {
                     // Corrupt settings file: keep defaults rather than crash the plugin.
                 }
             }
             profiles.ProfileChanged += OnProfileChanged;
             profiles.HorizonChanged += OnHorizonChanged;
+            ChartDefaults.PropertyChanged += OnChartDefaultsChanged;
             SeedSiteDrafts();
             initialized = true;
             if (carriedNightFlag) SaveGlobal();
@@ -524,7 +531,7 @@ namespace Zakfo.Unphased.Features.settings {
         private void SaveGlobal() {
             try {
                 Directory.CreateDirectory(Path.GetDirectoryName(globalPath));
-                var payload = JsonSerializer.Serialize(new { sunColor, moonColor, horizonColor });
+                var payload = JsonSerializer.Serialize(new { sunColor, moonColor, horizonColor, chartDefaults = (int)ChartDefaults.Value });
                 var temporaryPath = globalPath + ".tmp";
                 File.WriteAllText(temporaryPath, payload);
                 File.Move(temporaryPath, globalPath, true);
@@ -554,6 +561,7 @@ namespace Zakfo.Unphased.Features.settings {
             if (!initialized) return;
             profiles.ProfileChanged -= OnProfileChanged;
             profiles.HorizonChanged -= OnHorizonChanged;
+            ChartDefaults.PropertyChanged -= OnChartDefaultsChanged;
             initialized = false;
             // Stop handing out a stopped object: if the plugin is reloaded within one run of
             // N.I.N.A., For() builds a fresh one that reads the file again.

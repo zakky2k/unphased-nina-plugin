@@ -8,6 +8,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ninactrl="clr-namespace:NINA.CustomControlLibrary;assembly=NINA.CustomControlLibrary"
     xmlns:local="clr-namespace:Zakfo.Unphased.Features.settings">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/UnphasedNina;component/Features/ChartElementControls.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <DataTemplate x:Key="OptionsTemplate">
         <StackPanel Margin="10" MaxWidth="860" HorizontalAlignment="Left">
 
@@ -125,6 +129,15 @@
                 Content="Restore default colours"
                 ToolTip="Clear every picked colour: sun and moon follow the N.I.N.A. palette again, the horizon returns to green"
                 Command="{Binding Settings.ResetColorsCommand}" />
+
+            <TextBlock Text="Default chart elements" FontWeight="Bold" FontSize="15" Margin="0,16,0,0"
+                       Foreground="{DynamicResource PrimaryBrush}" />
+            <TextBlock Text="These choices are saved automatically. The planner uses them on startup and when you click Default."
+                       TextWrapping="Wrap" Foreground="{DynamicResource SecondaryBrush}" Margin="0,4,0,0" />
+            <ContentControl Content="{Binding Settings.ChartDefaults}" ContentTemplate="{StaticResource ChartElementPresetTemplate}" />
+            <CheckBox Content="Custom horizon" IsChecked="{Binding Settings.ChartDefaults.CustomHorizon.Enabled, Mode=TwoWay}"
+                      Style="{StaticResource OverlaySwitchStyle}"
+                      Margin="0,3,0,0" HorizontalAlignment="Left" />
 
             <Border Height="1" Margin="0,16,0,16" Background="{DynamicResource BorderBrush}" />
 

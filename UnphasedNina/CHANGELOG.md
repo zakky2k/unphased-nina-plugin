@@ -11,7 +11,8 @@
 - Enabled planet switches show a preview of the selected glyph style beside their names.
 - Chart elements independently controls altitude curves, scrub glyphs and scrub names
   for the Sun, Moon, selected planets and selected deep-sky targets. Each rise and set
-  label has its own switch. Reset restores the display defaults.
+  label has its own switch. All and None toggle the optional chart layers together.
+  Default restores the preset saved in the plugin’s Options.
 - The opt-in Custom horizon layer shades below the active N.I.N.A. profile’s horizon,
   projected along a selectable object’s azimuth across the visible time window.
 - Enabled Framing Assistant targets show a glyph beside their switch and on the chart's

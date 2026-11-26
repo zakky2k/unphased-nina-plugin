@@ -51,7 +51,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 option.Enabled = true;
                 Assert.That(planner.VisibleChartElements, Is.EqualTo(option.Element), option.Name);
                 var layer = Drawings(chart.Paint());
-                if (option.Element is ChartElements.PlanetAltitude or ChartElements.PlanetGlyph or ChartElements.PlanetLabel
+                if (option.Element is ChartElements.CustomHorizon or ChartElements.PlanetAltitude or ChartElements.PlanetGlyph or ChartElements.PlanetLabel
                     or ChartElements.TargetAltitude or ChartElements.TargetGlyph or ChartElements.TargetLabel) {
                     Assert.That(layer.SequenceEqual(baseline), Is.True, option.Name);
                 } else {
@@ -61,7 +61,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 }
                 option.Enabled = false;
             }
-            planner.ResetChartElementsCommand.Execute(null);
+            planner.ShowDefaultChartElementsCommand.Execute(null);
             Assert.That(planner.VisibleChartElements, Is.EqualTo(ChartElements.Default));
             Assert.That(planner.GlyphStyle, Is.EqualTo(PlanetGlyphStyle.Detailed));
             Assert.That(Drawings(chart.Paint()), Is.EqualTo(defaults));

@@ -9,23 +9,22 @@ namespace Zakfo.Unphased.Features.planner {
     public sealed partial class NightPlannerVM {
         private readonly OverlayChoice horizonMoon = new("Moon", 0, planet: NOVAS.Body.Moon);
         private readonly OverlayChoice horizonSun = new("Sun", 0, planet: NOVAS.Body.Sun);
-        private bool showCustomHorizon;
         private OverlayChoice horizonReference;
         private int horizonRevision;
         private string horizonStatus = string.Empty;
 
         public bool ShowCustomHorizon {
-            get => showCustomHorizon;
-            set {
-                if (showCustomHorizon == value) return;
-                showCustomHorizon = value;
-                if (value && horizonReference == null) {
-                    horizonReference = DefaultHorizonReference();
-                    RaisePropertyChanged(nameof(HorizonReference));
-                }
-                RaisePropertyChanged();
-                RefreshCustomHorizon();
+            get => ChartVisibility.CustomHorizon.Enabled;
+            set => ChartVisibility.CustomHorizon.Enabled = value;
+        }
+
+        private void OnCustomHorizonToggled() {
+            if (ShowCustomHorizon && horizonReference == null) {
+                horizonReference = DefaultHorizonReference();
+                RaisePropertyChanged(nameof(HorizonReference));
             }
+            RaisePropertyChanged(nameof(ShowCustomHorizon));
+            RefreshCustomHorizon();
         }
 
         public IEnumerable<OverlayChoice> HorizonReferenceOptions =>
@@ -82,8 +81,8 @@ namespace Zakfo.Unphased.Features.planner {
             var row = selectedNight;
             var reference = horizonReference;
             var horizon = settings.ActiveHorizon;
-            HorizonStatus = !showCustomHorizon || horizon != null ? string.Empty : "No custom horizon in the active profile.";
-            if (!showCustomHorizon || row == null || reference == null || horizon == null) return;
+            HorizonStatus = !ShowCustomHorizon || horizon != null ? string.Empty : "No custom horizon in the active profile.";
+            if (!ShowCustomHorizon || row == null || reference == null || horizon == null) return;
 
             _ = Task.Run(async () => {
                 await overlayWorker.WaitAsync().ConfigureAwait(false);
