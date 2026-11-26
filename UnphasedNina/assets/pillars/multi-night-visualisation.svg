@@ -1,15 +1,16 @@
-<!-- Unphased Night Planner - "Lunar conditions" pillar icon. Drawn for this plugin; no
+<!-- Unphased Night Planner - "Multi-night visualisation" pillar icon. Drawn for this plugin; no
      third-party icon library. This Source Code Form is subject to the terms of the Mozilla
      Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can
      obtain one at https://mozilla.org/MPL/2.0/. -->
 <!-- The same geometry as the Path elements in Features/settings/Resources.xaml, and
      PillarIdentityTests fails if the two stop matching. 64 x 64 canvas, stroke 2, rounded
-     caps and joins. stroke="currentColor" so the host page supplies the colour. -->
+     caps and joins. stroke="currentColor" so the host page supplies the colour. The three
+     altitude curves are the point of this one: what the planner compares from night to night
+     is the shape of the sky, not a date. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"
      fill="none" stroke="currentColor" stroke-width="2"
      stroke-linecap="round" stroke-linejoin="round">
-  <path d="M8 48 H56"/>
-  <path d="M26 13 A11 11 0 1 0 26 35 A8.5 8.5 0 1 1 26 13 Z"/>
-  <path d="M44 12 V20 M40 16 H48"/>
-  <path d="M8 42 C22 34 42 34 56 42" stroke-dasharray="2 4"/>
+  <path d="M14 16 H50 A2 2 0 0 1 52 18 V50 A2 2 0 0 1 50 52 H14 A2 2 0 0 1 12 50 V18 A2 2 0 0 1 14 16 Z"/>
+  <path d="M20 11 V18 M44 11 V18 M12 24 H52"/>
+  <path d="M16 46 Q20 31 24 46 M28 46 Q32 29 36 46 M40 46 Q44 31 48 46"/>
 </svg>

@@ -21,9 +21,9 @@ namespace Zakfo.Unphased.Tests.Features.settings {
     /// page can be eyeballed without starting N.I.N.A.
     /// <para>
     /// The identity tests say the words are there and in the right order; a picture is the only way to
-    /// see whether the page reads as intended: whether the pillars sit above the settings, whether the
-    /// three drawings are legible at 48 DIP, and whether a wrapped paragraph has become a column three
-    /// words wide. Those are the failures a wiring test cannot see.
+    /// see whether the page reads as intended: whether the settings lead and the three pillars close
+    /// the page above About, whether the three drawings are legible at 48 DIP, and whether a wrapped
+    /// paragraph has become a column three words wide. Those are the failures a wiring test cannot see.
     /// </para>
     /// <para>
     /// The third picture is the drawings alone at the specification's large size, and it is not only
@@ -95,9 +95,15 @@ namespace Zakfo.Unphased.Tests.Features.settings {
 
                 yield return Save(host, width, (int)height, "options-page-at-860");
 
-                // The pillars band on its own: the part the round is about, at the size it is read at.
-                int band = Math.Min((int)height, 470);
-                yield return Save(host, width, band, "options-page-pillars-at-860");
+                // The pillar block on its own: the part the round is about, at the size it is read at.
+                // It sits below the settings now, so this band is cut where the heading actually is
+                // rather than from the top of the page, which would show latitude boxes instead.
+                var heading = FindText(page, t => t.Text != null && t.Text.StartsWith("Three perspectives"));
+                Assert.That(heading, Is.Not.Null, "the pillars heading is on the page");
+                int top = (int)Math.Floor(heading.TransformToVisual(host).Transform(new Point(0, 0)).Y);
+                int band = Math.Min((int)height - top, 520);
+                TestContext.Progress.WriteLine($"pillar band from y={top} for {band} DIP");
+                yield return SaveBand(host, width, (int)height, top, band, "options-page-pillars-at-860");
             }
 
             // The drawings at the specification's large size, 64 DIP, taken from the markup itself
@@ -172,6 +178,32 @@ namespace Zakfo.Unphased.Tests.Features.settings {
             encoder.Frames.Add(BitmapFrame.Create(rtb));
             using (var stream = File.Create(path)) encoder.Save(stream);
             return path;
+        }
+
+        /// <summary>Render the whole page, then keep only the rows between <paramref name="top"/> and
+        /// <paramref name="band"/> - so a block in the middle of a long page can be looked at close up.</summary>
+        private static string SaveBand(FrameworkElement host, int width, int height, int top, int band, string name) {
+            var path = Path.Combine(Path.GetTempPath(), name + ".png");
+            var rtb = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            rtb.Render(host);
+            var crop = new CroppedBitmap(rtb, new Int32Rect(0, top, width, band));
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(crop));
+            using (var stream = File.Create(path)) encoder.Save(stream);
+            return path;
+        }
+
+        /// <summary>Depth-first search of the laid-out page for the first text block matching
+        /// <paramref name="match"/>, so the picture can be cut relative to something on the page
+        /// instead of relative to a guessed pixel offset.</summary>
+        private static TextBlock FindText(DependencyObject node, Func<TextBlock, bool> match) {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++) {
+                var child = VisualTreeHelper.GetChild(node, i);
+                if (child is TextBlock block && match(block)) return block;
+                var found = FindText(child, match);
+                if (found != null) return found;
+            }
+            return null;
         }
 
         private static string OptionsPageXaml() {

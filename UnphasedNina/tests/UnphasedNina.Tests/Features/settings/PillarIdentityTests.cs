@@ -20,11 +20,13 @@ namespace Zakfo.Unphased.Tests.Features.settings {
     /// <para>
     /// Nothing here checks that a person likes the wording. What it checks is the thing that
     /// quietly rots without a test: that the page, the listing and the README still say the same
-    /// sentences, that the page still puts the pillars <em>above</em> the settings so a first-time
-    /// reader meets the purpose before the controls, and that the three drawings are the same
-    /// drawings in WPF and in the <c>assets/pillars/*.svg</c> the README links. Wording drift is
-    /// invisible - nobody notices the day the panel starts calling the Moon section something
-    /// else - so it is pinned here rather than left to discipline.
+    /// sentences, that the page still leads with its real settings and puts the pillars last, above
+    /// About - N.I.N.A. owns the strip above its own <em>Options</em> caption and a plugin template
+    /// cannot reach above it, so the manifest description is the one opening line that sits there -
+    /// and that the three drawings are the same drawings in WPF and in the
+    /// <c>assets/pillars/*.svg</c> the README links. Wording drift is invisible - nobody notices the
+    /// day the panel starts calling the Moon section something else - so it is pinned here rather
+    /// than left to discipline.
     /// </para>
     /// <para>
     /// The drawings are checked against the agreed specification: a 64 x 64 canvas, stroke width
@@ -35,7 +37,13 @@ namespace Zakfo.Unphased.Tests.Features.settings {
     /// </summary>
     [NonParallelizable, Apartment(ApartmentState.STA)]
     public class PillarIdentityTests {
-        private const string Tagline = "Visualise the night. Plan your imaging.";
+        /// <summary>The slogan round 12 put in the manifest line. Round 13 retired it: the one line a
+        /// plugin can place above N.I.N.A.'s Options caption now says what the plugin does.</summary>
+        private const string RetiredTagline = "Visualise the night. Plan your imaging.";
+
+        /// <summary>The plugin's opening sentence. Since round 13 it lives in the manifest, where
+        /// N.I.N.A. draws it in italic above its own Options caption, and is deliberately not
+        /// repeated at the top of our options page.</summary>
         private const string Lede =
             "Visualise darkness, twilight and moonlight across consecutive nights in a single interactive astronomical chart.";
         private const string PillarsHeading = "Three perspectives. One view of the night.";
@@ -43,21 +51,23 @@ namespace Zakfo.Unphased.Tests.Features.settings {
         /// <summary>The pillar copy, in the order the page shows it. This is the one place these
         /// sentences are written in this repository; everything else is asserted against it.</summary>
         private static readonly (string Title, string Body, string Tagline, string Svg)[] Pillars = {
+            // The order is a decision, not an accident: the Moon is what decides whether a night is
+            // worth setting up for, so it leads. Round 13 put it first and renamed two of the three.
+            (
+                "Lunar phases",
+                "Explore the dynamic phases of the Moon along with its altitude and illumination. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities.",
+                "Understand the Moon.",
+                "lunar-phases.svg"),
             (
                 "Astronomical darkness",
                 "Visualise the transition from daylight through civil, nautical and astronomical twilight into astronomical darkness. Easily identify when darkness begins, when it ends and how much dark imaging time is available throughout each night.",
                 "Understand the darkness.",
                 "astronomical-darkness.svg"),
             (
-                "Lunar conditions",
-                "Explore the Moon's altitude, phase and illumination throughout the night. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities.",
-                "Understand the Moon.",
-                "lunar-conditions.svg"),
-            (
-                "Multi-night planning",
-                "Look beyond tonight and explore how astronomical darkness and lunar conditions evolve across consecutive nights. Compare upcoming nights and identify favourable windows for future astrophotography sessions.",
+                "Multi-night visualisation",
+                "Look beyond tonight and explore how astronomical darkness and the Moon evolve across consecutive nights. Compare upcoming nights and identify favourable windows for future astrophotography sessions.",
                 "Plan the nights ahead.",
-                "multi-night-planning.svg"),
+                "multi-night-visualisation.svg"),
         };
 
         /// <summary>The words the settings half of the page uses, from the design: what each control
@@ -90,15 +100,21 @@ namespace Zakfo.Unphased.Tests.Features.settings {
             "Sun path",
             "Moon path",
             "Reset colours to defaults",
+            // Round 13 renamed these two pillars; the old titles must not come back on any surface.
+            "Lunar conditions",
+            "Multi-night planning",
+            // Round 13 moved the plugin's opening sentence into the manifest line above N.I.N.A.'s
+            // Options caption and retired the slogan it used to quote.
+            RetiredTagline,
+            Lede,
         };
 
         [Test]
-        public void ThePagePutsTheThreePerspectivesAboveTheSettings() {
+        public void ThePageOpensWithItsSettingsAndClosesWithTheThreePerspectives() {
             var flat = Flatten(OptionsPage());
 
             var seen = Texts(flat).ToList();
             Assert.Multiple(() => {
-                Assert.That(seen, Does.Contain(Lede), "the page opens with what the plugin does");
                 Assert.That(seen, Does.Contain(PillarsHeading), "the pillars get their own heading");
                 foreach (var pillar in Pillars) {
                     Assert.That(seen, Does.Contain(pillar.Title), $"pillar title: {pillar.Title}");
@@ -107,21 +123,35 @@ namespace Zakfo.Unphased.Tests.Features.settings {
                 }
             });
 
-            // Order is the actual design decision, not decoration: somebody meeting the plugin for
-            // the first time reads what it is for before they are handed its settings.
-            int lede = IndexOfText(flat, Lede);
+            // Order is the actual design decision, not decoration. N.I.N.A. draws the plugin's name,
+            // author, version, featured image and manifest description above its own "Options"
+            // caption, and a plugin template cannot reach above that caption - so whatever the caption
+            // hands us has to start with the real settings, and the three perspectives follow them,
+            // closing the page above About. The plugin's opening sentence therefore lives in the
+            // manifest, where it is the last thing read before the caption, and is kept off this page
+            // by RetiredWords so the page does not say it a second time.
             int heading = IndexOfText(flat, PillarsHeading);
             int firstSettingHeading = IndexOfText(flat, "Observatory location");
             int firstOptionButton = IndexOf(flat, b => b is Button button && b is not null && button.Content is string);
+            int about = IndexOfText(flat, "About Unphased Night Planner");
             Assert.Multiple(() => {
-                Assert.That(lede, Is.GreaterThanOrEqualTo(0), "the lede is on the page");
-                Assert.That(heading, Is.GreaterThan(lede), "the lede comes before the pillars heading");
+                Assert.That(firstSettingHeading, Is.GreaterThanOrEqualTo(0), "the settings lead the page");
+                Assert.That(firstOptionButton, Is.GreaterThanOrEqualTo(0), "a real control is on the page");
+                Assert.That(firstOptionButton, Is.LessThan(heading), "a real control comes before the pillars");
+                Assert.That(heading, Is.GreaterThan(firstSettingHeading), "the pillars come after the settings");
+                Assert.That(about, Is.GreaterThan(heading), "About closes the page");
                 foreach (var pillar in Pillars) {
                     Assert.That(IndexOfText(flat, pillar.Title), Is.GreaterThan(heading), $"{pillar.Title} sits under the pillars heading");
-                    Assert.That(IndexOfText(flat, pillar.Title), Is.LessThan(firstSettingHeading), $"{pillar.Title} comes before the settings");
+                    Assert.That(IndexOfText(flat, pillar.Title), Is.LessThan(about), $"{pillar.Title} comes before About");
                 }
-                Assert.That(firstSettingHeading, Is.GreaterThan(heading), "the settings come after the pillars");
-                Assert.That(firstOptionButton, Is.GreaterThan(heading), "no control at all before the pillars");
+                // And in the order the array above lists them, because that array is also what the
+                // README and the store listing are checked against - a page that silently reorders
+                // the pillars now has to say so here.
+                for (int i = 1; i < Pillars.Length; i++) {
+                    Assert.That(IndexOfText(flat, Pillars[i].Title),
+                        Is.GreaterThan(IndexOfText(flat, Pillars[i - 1].Title)),
+                        $"{Pillars[i].Title} is read after {Pillars[i - 1].Title}");
+                }
             });
         }
 
@@ -240,8 +270,8 @@ namespace Zakfo.Unphased.Tests.Features.settings {
             // becomes a test of where the lines are broken.
             var readme = Collapse(File.ReadAllText(Path.Combine(root, "UnphasedNina", "README.md")));
             Assert.Multiple(() => {
-                Assert.That(readme, Does.Contain(Tagline), "the README opens with the same line the plugin does");
-                Assert.That(readme, Does.Contain(Collapse(Lede)));
+                Assert.That(readme, Does.Contain(Collapse(Lede)), "the README opens with the manifest line");
+                Assert.That(readme, Does.Not.Contain(Collapse(RetiredTagline)), "the retired slogan stays off the README");
                 Assert.That(readme, Does.Contain(PillarsHeading));
                 foreach (var pillar in Pillars) {
                     Assert.That(readme, Does.Contain(pillar.Title), $"README pillar title: {pillar.Title}");
@@ -253,18 +283,20 @@ namespace Zakfo.Unphased.Tests.Features.settings {
         }
 
         [Test]
-        public void TheStoreListingAndThePageOpenWithTheSameLine() {
+        public void TheManifestLineCarriesTheOpeningSentenceNinaDrawsAboveItsCaption() {
             var descriptions = new Plugin().Descriptions;
 
             Assert.Multiple(() => {
-                // N.I.N.A. draws this in italic under the plugin name on the plugin's own page, and
-                // quotes it in the store list - so it is the identity line, and the page below it
-                // starts with the sentence that explains it rather than repeating it.
-                Assert.That(descriptions.ShortDescription, Is.EqualTo(Tagline));
+                // N.I.N.A. draws this in italic under the plugin name above its own Options caption,
+                // and quotes it in the store list. It is the only prose a plugin can place above that
+                // caption, so it carries the plugin's opening sentence rather than a slogan - and the
+                // options page below the caption starts with its settings instead of repeating it.
+                Assert.That(descriptions.ShortDescription, Is.EqualTo(Lede));
                 Assert.That(descriptions.ShortDescription.Length, Is.LessThanOrEqualTo(256));
-                Assert.That(descriptions.LongDescription, Does.StartWith(Tagline),
+                Assert.That(descriptions.LongDescription, Does.StartWith(Lede),
                     "the long description leads with the same line, because the store page has no header of its own");
-                Assert.That(descriptions.LongDescription, Does.Contain(Lede));
+                Assert.That(descriptions.LongDescription, Does.Not.Contain(RetiredTagline),
+                    "the retired slogan stays out of the listing");
                 Assert.That(descriptions.LongDescription, Does.Contain(PillarsHeading));
                 foreach (var pillar in Pillars) {
                     Assert.That(descriptions.LongDescription, Does.Contain(pillar.Title), $"listing pillar title: {pillar.Title}");

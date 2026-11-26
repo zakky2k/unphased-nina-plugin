@@ -1,5 +1,36 @@
 # Changelog
 
+## Unreleased — round 13: the settings lead the page, and the pillars move to the end
+
+The review asked for three things: the pillars heading above **Options**, **Lunar conditions** renamed **Lunar phases**
+and moved first, and **Multi night planning** renamed **Multi night visualization**. Two landed as asked; the first one
+turned out to be impossible, and what it revealed changed the layout. Suite stays at **108**. Deployed into the live
+plugin folder and launched; the 0.7.0.0 archive is untouched and there is no new tag.
+
+- **N.I.N.A. owns the strip above its "Options" caption.** Capturing the real page showed that the big **Options** heading
+  is drawn by the host, not by this plugin — the plugin template render contains no such text — and the only plugin-supplied
+  prose above it is the manifest's short description. A plugin cannot place markup there; the only route would be walking
+  N.I.N.A.'s visual tree and re-parenting our block, which breaks the moment the host changes its settings page. So the
+  block moved the other way: **Observatory location → Display palette → Custom chart colours** now come first under Options,
+  then the three perspectives, then About.
+- **The manifest line says what the plugin does.** The slogan "Visualise the night. Plan your imaging." was retired and the
+  short description is now "Visualise darkness, twilight and moonlight across consecutive nights in a single interactive
+  astronomical chart." — 112 of the 256 characters the schema allows. The same sentence used to be repeated at the top of the
+  options page; it is no longer on the page at all, and both the slogan and the sentence are on the retired-word list for
+  that page, so the page cannot say twice what the header above it already said.
+- **Lunar phases leads; the titles were normalised.** Pillar order is now **Lunar phases**, **Astronomical darkness**,
+  **Multi-night visualisation**, with the Moon's body reading "Explore the dynamic phases of the Moon along with its
+  altitude and illumination." The review wrote "Lunar Phases" and "Multi night visualization"; sentence case and the
+  British spelling already used across the plugin were kept, and the wording is pinned by a test that also asserts the order
+  on the rendered page. The old titles are retired words.
+- **The drawings moved with their names.** `assets/pillars/lunar-conditions.svg` → `lunar-phases.svg` and
+  `multi-night-planning.svg` → `multi-night-visualisation.svg`; the geometry is unchanged, stroke for stroke, and still
+  compared against the XAML.
+- **State of this build.** 108 tests, 0 failures. The page was rendered at 860 DIP (860 × 1225) and looked at, and the
+  picture band for the pillars is now cut at the heading's actual position instead of at the top of the page, because the
+  block moved. `UnphasedNina.dll` 105,984 B, sha256 `5ED67D03132701BD…`, copied into the live plugin folder; N.I.N.A. was
+  restarted and is waiting at its profile dialog, so the load of the new assembly is not yet confirmed on a running host.
+
 ## Unreleased — round 12: the three pillars are the front page, and the drawings are ours
 
 The review asked for the plugin's purpose to be the centrepiece rather than a list of features: three pillars —

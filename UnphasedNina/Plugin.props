@@ -14,14 +14,14 @@
     <Company>zakky2k</Company>
     <Authors>zakky2k</Authors>
     <!-- Becomes the manifest's Descriptions.ShortDescription - the schema caps it at 256 characters.
-         This is the identity line, not a feature list: it is what N.I.N.A. shows in italic under the
-         plugin name on the plugin's own page, and what the store row quotes. The sentence that says
-         what the plugin does lives one line lower, at the top of the options page and in the first
-         paragraph below, so both surfaces open with the same two lines in the same order. -->
-    <Description>Visualise the night. Plan your imaging.</Description>
-    <PluginLongDescription>Visualise the night. Plan your imaging.
-
-Visualise darkness, twilight and moonlight across consecutive nights in a single interactive astronomical chart.
+          This is the one line of prose N.I.N.A. draws above its own "Options" caption, in italic
+          under the plugin name, and it is also what the store row quotes - so it carries what the
+          plugin does rather than a slogan. The slogan that used to sit here ("Visualise the night.
+          Plan your imaging.") was retired in round 13: the round-12 layout put a lede with the same
+          words at the top of the options page, which read as a duplicate of this line, so the page
+          now starts with its settings and this line is the plugin's opening sentence everywhere. -->
+    <Description>Visualise darkness, twilight and moonlight across consecutive nights in a single interactive astronomical chart.</Description>
+    <PluginLongDescription>Visualise darkness, twilight and moonlight across consecutive nights in a single interactive astronomical chart.
 
 Unphased Night Planner is an interactive, dockable panel for N.I.N.A., designed to help astrophotographers visualise astronomical darkness and lunar conditions for tonight and the nights ahead.
 
@@ -29,11 +29,11 @@ By combining solar altitude, lunar altitude, Moon phase and twilight periods in 
 
 Three perspectives. One view of the night.
 
+Lunar phases - Understand the Moon. Explore the dynamic phases of the Moon along with its altitude and illumination. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities.
+
 Astronomical darkness - Understand the darkness. Visualise the transition from daylight through civil, nautical and astronomical twilight into astronomical darkness. Easily identify when darkness begins, when it ends and how much dark imaging time is available throughout each night.
 
-Lunar conditions - Understand the Moon. Explore the Moon's altitude, phase and illumination throughout the night. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities.
-
-Multi-night planning - Plan the nights ahead. Look beyond tonight and explore how astronomical darkness and lunar conditions evolve across consecutive nights. Compare upcoming nights and identify favourable windows for future astrophotography sessions.
+Multi-night visualisation - Plan the nights ahead. Look beyond tonight and explore how astronomical darkness and the Moon evolve across consecutive nights. Compare upcoming nights and identify favourable windows for future astrophotography sessions.
 
 Interactive night planning
 - Combined solar and lunar altitude chart.

@@ -1,9 +1,12 @@
 # Unphased Night Planner
 
-**Visualise the night. Plan your imaging.**
+**Visualise darkness, twilight and moonlight across consecutive nights in a single interactive
+astronomical chart.**
 
-Visualise darkness, twilight and moonlight across consecutive nights in a single interactive
-astronomical chart.
+On N.I.N.A.'s page for this plugin that sentence is the italic line under the plugin name, above
+the host's own **Options** caption - the only prose a plugin can place there. The three perspectives
+below come after the plugin's real settings, immediately above About, because a plugin template
+cannot reach above that caption.
 
 ## Three perspectives. One view of the night.
 
@@ -12,6 +15,16 @@ N.I.N.A. and in its listing on the plugin catalogue. The three drawings are the 
 art — `assets/pillars/`, 64 × 64 units, 2-unit stroke, rounded caps and joins, no icon library —
 and they are the same geometry the page draws in WPF; `PillarIdentityTests` fails if the two drift
 apart. They are drawn with `currentColor`, so the page or document you are reading sets the colour.
+
+### Lunar phases
+
+<img src="assets/pillars/lunar-phases.svg" width="64" height="64" alt="A crescent Moon with its trajectory across the horizon">
+
+Explore the dynamic phases of the Moon along with its altitude and illumination. Identify periods
+when the Moon is below the horizon, assess potential moonlight interference and discover moon-free
+imaging opportunities.
+
+*Understand the Moon.*
 
 ### Astronomical darkness
 
@@ -23,23 +36,13 @@ time is available throughout each night.
 
 *Understand the darkness.*
 
-### Lunar conditions
+### Multi-night visualisation
 
-<img src="assets/pillars/lunar-conditions.svg" width="64" height="64" alt="A crescent Moon with its trajectory across the horizon">
+<img src="assets/pillars/multi-night-visualisation.svg" width="64" height="64" alt="A calendar carrying three astronomical altitude curves">
 
-Explore the Moon's altitude, phase and illumination throughout the night. Identify periods when the
-Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging
-opportunities.
-
-*Understand the Moon.*
-
-### Multi-night planning
-
-<img src="assets/pillars/multi-night-planning.svg" width="64" height="64" alt="A calendar carrying three astronomical altitude curves">
-
-Look beyond tonight and explore how astronomical darkness and lunar conditions evolve across
-consecutive nights. Compare upcoming nights and identify favourable windows for future
-astrophotography sessions.
+Look beyond tonight and explore how astronomical darkness and the Moon evolve across consecutive
+nights. Compare upcoming nights and identify favourable windows for future astrophotography
+sessions.
 
 *Plan the nights ahead.*
 

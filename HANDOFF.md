@@ -1,4 +1,4 @@
-# HANDOFF — Unphased Night Planner (N.I.N.A. plugin), state at 2026-11-26 (round 12 delivered: three-pillar identity on the options page, suite 108, not yet deployed or committed; 0.7.0.0 remains the released build, `main` is ahead of that tag)
+# HANDOFF — Unphased Night Planner (N.I.N.A. plugin), state at 2026-11-26 (round 13 delivered: settings lead the options page, three pillars above About, Lunar phases first, suite 108, deployed to the live plugin folder; 0.7.0.0 remains the released build, `main` is ahead of that tag)
 
 > **Moved on 26 Nov, round 9:** this tree is its own repository now — `github.com/zakky2k/unphased-nina-plugin`,
 > working path `C:\Users\zakfo\Documents\unphased-nina-plugin`. It was copied out of `AstroScripts/nina-plugin` at
@@ -1125,6 +1125,46 @@ identity, with the previously agreed terminology, British spelling and the exist
 - Leftovers from the earlier net10 experiment: stale `bin/Debug/net10.0-windows` trees under `src` and `tests`
   (gitignored, safe to delete).
 
+## Round 13 delivered (26 Nov, early afternoon) — the settings lead the page; suite 108, deployed
+
+The brief was three edits: put **"Three perspectives. one view of the night"** above **Options**, rename **Lunar
+Conditions** → **Lunar Phases** and move it first with a new sentence about the phases, and rename **Multi night planning**
+→ **Multi night visualization**. Items 2 and 3 shipped. Item 1 is the one worth remembering, because it is a platform fact
+rather than a preference.
+
+- **N.I.N.A. draws the big "Options" caption itself, and a plugin cannot put anything above it.** Evidence: the live
+  capture (`%TEMP%\nina-live.png`, taken with `GetWindowRect` + `Graphics.CopyFromScreen`) shows the caption between
+  N.I.N.A.'s plugin header and our content, and our own render of the `OptionsTemplate` contains no "Options" text at all.
+  Above that caption the host renders only manifest data: featured image, name, author, version, homepage, change-log link
+  and the short `Description`. The only way to get markup above it is to walk N.I.N.A.'s visual tree and re-parent our
+  block — refused: it breaks on the next host update and can take their settings page with it.
+- **So the layout inverted** (this is a reversal of the round-12 rule, chosen by the user: "actuall settings under
+  options"). Under Options: **Observatory location → Display palette → Custom chart colours**, then a rule, then
+  **Three perspectives. One view of the night.** with the three pillars, then a rule, then About. The template starts at
+  line 13 of `Features/settings/Resources.xaml` in that order.
+- **The manifest short description now carries the plugin's opening sentence**: "Visualise darkness, twilight and moonlight
+  across consecutive nights in a single interactive astronomical chart." (112 of 256 characters). The round-12 slogan
+  "Visualise the night. Plan your imaging." is retired from the manifest, the long description and the README, and the
+  lede `TextBlock` was deleted from the options page — the header above the caption already says it, so the page said it
+  twice. `RetiredWords` now includes the slogan *and* the lede, so neither can reappear on the page.
+- **Titles**: **Lunar phases** (first, with "Explore the dynamic phases of the Moon along with its altitude and
+  illumination. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover
+  moon-free imaging opportunities."), **Astronomical darkness**, **Multi-night visualisation**. The user's message said
+  "Lunar Phases" and "Multi night visualization"; sentence case and British spelling were kept for consistency with the rest
+  of the plugin and flagged as a normalisation, and the user confirmed them. `ThePageOpensWithItsSettingsAndClosesWithTheThreePerspectives`
+  pins settings → pillars → About and the pillar order; the old pillar titles are retired words.
+- **Files that moved**: `assets/pillars/lunar-conditions.svg` → `lunar-phases.svg`, `multi-night-planning.svg` →
+  `multi-night-visualisation.svg` (`git mv`, geometry untouched); README sections re-ordered and re-headed to match.
+- **The render smoke had to change**: its "pillars band" used to be the top 470 DIP of the page, which is the location
+  fields now. It finds the heading `TextBlock` in the laid-out tree, `TransformToVisual(host)` to get its y, renders the
+  full page to a `RenderTargetBitmap` and keeps a `CroppedBitmap` band (`SaveBand`, `FindText`). Page is now 860 × 1225.
+- **State**: 108 tests, 0 failures. `UnphasedNina.dll` 105,984 B sha256 `5ED67D03132701BD…` deployed to
+  `%LOCALAPPDATA%\NINA\Plugins\3.0.0\Unphased Night Planner\` and N.I.N.A. relaunched (PID 17772 at 13:23). **Load not yet
+  confirmed on a running host**: the app is sitting at its profile-selection dialog ("Load profile", profile
+  `PRG_6200MM_AP130GTX_QTCC_AP1600_Master`) and plugins are not in the process module list until it is dismissed — choosing
+  a profile is the user's call, not ours. No new tag; the 0.7.0.0 archive is untouched (`154,585 B`,
+  sha256 `7da5fd24…`).
+
 ## Gotchas learned
 - **There are two N.I.N.A. source trees on this machine and only one is right.** `Workspace\NINA` is `develop` at
   **3.3.0.1070**; the installed app is **3.2.1.3002**, whose tree is `Workspace\nina32\nina-release-3.2.x` (flat layout:
@@ -1181,6 +1221,11 @@ identity, with the previously agreed terminology, British spelling and the exist
   ambiguity. `UnphasedNina/Directory.Build.targets` removes those two usings; do not delete it.
 - `RelayCommand` is ambiguous between `CommunityToolkit.Mvvm.Input` and **`NINA.Core.Utility`**; the settings VM uses
   a `using RelayCommand = CommunityToolkit.Mvvm.Input.RelayCommand;` alias.
+- **A restarted N.I.N.A. does not load plugins until its profile dialog is dismissed.** After a relaunch the process sits at
+  the profile chooser (a 500 × 400 window whose title is just N.I.N.A.), `MainWindowHandle` points at that dialog and
+  `$p.Modules` contains no `UnphasedNina.dll` — which reads like a failed deploy but is not one. The profile is the user's
+  equipment choice, so ask rather than pressing *Load profile*; then re-check `$p.Modules` and the newest file in
+  `%LOCALAPPDATA%\NINA\logs`.
 - The plugin options JSON is written from **fields**, so its keys are camelCase (`darkMode`, `sunColor`). Reading with
   `nameof(SunColor)` finds nothing and silently returns empty — the persistence test caught exactly that.
 - The plugin options file is the **live one** (`%LOCALAPPDATA%\NINA\PluginSettings\09572065-…\settings.json`), so the
