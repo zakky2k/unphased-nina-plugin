@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased — planet and target overlays
+## 0.8.0.0 Beta
+
+- Clear Horizon is the new plugin artwork. Its crescent Moon sits at the peak of
+  the altitude curve above a custom horizon. A simplified Windows icon is
+  available in ten sizes for the standalone desktop edition.
 
 - The planner's Overlays box adds independent switches for the seven observable planets
   and for saved targets imported from N.I.N.A.'s Framing Assistant. Targets are saved with
@@ -24,6 +28,7 @@
 - Scrub name labels use their curve's color and dash pattern. Mouse scrubbing follows
   the pointer smoothly. Measure drag shows the latest drawing timings. The buttons
   still step by an hour.
+- Descriptive text in Options can be selected and copied.
 
 ## Unreleased — round 13: the settings lead the page, and the pillars move to the end
 

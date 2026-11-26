@@ -68,10 +68,10 @@ this plugin stays on the shipped 3.2 line until the app it targets is released.)
 The plugin is **not in N.I.N.A.'s plugin list yet**, deliberately — see *Release and the plugin
 catalogue* below. Until it is, install it from the GitHub release:
 
-1. Download `UnphasedNina.0.7.0.0.zip` from the
-   [releases page](https://github.com/zakky2k/unphased-nina-plugin/releases) — 154,585 bytes,
-   SHA256 `7da5fd2421f93b54d540a7460a8e6eb43bbf2258b6b456be2bb5186e602c0d1f`.
-2. Unzip it into `%LOCALAPPDATA%\NINA\Plugins\3.0.0\Unphased Night Planner\`, creating that folder.
+1. Download `UnphasedNina.0.8.0.0.zip` from the
+   [releases page](https://github.com/zakky2k/unphased-nina-plugin/releases).
+2. With N.I.N.A. closed, extract the files directly into
+   `%LOCALAPPDATA%\NINA\Plugins\3.0.0\Unphased Night Planner\`, creating that folder if needed.
    The archive holds everything: `UnphasedNina.dll`, `UnphasedCore.dll`, `astronomy.dll`,
    `LICENSE.txt`, `THIRD-PARTY-NOTICES.txt`, `UnphasedNina.pdb` (the `.pdb` is optional).
 3. Restart N.I.N.A. The panel is the **puzzle-piece button in the Info bar** on the Imaging page;
@@ -127,7 +127,7 @@ shown above, so re-pick your colours afterwards, and the process may hold exactl
 ## Release and the plugin catalogue
 
 ```powershell
-./build/Build-Release.ps1 -Tag v0.7.0.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta
+./build/Build-Release.ps1 -Tag v0.8.0.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta
 ```
 
 `-Repository` is what the archive's `Installer.URL` and the manifest's `Repository` are built from,
@@ -140,14 +140,17 @@ validated against N.I.N.A.'s own manifest schema (`build\vendor\manifest.schema.
 unmodified — see [PROVENANCE.md](build/vendor/PROVENANCE.md)). Nothing is uploaded or tagged.
 `Verify-ReleaseArtifacts.ps1` re-checks an archive against its manifest (checksum, URL, version).
 
-**Status: 0.7.0.0 is released but deliberately *not* submitted to the catalogue.** Listing means a
-pull request into someone else's repository, reviewed and merged by a N.I.N.A. maintainer, once per
-version you want listed — a gate that is fine but is not free. The manifest is already written and
-already passes the catalogue's own validation (`node validate-latest-manifest.js` after committing:
-schema valid, and its own re-hash of the hosted ZIP matched), so it is kept here as
-`catalogue\manifest.0.7.0.0.json` and submitting it later is a two-minute job. Nothing about the
-catalogue is load-bearing: it holds no code, the binaries always come from this repository's
-releases, and an unlisted or rejected manifest changes nothing about whether the plugin works.
+N.I.N.A. loads the Clear Horizon artwork from `assets/unphased-256.png`. The
+full-size artwork is `assets/unphased-featured.png`, and `assets/unphased.ico`
+is the Windows desktop variant with 16, 20, 24, 32, 40, 48, 64, 96, 128 and
+256 px frames. The full-size PNG and ICO can be attached directly to the GitHub
+release. See the [approved Clear Horizon reference](assets/clear-horizon-reference.png)
+for both designs and the small-size previews.
+
+**The beta is distributed through GitHub Releases.** The manifests under
+`catalogue/` are ready for a separate catalogue submission. Each catalogue
+version requires a pull request reviewed by a N.I.N.A. maintainer, and the
+catalogue downloads the installer from this repository's release.
 
 Then, by hand:
 
@@ -158,7 +161,7 @@ Then, by hand:
 2. Submit the manifest to the [N.I.N.A. plugin manifests repository](https://github.com/isbeorn/nina.plugin.manifests)
    — that repository *is* the catalogue; it holds JSON only, the binaries stay here. Fork it, add
    the manifest as
-   `manifests/U/Unphased Night Planner/3.2.0.9001/0.7.0.0/manifest.json`, and open a pull request.
+   `manifests/U/Unphased Night Planner/3.2.0.9001/0.8.0.0/manifest.json`, and open a pull request.
    Its CI validates against the schema and re-hashes the download; on merge, `gather.js` publishes
    the file to `https://nighttime-imaging.eu/wp-json/nina/v1/...`, which is what N.I.N.A. fetches
    (`PluginFetcher.cs:38`). A manifest that fails validation is simply never listed, so
