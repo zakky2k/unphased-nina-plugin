@@ -8,6 +8,7 @@
 - The scrub marker offers Basic symbols, Phase discs and Detailed illustrations for the
   Moon and planets. Phase is the default. Mercury and Venus use their illumination at
   the selected hour. Detailed artwork follows the night-vision palette.
+- Enabled planet switches show a preview of the selected glyph style beside their names.
 
 ## Unreleased — round 13: the settings lead the page, and the pillars move to the end
 

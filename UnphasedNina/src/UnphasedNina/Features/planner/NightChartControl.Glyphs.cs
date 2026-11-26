@@ -63,21 +63,27 @@ namespace Zakfo.Unphased.Features.planner {
 
         internal void DrawBodyGlyph(DrawingContext dc, NOVAS.Body body, Point centre, double radius,
             Brush ink, PlanetGlyphStyle style, BodyIllumination? phase) {
-            if (style == PlanetGlyphStyle.Basic) {
-                DrawSymbol(dc, body, centre, radius, ink);
-                return;
-            }
+            var background = palette.ChipFill(scheme);
             if (style == PlanetGlyphStyle.Phase && body == NOVAS.Body.Moon && phase is { } lunar) {
-                dc.DrawEllipse(palette.ChipFill(scheme), new Pen(ink, 0.8), centre, radius + 2, radius + 2);
+                dc.DrawEllipse(background, new Pen(ink, 0.8), centre, radius + 2, radius + 2);
                 DrawMoonGlyph(dc, centre.X, centre.Y, radius, lunar.Fraction, lunar.BrightSideDegrees == 0);
                 return;
             }
+            DrawPlanetGlyph(dc, body, centre, radius, ink, background, style, phase, scheme == ChartScheme.Night,
+                VisualTreeHelper.GetDpi(this).PixelsPerDip);
+        }
 
+        internal static void DrawPlanetGlyph(DrawingContext dc, NOVAS.Body body, Point centre, double radius,
+            Brush ink, Brush background, PlanetGlyphStyle style, BodyIllumination? phase, bool night, double pixelsPerDip) {
+            if (style == PlanetGlyphStyle.Basic) {
+                DrawSymbol(dc, body, centre, radius, ink, background, pixelsPerDip);
+                return;
+            }
             bool detailed = style == PlanetGlyphStyle.Detailed;
-            var (surface, feature, highlight) = detailed ? BodyColours(body) : (ink, palette.ChipFill(scheme), ink);
+            var (surface, feature, highlight) = detailed ? BodyColours(body, night) : (ink, background, ink);
             var outline = new Pen(ink, 0.75);
             if (body == NOVAS.Body.Saturn) DrawRings(dc, centre, radius, highlight, false);
-            dc.DrawEllipse(palette.ChipFill(scheme), outline, centre, radius, radius);
+            dc.DrawEllipse(background, outline, centre, radius, radius);
             var lit = IlluminatedDisc(centre, radius, phase);
             if (lit != null) {
                 dc.DrawGeometry(surface, null, lit);
@@ -90,7 +96,8 @@ namespace Zakfo.Unphased.Features.planner {
             if (body == NOVAS.Body.Saturn) DrawRings(dc, centre, radius, highlight, true);
         }
 
-        private void DrawSymbol(DrawingContext dc, NOVAS.Body body, Point centre, double radius, Brush ink) {
+        private static void DrawSymbol(DrawingContext dc, NOVAS.Body body, Point centre, double radius,
+            Brush ink, Brush background, double pixelsPerDip) {
             string symbol = body switch {
                 NOVAS.Body.Mercury => "☿",
                 NOVAS.Body.Venus => "♀",
@@ -102,10 +109,10 @@ namespace Zakfo.Unphased.Features.planner {
                 _ => "☽"
             };
             var text = new FormattedText(symbol, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
-                SymbolTypeface, radius * 2, ink, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+                SymbolTypeface, radius * 2, ink, pixelsPerDip);
             var geometry = text.BuildGeometry(new Point());
             var bounds = geometry.Bounds;
-            dc.DrawEllipse(palette.ChipFill(scheme), null, centre, radius + .5, radius + .5);
+            dc.DrawEllipse(background, null, centre, radius + .5, radius + .5);
             if (bounds.IsEmpty) return;
             double scale = 1.8 * radius / Math.Max(bounds.Width, bounds.Height);
             dc.PushTransform(new MatrixTransform(scale, 0, 0, scale,
@@ -130,7 +137,7 @@ namespace Zakfo.Unphased.Features.planner {
             dc.Pop();
         }
 
-        private (Brush Surface, Brush Feature, Brush Highlight) BodyColours(NOVAS.Body body) {
+        private static (Brush Surface, Brush Feature, Brush Highlight) BodyColours(NOVAS.Body body, bool night) {
             var (surface, feature, highlight) = body switch {
                 NOVAS.Body.Mercury => (0xACA299, 0x716560, 0xD8CEC3),
                 NOVAS.Body.Venus => (0xE7C998, 0xBC925E, 0xFFF0C6),
@@ -141,12 +148,12 @@ namespace Zakfo.Unphased.Features.planner {
                 NOVAS.Body.Neptune => (0x5983C4, 0x365A91, 0x9DBDE9),
                 _ => (0xCDCDCF, 0x858690, 0xEBEBEE)
             };
-            return (ArtworkBrush(surface), ArtworkBrush(feature), ArtworkBrush(highlight));
+            return (ArtworkBrush(surface, night), ArtworkBrush(feature, night), ArtworkBrush(highlight, night));
         }
 
-        private Brush ArtworkBrush(int rgb) {
+        private static Brush ArtworkBrush(int rgb, bool night) {
             byte red = (byte)(rgb >> 16), green = (byte)(rgb >> 8), blue = (byte)rgb;
-            if (scheme == ChartScheme.Night) {
+            if (night) {
                 var luminance = .2126 * red + .7152 * green + .0722 * blue;
                 return new SolidColorBrush(Color.FromRgb((byte)(55 + luminance * .72), 12, 11));
             }

@@ -10,17 +10,20 @@ using NINA.WPF.Base.Interfaces.ViewModel;
 using NUnit.Framework;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Zakfo.Unphased.Core;
 using Zakfo.Unphased.Features.planner;
 using Zakfo.Unphased.Features.settings;
 using PlannerResources = Zakfo.Unphased.Features.planner.Resources;
+using Visibility = System.Windows.Visibility;
 
 namespace Zakfo.Unphased.Tests.Features.planner {
     [NonParallelizable, Apartment(ApartmentState.STA)]
     public class OverlayTests {
         [Test]
-        public void PlanetSwitchesStartOffAndStayOnWhenCollapsed() {
+        public void PlanetSwitchesShowTheirSelectedGlyphStyleOnlyWhileEnabled() {
             WpfHost.Ensure();
             PluginSettings.Shared?.Dispose();
             var profiles = new Mock<IProfileService>();
@@ -49,10 +52,37 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             var choices = (ItemsControl)view.FindName("PlanetSwitches");
             var item = (ContentPresenter)choices.ItemContainerGenerator.ContainerFromItem(jupiter);
             var toggle = (CheckBox)choices.ItemTemplate.FindName("PlanetSwitch", item);
+            var preview = (PlanetGlyphPreview)choices.ItemTemplate.FindName("PlanetPreview", item);
+            Assert.That(preview.Planner, Is.SameAs(planner));
+            Assert.That(preview.Visibility, Is.EqualTo(Visibility.Collapsed));
             toggle.SetCurrentValue(CheckBox.IsCheckedProperty, true);
+            view.UpdateLayout();
+            Assert.That(preview.Visibility, Is.EqualTo(Visibility.Visible));
+
+            var styles = (ComboBox)view.FindName("GlyphStylePicker");
+            var images = new HashSet<string>();
+            foreach (var style in planner.GlyphStyles) {
+                styles.SetCurrentValue(ComboBox.SelectedItemProperty, style);
+                view.UpdateLayout();
+                Assert.That(planner.GlyphStyle, Is.EqualTo(style));
+                var drawing = VisualTreeHelper.GetDrawing(preview);
+                Assert.That(drawing, Is.Not.Null, $"{style} should draw the enabled switch's glyph");
+                var visual = new DrawingVisual();
+                using (var dc = visual.RenderOpen()) dc.DrawDrawing(drawing);
+                var bitmap = new RenderTargetBitmap(32, 25, 96, 96, PixelFormats.Pbgra32);
+                bitmap.Render(visual);
+                var pixels = new byte[32 * 25 * 4];
+                bitmap.CopyPixels(pixels, 32 * 4, 0);
+                Assert.That(pixels.Any(value => value != 0), Is.True, style.ToString());
+                images.Add(Convert.ToBase64String(pixels));
+            }
+            Assert.That(images.Count, Is.EqualTo(3), "each style paints a different preview");
             list.IsExpanded = false;
             Assert.That(planner.PlanetSelection, Is.EqualTo("1 selected"));
             Assert.That(jupiter.Enabled, Is.True);
+            list.IsExpanded = true;
+            toggle.SetCurrentValue(CheckBox.IsCheckedProperty, false);
+            Assert.That(preview.Visibility, Is.EqualTo(Visibility.Collapsed));
         }
 
         [Test]
@@ -126,6 +156,8 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             var planner = PlannerFixture.WindowOfThreeNights();
             planner.AddFramingTarget(orion);
             planner.Planets.Single(planet => planet.Name == "Jupiter").Enabled = true;
+            var venus = planner.Planets.Single(planet => planet.Name == "Venus");
+            venus.Enabled = true;
             planner.SelectedDate = new DateTime(2026, 11, 26);
             planner.SetZoom(2);
             var row = planner.SelectedNight;
@@ -135,15 +167,20 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             };
             var deadline = DateTime.UtcNow.AddSeconds(8);
             timer.Tick += (_, _) => {
-                if (planner.OverlayTracks.Count == 2 || DateTime.UtcNow >= deadline) frame.Continue = false;
+                if (planner.OverlayTracks.Count == 3 || DateTime.UtcNow >= deadline) frame.Continue = false;
             };
             timer.Start();
             try { Dispatcher.PushFrame(frame); } finally { timer.Stop(); }
-            Assert.That(planner.OverlayTracks.Count, Is.EqualTo(2), planner.OverlayNotice);
+            Assert.That(planner.OverlayTracks.Count, Is.EqualTo(3), planner.OverlayNotice);
             foreach (var track in planner.OverlayTracks) {
                 Assert.That(track.Samples[0].Time, Is.EqualTo(row.Payload.FrameNoon));
                 Assert.That(track.Samples[^1].Time, Is.EqualTo(row.Chart.TimeAtMinutes(row.Chart.FrameMinutes)));
             }
+            var venusTrack = planner.OverlayTracks.Single(track => track.Choice == venus);
+            var midpoint = venusTrack.Phases.MinBy(sample => Math.Abs((sample.Key - row.Payload.MidnightTime).Ticks)).Value;
+            Assert.That(planner.PlanetPreviewPhase(venus), Is.EqualTo(midpoint));
+            planner.SetScrub(9 * 60);
+            Assert.That(planner.PlanetPreviewPhase(venus), Is.EqualTo(venusTrack.Phases[row.Chart.TimeAtMinutes(9 * 60)]));
         }
 
         private static IProfile Profile() {

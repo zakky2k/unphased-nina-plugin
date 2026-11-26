@@ -350,8 +350,26 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <CheckBox x:Name="PlanetSwitch" Style="{StaticResource OverlaySwitchStyle}" Content="{Binding Name}"
-                                              AutomationProperties.Name="{Binding Name}" IsChecked="{Binding Enabled, Mode=TwoWay}"/>
+                                    <CheckBox x:Name="PlanetSwitch" Style="{StaticResource OverlaySwitchStyle}"
+                                              AutomationProperties.Name="{Binding Name}" IsChecked="{Binding Enabled, Mode=TwoWay}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                            <planner:PlanetGlyphPreview x:Name="PlanetPreview" Width="32" Height="25" Margin="4,0,0,0"
+                                                IsHitTestVisible="False"
+                                                Planner="{Binding DataContext.Planner, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                                                <planner:PlanetGlyphPreview.Style>
+                                                    <Style TargetType="planner:PlanetGlyphPreview">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Enabled}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </planner:PlanetGlyphPreview.Style>
+                                            </planner:PlanetGlyphPreview>
+                                        </StackPanel>
+                                    </CheckBox>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>

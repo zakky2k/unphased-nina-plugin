@@ -49,6 +49,18 @@ namespace Zakfo.Unphased.Features.planner {
         public IRelayCommand<OverlayChoice> RemoveTargetCommand => removeTarget ??= new RelayCommand<OverlayChoice>(RemoveTarget);
 
         internal IReadOnlyList<OverlayTrack> OverlayTracks => overlayTracks;
+
+        internal BodyIllumination? PlanetPreviewPhase(OverlayChoice choice) {
+            var row = selectedNight;
+            var track = overlayTracks.FirstOrDefault(track => ReferenceEquals(track.Choice, choice));
+            if (row == null || track == null || track.Phases.Count == 0) return null;
+
+            var instant = scrubMinutes is { } minutes ? row.Chart.TimeAtMinutes(minutes) : row.Payload.MidnightTime;
+            if (track.Phases.TryGetValue(instant, out var phase)) return phase;
+            // The night midpoint is usually between two of the cached hourly samples.
+            return track.Phases.MinBy(sample => Math.Abs((sample.Key - instant).Ticks)).Value;
+        }
+
         public IEnumerable<OverlayLegendEntry> OverlayLegend {
             get {
                 var instant = scrubMinutes.HasValue ? selectedNight?.Chart.TimeAtMinutes(scrubMinutes.Value) : null;
