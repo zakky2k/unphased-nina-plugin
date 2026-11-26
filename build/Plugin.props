@@ -4,7 +4,7 @@
     <PluginId>09572065-E196-4DBA-B954-48F84B351DD1</PluginId>
     <!-- Early beta: the panel works and the chart is through several review
          rounds, but the plugin is not feature complete, so the version stays 0.x. -->
-    <Version Condition="'$(Version)' == ''">0.8.1.0</Version>
+    <Version Condition="'$(Version)' == ''">0.8.2.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
     <Title>Unphased Night Planner</Title>
@@ -65,12 +65,12 @@ Unphased Night Planner is under active development, with ongoing improvements to
     <MinimumNinaVersion>3.2.0.9001</MinimumNinaVersion>
     <PluginLicense>MPL-2.0</PluginLicense>
     <PluginLicenseUrl>https://www.mozilla.org/en-US/MPL/2.0/</PluginLicenseUrl>
-    <PluginChangelogUrl>https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/UnphasedNina/CHANGELOG.md</PluginChangelogUrl>
+    <PluginChangelogUrl>https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/CHANGELOG.md</PluginChangelogUrl>
     <!-- The plugin icon. N.I.N.A. reads this from the DLL (FeaturedImageURL assembly metadata) and shows it
          at 25 px in the plugin list and 150 px on the plugin's settings page. The Clear Horizon featured PNG
          includes the terrain profile. The desktop ICO uses the simplified artwork. The URL must stay live because
          a non-empty but unreachable URL renders a blank rather than falling back to the default image. -->
-    <PluginFeaturedImageUrl>https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/UnphasedNina/assets/unphased-256.png</PluginFeaturedImageUrl>
+    <PluginFeaturedImageUrl>https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/assets/unphased-256.png</PluginFeaturedImageUrl>
     <!-- Left empty on purpose: there is no hosted screenshot yet. Fill these with real
           panel screenshots (a GitHub release asset works) once one exists - the store
           page shows them, and a made-up URL would only 404 there. -->

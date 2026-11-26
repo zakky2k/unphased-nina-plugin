@@ -1,9 +1,8 @@
 # Handoff — Unphased Night Planner
 
-The 0.8.1.0 beta addresses settings startup and persistence, includes the full MPL-2.0 licence,
-and verifies installer contents and source revision before publication. See the
-[changelog](UnphasedNina/CHANGELOG.md) for current changes and the
-[release guide](UnphasedNina/README.md#release-and-the-plugin-catalogue) for packaging.
+The root solution builds the plugin and astronomy core and runs both test suites.
+See the [changelog](../CHANGELOG.md) for current changes and the
+[release guide](../README.md#release-and-the-plugin-catalogue) for packaging.
 The notes below describe earlier development rounds.
 
 > **Moved on 26 Nov, round 9:** this tree is its own repository now — `github.com/zakky2k/unphased-nina-plugin`,

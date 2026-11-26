@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../build/Nina.props" />
   <PropertyGroup>
     <IsTestProject>true</IsTestProject>
     <IsPackable>false</IsPackable>
@@ -15,4 +16,5 @@
   <ItemGroup>
     <Content Include="../../build/vendor/manifest.schema.json" Link="manifest.schema.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <Import Project="../../build/Nina.targets" />
 </Project>

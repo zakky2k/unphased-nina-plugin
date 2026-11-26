@@ -70,7 +70,7 @@ namespace Zakfo.Unphased.Tests {
 
         /// <summary>
         /// Find the checkout this test was built from by walking up from the binary - the pair
-        /// <c>UnphasedNina/CHANGELOG.md</c> and <c>UnphasedCore/NightCalculator.cs</c> is this
+        /// <c>UnphasedNina.slnx</c> and <c>src/UnphasedCore/NightCalculator.cs</c> is this
         /// repository's shape. Null when the suite is run from a bare binary with no sources, which
         /// is a real deployment of the test DLL and should be reported, not failed.
         /// </summary>
@@ -81,8 +81,8 @@ namespace Zakfo.Unphased.Tests {
             }) {
                 var dir = new DirectoryInfo(start);
                 for (int hop = 0; dir != null && hop < 10; hop++, dir = dir.Parent) {
-                    if (File.Exists(Path.Combine(dir.FullName, "UnphasedNina", "CHANGELOG.md"))
-                        && File.Exists(Path.Combine(dir.FullName, "UnphasedCore", "NightCalculator.cs"))) {
+                    if (File.Exists(Path.Combine(dir.FullName, "UnphasedNina.slnx"))
+                        && File.Exists(Path.Combine(dir.FullName, "src", "UnphasedCore", "NightCalculator.cs"))) {
                         return dir.FullName;
                     }
                 }

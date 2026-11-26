@@ -10,4 +10,4 @@ TestResults/
 local.props
 
 # Scratch dumps
-reflect/out.txt
+tools/reflect/out.txt

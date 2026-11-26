@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.2.0 Beta
+
+- The repository homepage now links directly to the manual installer.
+- Source, tests, build scripts, and artwork have dedicated directories at the repository root. The root solution builds and tests both the plugin and the astronomy core.
+- This build loads its featured icon and changelog from their new public locations.
+
 ## 0.8.1.0 Beta
 
 - The plugin can start before a N.I.N.A. profile is active and recover when it becomes available.

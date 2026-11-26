@@ -21,7 +21,7 @@ if ($minimumVersion) {
     } else {
         $ninaVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($NinaExe).FileVersion
         if ($ninaVersion -and [version]$minimumVersion -gt [version]$ninaVersion) {
-            throw "Staged $AssemblyName declares MinimumApplicationVersion $minimumVersion but the installed N.I.N.A. is $ninaVersion ($NinaExe). Build against the matching NINA.Plugin package (see Directory.Build.props NinaPackageVersion) before deploying."
+            throw "Staged $AssemblyName declares MinimumApplicationVersion $minimumVersion but the installed N.I.N.A. is $ninaVersion ($NinaExe). Build against the matching NINA.Plugin package (see build/Nina.props NinaPackageVersion) before deploying."
         }
         Write-Host "Compatibility check: plugin needs N.I.N.A. $minimumVersion, installed app is $ninaVersion."
     }

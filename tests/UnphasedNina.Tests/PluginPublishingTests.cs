@@ -25,7 +25,7 @@ namespace Zakfo.Unphased.Tests {
     /// <para>
     /// The schema file is the one N.I.N.A. itself uses, vendored unmodified from
     /// <c>github.com/isbeorn/nina.plugin.manifests</c> under
-    /// <c>UnphasedNina/build/vendor/</c> and copied to the test output.
+    /// <c>build/vendor/</c> and copied to the test output.
     /// </para>
     /// </summary>
     public class PluginPublishingTests {
@@ -97,7 +97,9 @@ namespace Zakfo.Unphased.Tests {
                 // so it must point at the changelog this repository actually serves, not a copy of it.
                 Assert.That(
                     plugin.ChangelogURL,
-                    Is.EqualTo("https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/UnphasedNina/CHANGELOG.md"));
+                    Is.EqualTo("https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/CHANGELOG.md"));
+                Assert.That(plugin.Descriptions.FeaturedImageURL,
+                    Is.EqualTo("https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/assets/unphased-256.png"));
             });
         }
 

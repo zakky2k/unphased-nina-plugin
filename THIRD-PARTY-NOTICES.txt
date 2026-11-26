@@ -47,7 +47,7 @@ MPL-2.0.
 
 Build tooling in this repository (not shipped to users)
 ------------------------------------------------------
-UnphasedNina/build/vendor/ holds manifest.schema.json, CreateManifest.ps1 and LICENSE copied
+build/vendor/ holds manifest.schema.json, CreateManifest.ps1 and LICENSE copied
 unmodified from https://github.com/isbeorn/nina.plugin.manifests (MPL-2.0, N.I.N.A. project).
 The revision is pinned in build/vendor/PROVENANCE.md. They are build inputs and are not part of
 the plugin archive.

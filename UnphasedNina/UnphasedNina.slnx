@@ -1,4 +1,0 @@
-<Solution>
-  <Project Path="src/UnphasedNina/UnphasedNina.csproj" />
-  <Project Path="tests/UnphasedNina.Tests/UnphasedNina.Tests.csproj" />
-</Solution>

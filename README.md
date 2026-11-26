@@ -3,18 +3,18 @@
 **Visualise darkness, twilight and moonlight across consecutive nights in a single interactive
 astronomical chart.**
 
-On N.I.N.A.'s page for this plugin that sentence is the italic line under the plugin name, above
-the host's own **Options** caption - the only prose a plugin can place there. The three perspectives
-below come after the plugin's real settings, immediately above About, because a plugin template
-cannot reach above that caption.
+**[Download the Windows plugin ZIP · v0.8.2.0 Beta](https://github.com/zakky2k/unphased-nina-plugin/releases/download/v0.8.2.0/UnphasedNina.0.8.2.0.zip)**
+
+Requires N.I.N.A. **3.2.0.9001 or newer**. This beta is available as a manual install.
+
+1. Close N.I.N.A. and extract the ZIP directly into
+   `%LOCALAPPDATA%\NINA\Plugins\3.0.0\Unphased Night Planner\`.
+2. Check that `UnphasedNina.dll` sits directly inside that folder, then reopen N.I.N.A.
+3. In **Imaging**, use the puzzle-piece button in the Info bar to open the planner.
+
+[All releases](https://github.com/zakky2k/unphased-nina-plugin/releases) · [Changelog](CHANGELOG.md) · [Build and test](#develop)
 
 ## Three perspectives. One view of the night.
-
-The same three sections, in the same order and the same words, appear on the plugin's own page in
-N.I.N.A. and in its listing on the plugin catalogue. The three drawings are the plugin's own line
-art — `assets/pillars/`, 64 × 64 units, 2-unit stroke, rounded caps and joins, no icon library —
-and they are the same geometry the page draws in WPF; `PillarIdentityTests` fails if the two drift
-apart. They are drawn with `currentColor`, so the page or document you are reading sets the colour.
 
 ### Lunar and planetary phases
 
@@ -56,34 +56,6 @@ and local light pollution.
 Status: **0.x beta**, under active development. It runs and is used, and the [changelog](CHANGELOG.md)
 says what is still rough.
 
-## Requirements
-
-Built against `NINA.Plugin` **3.2.0.9001** for **net8.0-windows**, and it declares that as the
-minimum application version. N.I.N.A. 3.1 and older will refuse to load it; a 3.2.x installation
-loads it. (This tree also carries a 3.3/net10 experiment in `UnphasedCore` notes —
-this plugin stays on the shipped 3.2 line until the app it targets is released.)
-
-## Install
-
-The plugin is **not in N.I.N.A.'s plugin list yet**, deliberately — see *Release and the plugin
-catalogue* below. Until it is, install it from the GitHub release:
-
-1. Download `UnphasedNina.0.8.1.0.zip` from the
-   [releases page](https://github.com/zakky2k/unphased-nina-plugin/releases).
-2. With N.I.N.A. closed, extract the files directly into
-   `%LOCALAPPDATA%\NINA\Plugins\3.0.0\Unphased Night Planner\`, creating that folder if needed.
-   The archive holds everything: `UnphasedNina.dll`, `UnphasedCore.dll`, `astronomy.dll`,
-   `LICENSE.txt`, `THIRD-PARTY-NOTICES.txt`, `UnphasedNina.pdb` (the `.pdb` is optional).
-3. Restart N.I.N.A. The panel is the **puzzle-piece button in the Info bar** on the Imaging page;
-   the options page is *Unphased Night Planner* in N.I.N.A.'s options.
-
-To build it instead: `dotnet msbuild src\UnphasedNina\UnphasedNina.csproj -t:DeployPlugin -v:m`
-stages and copies into the live folder in one go (close N.I.N.A. first — the target refuses while it
-runs); the staged files are also sitting in `artifacts\stage\Debug` if you prefer to copy yourself.
-
-The plugin's identity is the GUID in `Plugin.props`; N.I.N.A. keys the settings file off it, so the
-GUID is permanent once published.
-
 ## Options
 
 The options page puts the three perspectives above first, so the purpose of the plugin is read before
@@ -106,17 +78,24 @@ Settings are global, stored at
 
 ## Develop
 
-Windows, .NET 8 SDK and PowerShell 7. Open `UnphasedNina.slnx` or use the CLI. The repository root
-holds this plugin (`UnphasedNina/`), the night computation it shares with the web planner
-(`UnphasedCore/`) and that core's accuracy tests (`UnphasedCore.Tests/`).
+Use Windows, the .NET 10 SDK version in `global.json`, the .NET 8 Windows Desktop Runtime,
+and PowerShell 7. Open `UnphasedNina.slnx` or run these commands from the repository root.
 
 ```powershell
 dotnet build UnphasedNina.slnx
-dotnet test tests\UnphasedNina.Tests\UnphasedNina.Tests.csproj -c Debug -f net8.0-windows
+dotnet test UnphasedNina.slnx
 ```
 
 Copy `local.props.example` to the ignored `local.props` and point `NinaExecutable` at your N.I.N.A.
 installation. Normal builds do not deploy; `DeployPlugin` does, and needs N.I.N.A. closed.
+`dotnet msbuild src/UnphasedNina/UnphasedNina.csproj -t:StagePlugin` stages a
+Debug install under `artifacts/stage/Debug`. Use `-t:DeployPlugin` to copy it into N.I.N.A.
+
+- [src/](src/) contains the plugin and shared astronomy core.
+- [tests/](tests/) contains the plugin and core test suites.
+- [build/](build/) contains packaging and deployment scripts.
+- [catalogue/](catalogue/) contains the versioned plugin manifests.
+- [assets/](assets/), [docs/](docs/), and [tools/](tools/) hold artwork, project notes, and developer utilities.
 
 The settings tests use a unique directory under the test working directory. Use the shared
 `WpfHost` for tests that need a `System.Windows.Application`.
@@ -132,7 +111,7 @@ to check against the installed N.I.N.A. catalogue.
 ## Release and the plugin catalogue
 
 ```powershell
-./build/Build-Release.ps1 -Tag v0.8.1.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta
+./build/Build-Release.ps1 -Tag v0.8.2.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta
 ```
 
 `-Repository` is what the archive's `Installer.URL` and the manifest's `Repository` are built from,
@@ -168,7 +147,7 @@ Then, by hand:
 2. Submit the manifest to the [N.I.N.A. plugin manifests repository](https://github.com/isbeorn/nina.plugin.manifests)
    — that repository *is* the catalogue; it holds JSON only, the binaries stay here. Fork it, add
    the manifest as
-   `manifests/U/Unphased Night Planner/3.2.0.9001/0.8.1.0/manifest.json`, and open a pull request.
+   `manifests/U/Unphased Night Planner/3.2.0.9001/0.8.2.0/manifest.json`, and open a pull request.
    Its CI validates against the schema and re-hashes the download; on merge, `gather.js` publishes
    the file to `https://nighttime-imaging.eu/wp-json/nina/v1/...`, which is what N.I.N.A. fetches
    (`PluginFetcher.cs:38`). A manifest that fails validation is simply never listed, so

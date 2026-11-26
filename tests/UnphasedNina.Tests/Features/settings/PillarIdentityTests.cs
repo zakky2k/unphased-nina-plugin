@@ -241,7 +241,7 @@ namespace Zakfo.Unphased.Tests.Features.settings {
             Assert.That(blocks, Has.Count.EqualTo(Pillars.Length), "one Viewbox per pillar, in the order the page shows them");
 
             foreach (var (pillar, block) in Pillars.Zip(blocks)) {
-                var svgPath = Path.Combine(root, "UnphasedNina", "assets", "pillars", pillar.Svg);
+                var svgPath = Path.Combine(root, "assets", "pillars", pillar.Svg);
                 Assert.That(File.Exists(svgPath), Is.True, $"the README links {pillar.Svg}");
                 var svg = File.ReadAllText(svgPath);
 
@@ -269,7 +269,7 @@ namespace Zakfo.Unphased.Tests.Features.settings {
             // Markdown is written wrapped at a readable width, so a sentence in the README has a
             // newline in the middle of it. Compare with the wrapping collapsed, otherwise this
             // becomes a test of where the lines are broken.
-            var readme = Collapse(File.ReadAllText(Path.Combine(root, "UnphasedNina", "README.md")));
+            var readme = Collapse(File.ReadAllText(Path.Combine(root, "README.md")));
             Assert.Multiple(() => {
                 Assert.That(readme, Does.Contain(Collapse(Lede)), "the README opens with the manifest line");
                 Assert.That(readme, Does.Not.Contain(Collapse(RetiredTagline)), "the retired slogan stays off the README");
@@ -341,7 +341,7 @@ namespace Zakfo.Unphased.Tests.Features.settings {
             var root = RepositoryRoot();
             Assert.That(root, Is.Not.Null, "this test reads the markup, so it needs the checkout");
             var path = Path.Combine(
-                root, "UnphasedNina", "src", "UnphasedNina", "Features", "settings", "Resources.xaml");
+                root, "src", "UnphasedNina", "Features", "settings", "Resources.xaml");
             Assert.That(File.Exists(path), Is.True, path);
             return path;
         }
@@ -405,8 +405,8 @@ namespace Zakfo.Unphased.Tests.Features.settings {
             foreach (var start in new[] { AppContext.BaseDirectory, Directory.GetCurrentDirectory() }) {
                 var dir = new DirectoryInfo(start);
                 for (int hop = 0; dir != null && hop < 10; hop++, dir = dir.Parent) {
-                    if (File.Exists(Path.Combine(dir.FullName, "UnphasedNina", "CHANGELOG.md"))
-                        && File.Exists(Path.Combine(dir.FullName, "UnphasedCore", "NightCalculator.cs"))) {
+                    if (File.Exists(Path.Combine(dir.FullName, "UnphasedNina.slnx"))
+                        && File.Exists(Path.Combine(dir.FullName, "src", "UnphasedCore", "NightCalculator.cs"))) {
                         return dir.FullName;
                     }
                 }

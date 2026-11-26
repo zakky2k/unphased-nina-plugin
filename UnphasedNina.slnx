@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/UnphasedCore/UnphasedCore.csproj" />
+    <Project Path="src/UnphasedNina/UnphasedNina.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/UnphasedCore.Tests/UnphasedCore.Tests.csproj" />
+    <Project Path="tests/UnphasedNina.Tests/UnphasedNina.Tests.csproj" />
+  </Folder>
+</Solution>

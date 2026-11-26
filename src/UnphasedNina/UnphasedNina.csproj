@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../../Plugin.props" />
+  <Import Project="../../build/Nina.props" />
+  <Import Project="../../build/Plugin.props" />
   <PropertyGroup>
     <RootNamespace>Zakfo.Unphased</RootNamespace>
     <AssemblyName>UnphasedNina</AssemblyName>
@@ -10,10 +11,11 @@
     <PackageReference Include="NINA.Plugin" Version="$(NinaPackageVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\UnphasedCore\UnphasedCore.csproj" />
+    <ProjectReference Include="../UnphasedCore/UnphasedCore.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="UnphasedNina.Tests" />
   </ItemGroup>
+  <Import Project="../../build/Nina.targets" />
   <Import Project="../../build/Plugin.targets" />
 </Project>
