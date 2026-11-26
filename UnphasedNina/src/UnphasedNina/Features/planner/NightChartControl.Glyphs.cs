@@ -19,10 +19,14 @@ namespace Zakfo.Unphased.Features.planner {
             double x, double minutes, DateTimeOffset instant) {
             var bodies = new List<BodyMarker>();
             double moonY = NightChartVM.YMoon(row.Chart.MoonAltitudeAt(instant)) * sy;
-            if (InChart(moonY, height)) {
+            if (Shows(ChartElements.MoonGlyph) && InChart(moonY, height)) {
                 var (fraction, litOnRight) = row.Chart.ScrubMoonGlyph(minutes);
                 bodies.Add(new BodyMarker(NOVAS.Body.Moon, moonY, palette.MoonTrack(scheme),
                     new BodyIllumination(fraction, litOnRight ? 0 : 180)));
+            }
+            if (Shows(ChartElements.SunGlyph)) {
+                double sunY = NightChartVM.YSun(row.Chart.SunAltitudeAt(instant)) * sy;
+                if (InChart(sunY, height)) bodies.Add(new BodyMarker(NOVAS.Body.Sun, sunY, palette.SunTrack(scheme), null));
             }
             foreach (var overlay in VisibleOverlays) {
                 double y = NightChartVM.YSun(NightChartVM.AltitudeAt(overlay.Samples, instant)) * sy;
@@ -99,6 +103,7 @@ namespace Zakfo.Unphased.Features.planner {
         private static void DrawSymbol(DrawingContext dc, NOVAS.Body body, Point centre, double radius,
             Brush ink, Brush background, double pixelsPerDip) {
             string symbol = body switch {
+                NOVAS.Body.Sun => "☉",
                 NOVAS.Body.Mercury => "☿",
                 NOVAS.Body.Venus => "♀",
                 NOVAS.Body.Mars => "♂",
@@ -139,6 +144,7 @@ namespace Zakfo.Unphased.Features.planner {
 
         private static (Brush Surface, Brush Feature, Brush Highlight) BodyColours(NOVAS.Body body, bool night) {
             var (surface, feature, highlight) = body switch {
+                NOVAS.Body.Sun => (0xF6AB40, 0xA65320, 0xFFD97A),
                 NOVAS.Body.Mercury => (0xACA299, 0x716560, 0xD8CEC3),
                 NOVAS.Body.Venus => (0xE7C998, 0xBC925E, 0xFFF0C6),
                 NOVAS.Body.Mars => (0xCA714A, 0x854739, 0xF5E9D9),
@@ -165,6 +171,12 @@ namespace Zakfo.Unphased.Features.planner {
             void Spot(Brush brush, double x, double y, double rx, double ry) =>
                 dc.DrawEllipse(brush, null, new Point(centre.X + x * radius, centre.Y + y * radius), rx * radius, ry * radius);
             switch (body) {
+                case NOVAS.Body.Sun:
+                    Spot(highlight, -.24, -.26, .48, .40);
+                    Spot(feature, .30, .16, .13, .10);
+                    Spot(feature, .47, .26, .08, .07);
+                    Spot(highlight, -.31, .45, .19, .11);
+                    break;
                 case NOVAS.Body.Moon:
                 case NOVAS.Body.Mercury:
                     Spot(feature, -.28, -.24, .32, .24);

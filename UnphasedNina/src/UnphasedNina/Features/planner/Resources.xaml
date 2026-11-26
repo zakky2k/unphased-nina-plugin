@@ -323,6 +323,11 @@
                 </planner:ControlGroup>
             </WrapPanel>
 
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="5*"/>
+                    <ColumnDefinition Width="4*"/>
+                </Grid.ColumnDefinitions>
             <Border Margin="2,0,2,4" Padding="6,3" CornerRadius="3" BorderThickness="1"
                     BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource SecondaryBackgroundBrush}">
                 <StackPanel>
@@ -431,6 +436,32 @@
                     </ItemsControl>
                 </StackPanel>
             </Border>
+                <Border Grid.Column="1" Margin="2,0,2,4" Padding="6,3" CornerRadius="3" BorderThickness="1"
+                        BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource SecondaryBackgroundBrush}">
+                    <StackPanel>
+                        <WrapPanel Margin="0,0,0,2">
+                            <TextBlock Text="Chart elements" FontWeight="SemiBold" VerticalAlignment="Center"
+                                       Margin="0,0,12,0" Foreground="{DynamicResource PrimaryBrush}"/>
+                            <Button Content="Reset" Padding="6,2" Command="{Binding Planner.ResetChartElementsCommand}"
+                                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                                    AutomationProperties.Name="Reset chart elements" ToolTip="Show only the Moon glyph"/>
+                        </WrapPanel>
+                        <ItemsControl x:Name="ChartElementSwitches" ItemsSource="{Binding Planner.ChartElementOptions}"
+                                      HorizontalAlignment="Left" MaxWidth="472">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Width="118" Style="{StaticResource OverlaySwitchStyle}" Content="{Binding Name}"
+                                              ToolTip="{Binding ToolTip}"
+                                              AutomationProperties.Name="{Binding Name}" IsChecked="{Binding Enabled, Mode=TwoWay}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
             </StackPanel>
 
             <!-- The selected night's own figures, with the status readout on the same row: this

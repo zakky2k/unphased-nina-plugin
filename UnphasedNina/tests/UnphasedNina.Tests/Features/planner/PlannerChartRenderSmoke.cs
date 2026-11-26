@@ -155,6 +155,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             var ctl = new NightChartControl();
             ctl.SetRow(new NightRowVM(frame, NightChartVM.FrameMinutesAtZoom(slice.Count)));
             ctl.SetScheme(scheme);
+            ctl.SetChartElements(ChartElements.All & ~ChartElements.SunGlyph);
             if (scrubHoursAfterNoon >= 0) ctl.SetScrub(scrubHoursAfterNoon * 60.0);
             ctl.Measure(new Size(width, height));
             ctl.Arrange(new Rect(0, 0, width, height));

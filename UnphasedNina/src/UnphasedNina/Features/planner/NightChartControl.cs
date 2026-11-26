@@ -48,6 +48,14 @@ namespace Zakfo.Unphased.Features.planner {
         private readonly PlannerPalette palette = new();
         private NightRowVM row;
         private ChartScheme scheme = ChartScheme.Default;
+        private ChartElements chartElements = ChartElements.Default;
+
+        internal void SetChartElements(ChartElements elements) {
+            chartElements = elements;
+            RequestRerender();
+        }
+
+        private bool Shows(ChartElements element) => chartElements.HasFlag(element);
 
         // Mirror of the planner's scrub position (minutes from frame noon, null = off).
         // The planner owns it, this is only what OnRender draws.
@@ -72,6 +80,7 @@ namespace Zakfo.Unphased.Features.planner {
         private void HookPlanner() {
             if (hookedPlanner != null) hookedPlanner.PropertyChanged -= PlannerChanged;
             hookedPlanner = FindPlanner(DataContext);
+            SetChartElements(hookedPlanner?.VisibleChartElements ?? ChartElements.Default);
             if (hookedPlanner != null) {
                 hookedPlanner.PropertyChanged += PlannerChanged;
                 SetScheme(hookedPlanner.Scheme);
@@ -103,6 +112,7 @@ namespace Zakfo.Unphased.Features.planner {
         private void PlannerChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e) {
             if (e.PropertyName == nameof(NightPlannerVM.Scheme)) SetScheme(hookedPlanner.Scheme);
             if (e.PropertyName == nameof(NightPlannerVM.ScrubMinutes)) SetScrub(hookedPlanner.ScrubMinutes);
+            if (e.PropertyName == nameof(NightPlannerVM.VisibleChartElements)) SetChartElements(hookedPlanner.VisibleChartElements);
             if (e.PropertyName is nameof(NightPlannerVM.OverlayTracks) or nameof(NightPlannerVM.GlyphStyle)) RequestRerender();
             if (e.PropertyName is nameof(NightPlannerVM.SunColor) or nameof(NightPlannerVM.MoonColor)
                 or nameof(NightPlannerVM.HorizonColor)) {
@@ -172,14 +182,16 @@ namespace Zakfo.Unphased.Features.planner {
 
             DrawTwilightShading(dc, h, sx);
             DrawGrid(dc, w, h, sx, sy, spanMinutes);
-            DrawCurve(dc, row.Chart.SunPolyline, palette.SunTrack(scheme), 1.6, sx, sy);
-            DrawCurve(dc, row.Chart.MoonPolyline, palette.MoonTrack(scheme), 1.2, sx, sy);
+            if (Shows(ChartElements.SunAltitude))
+                DrawCurve(dc, row.Chart.SunPolyline, palette.SunTrack(scheme), 1.6, sx, sy);
+            if (Shows(ChartElements.MoonAltitude))
+                DrawCurve(dc, row.Chart.MoonPolyline, palette.MoonTrack(scheme), 1.2, sx, sy);
             foreach (var track in VisibleOverlays) {
                 int style = track.Choice.StyleIndex;
                 DrawCurve(dc, track.Polyline, OverlayStyle.BrushFor(style, scheme), 1.4, sx, sy, OverlayStyle.DashFor(style));
             }
-            DrawSunMarkers(dc, w, h, sx, sy);
-            DrawMoonMarkers(dc, w, h, sx, sy);
+            if (Shows(ChartElements.Sunrise) || Shows(ChartElements.Sunset)) DrawSunMarkers(dc, w, h, sx, sy);
+            if (Shows(ChartElements.Moonrise) || Shows(ChartElements.Moonset)) DrawMoonMarkers(dc, w, h, sx, sy);
             DrawScrub(dc, w, h, sx, sy, spanMinutes);
             DrawLegend(dc);
         }
@@ -331,6 +343,7 @@ namespace Zakfo.Unphased.Features.planner {
             // Read off the plotted sun curve itself, so the label always sits where the
             // curve it describes actually crosses.
             foreach (var crossing in row.Chart.SunCrossings()) {
+                if (!Shows(crossing.Rising ? ChartElements.Sunrise : ChartElements.Sunset)) continue;
                 double x = row.Chart.XAt(crossing.Time) * sx;
                 if (x < 2 || x > w - 2) continue;
                 string name = crossing.Rising ? "sunrise" : "sunset";
@@ -382,8 +395,9 @@ namespace Zakfo.Unphased.Features.planner {
             double horizonY = NightChartVM.YSun(0) * sy;
             var taken = new List<Rect>(axisChips);
 
-            foreach (var ev in p.Moon.Rise.Select(t => (time: t, name: "moonrise"))
-                       .Concat(p.Moon.Set.Select(t => (time: t, name: "moonset")))) {
+            foreach (var ev in p.Moon.Rise.Select(t => (time: t, name: "moonrise", element: ChartElements.Moonrise))
+                       .Concat(p.Moon.Set.Select(t => (time: t, name: "moonset", element: ChartElements.Moonset)))) {
+                if (!Shows(ev.element)) continue;
                 double x = row.Chart.XAt(ev.time) * sx;
                 if (x < 2 || x > w - 2) continue;
                 var s = LabelSize(ev.name, MarkerFs);
@@ -419,7 +433,8 @@ namespace Zakfo.Unphased.Features.planner {
 
             var chart = row.Chart;
             var instant = chart.TimeAtMinutes(minutes);
-            DrawScrubDot(dc, x, NightChartVM.YSun(chart.SunAltitudeAt(instant)) * sy, palette.SunTrack(scheme), h);
+            if (Shows(ChartElements.SunAltitude) && !Shows(ChartElements.SunGlyph))
+                DrawScrubDot(dc, x, NightChartVM.YSun(chart.SunAltitudeAt(instant)) * sy, palette.SunTrack(scheme), h);
             DrawScrubGlyphs(dc, w, h, sy, x, minutes, instant);
 
             string readout = chart.ScrubReadout(minutes);
@@ -429,10 +444,9 @@ namespace Zakfo.Unphased.Features.planner {
             double top = 3;
             // The legend owns the top-left corner, so a scrub line parked at the start
             // of the frame hangs its readout under the legend rather than over it.
-            double legendRight = 32 + Math.Max(
-                LabelSize("sun altitude", LegendFs).Width,
-                LabelSize("moon altitude", LegendFs).Width);
-            if (left < legendRight) top = LegendRow2 + LabelSize("moon altitude", LegendFs).Height / 2 + 4;
+            var legend = AltitudeLegendBounds();
+            if (!legend.IsEmpty && left < legend.Right && left + s.Width > legend.Left)
+                top = legend.Bottom + 4;
             // The degrees now stand on the left edge as well as the right, and the legend
             // sits below the top of that column, so the readout steps down past whatever
             // it would otherwise paint across rather than doubling up a number.
@@ -586,8 +600,22 @@ namespace Zakfo.Unphased.Features.planner {
 
         /// <summary>Name the two curves; a bare arc is otherwise ambiguous.</summary>
         private void DrawLegend(DrawingContext dc) {
-            DrawKey(dc, LegendRow1, palette.SunTrack(scheme), "sun altitude");
-            DrawKey(dc, LegendRow2, palette.MoonTrack(scheme), "moon altitude");
+            if (Shows(ChartElements.SunAltitude)) DrawKey(dc, LegendRow1, palette.SunTrack(scheme), "sun altitude");
+            if (Shows(ChartElements.MoonAltitude)) DrawKey(dc, MoonLegendRow, palette.MoonTrack(scheme), "moon altitude");
+        }
+
+        private double MoonLegendRow => Shows(ChartElements.SunAltitude) ? LegendRow2 : LegendRow1;
+
+        private Rect AltitudeLegendBounds() {
+            var bounds = Rect.Empty;
+            if (Shows(ChartElements.SunAltitude)) bounds.Union(KeyBounds(LegendRow1, "sun altitude"));
+            if (Shows(ChartElements.MoonAltitude)) bounds.Union(KeyBounds(MoonLegendRow, "moon altitude"));
+            return bounds;
+        }
+
+        private Rect KeyBounds(double y, string text) {
+            var size = LabelSize(text, LegendFs);
+            return new Rect(8, y - size.Height / 2, 24 + size.Width, size.Height);
         }
 
         private void DrawKey(DrawingContext dc, double y, Brush brush, string text) {

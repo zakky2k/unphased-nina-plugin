@@ -9,6 +9,8 @@
   Moon and planets. Phase is the default. Mercury and Venus use their illumination at
   the selected hour. Detailed artwork follows the night-vision palette.
 - Enabled planet switches show a preview of the selected glyph style beside their names.
+- Chart elements has separate switches for each Sun and Moon altitude curve, rise and
+  set label, and scrub glyph. Reset restores the Moon glyph as the sole enabled element.
 
 ## Unreleased — round 13: the settings lead the page, and the pillars move to the end
 

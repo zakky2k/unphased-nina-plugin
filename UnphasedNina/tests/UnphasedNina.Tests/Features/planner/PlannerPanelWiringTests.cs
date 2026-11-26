@@ -137,7 +137,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
 
             Assert.Multiple(() => {
                 Assert.That(paletteButtons, Has.Count.EqualTo(3), "one button per palette");
-                Assert.That(Visual<CheckBox>(root), Is.Empty, "the night switch is gone: a palette has no off");
+                Assert.That(Visual<CheckBox>(Group(root, "DISPLAY PALETTE")), Is.Empty, "a palette has no off");
                 Assert.That(root.GetValue(PlannerViewGlue.NightPaletteProperty), Is.EqualTo(ChartScheme.Default),
                     "the panel opens on the theme palette");
                 Assert.That(root.Resources.Contains("BackgroundBrush"), Is.False,
@@ -237,7 +237,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         /// of a different colour.
         /// </summary>
         [Test]
-        public void EveryPanelButtonIsTheAgreedSizeAndSaysWhatItDoes() {
+        public void ThePrimaryHeaderButtonsAreTheAgreedSizeAndSayWhatTheyDo() {
             var panel = new PlannerDockableVM(ProfilesWithNoSite(), new Mock<NINA.Equipment.Interfaces.Mediator.ITelescopeMediator>().Object);
             panel.Planner.ShowWindow(new[] { PlannerFixture.Night(2026, 11, 24, 691, 0.99) });
             panel.Planner.SelectedDate = PlannerFixture.Local(2026, 11, 26, 0, 0);
@@ -246,13 +246,13 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             // The stock DatePicker brings its own popup button in its template, and that one is
             // N.I.N.A.'s business, not this panel's - so it is excluded before anything is
             // counted or measured.
-            var buttons = Visual<Button>(root)
+            var buttons = Visual<ControlGroup>(root).SelectMany(Visual<Button>)
                 .Except(Visual<Button>(Only<DatePicker>(root)))
                 .ToList();
 
             // Two night arrows, Tonight, three scrub buttons, three zoom buttons (`-`, `reset
             // zoom`, `+`), three palettes.
-            Assert.That(buttons, Has.Count.EqualTo(12), "every pressable thing in the panel is counted here");
+            Assert.That(buttons, Has.Count.EqualTo(12));
             Assert.Multiple(() => {
                 Assert.That(buttons.Select(b => b.ActualHeight), Is.All.EqualTo(32.0),
                     "every button renders exactly 32 DIP tall, whatever is written in it");

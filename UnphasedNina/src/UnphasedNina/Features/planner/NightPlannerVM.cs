@@ -125,6 +125,7 @@ namespace Zakfo.Unphased.Features.planner {
             this.settings = settings;
             selectedDate = DateTimeOffset.Now.Date;
             Nights = new ObservableCollection<NightRowVM>();
+            InitializeChartElements();
             InitializeOverlays();
             settings.PropertyChanged += (_, e) => {
                 if (e.PropertyName is nameof(PluginSettings.SiteLatOverride) or nameof(PluginSettings.SiteLonOverride))

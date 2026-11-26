@@ -28,6 +28,53 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         private const string SunPick = "#FF00FF";
 
         [Test]
+        [Apartment(ApartmentState.STA)]
+        public void ChartSwitchesShowIndependentLayersAndResetToMoonGlyphOnly() {
+            var planner = new NightPlannerVM(new PluginSettings(TestProfile().Object));
+            planner.GlyphStyle = PlanetGlyphStyle.Detailed;
+            var chart = new Probe { DataContext = planner };
+            chart.SetScheme(ChartScheme.Enhanced);
+            var calculator = new NightCalculator(new Site(50.08804, 14.42076));
+            var noon = new DateTimeOffset(2026, 11, 24, 12, 0, 0, TimeSpan.FromHours(1));
+            var frame = NightFrame.For(new[] { calculator.Compute(noon) }, 1);
+            chart.SetRow(new NightRowVM(frame, NightChartVM.FrameMinutesAtZoom(1)));
+            chart.SetScrub(180);
+            chart.Measure(new Size(1200, 600));
+            chart.Arrange(new Rect(0, 0, 1200, 600));
+
+            Assert.That(planner.VisibleChartElements, Is.EqualTo(ChartElements.MoonGlyph));
+            var defaults = Drawings(chart.Paint());
+            planner.ChartElementOptions.Single(option => option.Element == ChartElements.MoonGlyph).Enabled = false;
+            var baseline = Drawings(chart.Paint());
+            var layers = new List<int[]>();
+            foreach (var option in planner.ChartElementOptions) {
+                option.Enabled = true;
+                Assert.That(planner.VisibleChartElements, Is.EqualTo(option.Element), option.Name);
+                var layer = Drawings(chart.Paint());
+                Assert.That(layer.SequenceEqual(baseline), Is.False, option.Name);
+                Assert.That(layers.Any(other => other.SequenceEqual(layer)), Is.False, option.Name);
+                layers.Add(layer);
+                option.Enabled = false;
+            }
+            foreach (var option in planner.ChartElementOptions) option.Enabled = true;
+            planner.ResetChartElementsCommand.Execute(null);
+            Assert.That(planner.VisibleChartElements, Is.EqualTo(ChartElements.MoonGlyph));
+            Assert.That(planner.GlyphStyle, Is.EqualTo(PlanetGlyphStyle.Detailed));
+            Assert.That(Drawings(chart.Paint()), Is.EqualTo(defaults));
+        }
+
+        private static int[] Drawings(DrawingGroup group) {
+            const int width = 1200, height = 600, stride = width * 4;
+            var visual = new DrawingVisual();
+            using (var drawing = visual.RenderOpen()) drawing.DrawDrawing(group);
+            var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(visual);
+            var pixels = new int[width * height];
+            bitmap.CopyPixels(pixels, stride, 0);
+            return pixels;
+        }
+
+        [Test]
         public void ATrackThatDropsBelowTheFloorStopsThereInsteadOfRunningAlongIt() {
             int longest = 0;
             var worker = new Thread(() => longest = LongestSunRunOnTheBottomEdge());
@@ -127,13 +174,8 @@ namespace Zakfo.Unphased.Tests.Features.planner {
 
         /// <summary>Widest run of sun-coloured pixels found on the bottom rows of the rendered chart.</summary>
         private static int LongestSunRunOnTheBottomEdge() {
-            var profiles = new Mock<IProfileService>();
-            var profile = new Mock<IProfile>();
-            profile.SetupGet(p => p.PluginSettings).Returns(new NINA.Profile.PluginSettings());
-            profile.SetupGet(p => p.AstrometrySettings).Returns((IAstrometrySettings)null);
-            profiles.SetupGet(p => p.ActiveProfile).Returns(profile.Object);
             // A picked colour, so the sun track is a colour nothing else on the chart wears.
-            var settings = new PluginSettings(profiles.Object);
+            var settings = new PluginSettings(TestProfile().Object);
             settings.Initialize();
             settings.SunColor = SunPick;
             try {
@@ -142,6 +184,15 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 settings.ResetColors();
                 settings.Dispose();
             }
+        }
+
+        private static Mock<IProfileService> TestProfile() {
+            var profiles = new Mock<IProfileService>();
+            var profile = new Mock<IProfile>();
+            profile.SetupGet(p => p.PluginSettings).Returns(new NINA.Profile.PluginSettings());
+            profile.SetupGet(p => p.AstrometrySettings).Returns((IAstrometrySettings)null);
+            profiles.SetupGet(p => p.ActiveProfile).Returns(profile.Object);
+            return profiles;
         }
 
         private static int Measure(PluginSettings settings) {
@@ -154,6 +205,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             var frame = NightFrame.For(new[] { payload }, 1);
 
             var planner = new NightPlannerVM(settings);
+            planner.ChartElementOptions.Single(option => option.Element == ChartElements.SunAltitude).Enabled = true;
             var ctl = new NightChartControl();
             ctl.DataContext = planner;   // this is how the control takes its picked colours
             ctl.SetRow(new NightRowVM(frame, NightChartVM.FrameMinutesAtZoom(1)));
