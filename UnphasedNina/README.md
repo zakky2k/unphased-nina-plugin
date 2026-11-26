@@ -1,13 +1,57 @@
 # Unphased Night Planner
 
-A dockable night-planning panel for [N.I.N.A.](https://www.nina.ms): the Sun and Moon altitude
-against the horizon and the astronomical twilight bands, over one night, three nights or a week
-stitched together, with an hour-by-hour scrub and a moon-phase glyph.
+**Visualise the night. Plan your imaging.**
+
+Visualise darkness, twilight and moonlight across consecutive nights in a single interactive
+astronomical chart.
+
+## Three perspectives. One view of the night.
+
+The same three sections, in the same order and the same words, appear on the plugin's own page in
+N.I.N.A. and in its listing on the plugin catalogue. The three drawings are the plugin's own line
+art — `assets/pillars/`, 64 × 64 units, 2-unit stroke, rounded caps and joins, no icon library —
+and they are the same geometry the page draws in WPF; `PillarIdentityTests` fails if the two drift
+apart. They are drawn with `currentColor`, so the page or document you are reading sets the colour.
+
+### Astronomical darkness
+
+<img src="assets/pillars/astronomical-darkness.svg" width="64" height="64" alt="A setting Sun above the twilight bands, falling below the horizon">
+
+Visualise the transition from daylight through civil, nautical and astronomical twilight into
+astronomical darkness. Easily identify when darkness begins, when it ends and how much dark imaging
+time is available throughout each night.
+
+*Understand the darkness.*
+
+### Lunar conditions
+
+<img src="assets/pillars/lunar-conditions.svg" width="64" height="64" alt="A crescent Moon with its trajectory across the horizon">
+
+Explore the Moon's altitude, phase and illumination throughout the night. Identify periods when the
+Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging
+opportunities.
+
+*Understand the Moon.*
+
+### Multi-night planning
+
+<img src="assets/pillars/multi-night-planning.svg" width="64" height="64" alt="A calendar carrying three astronomical altitude curves">
+
+Look beyond tonight and explore how astronomical darkness and lunar conditions evolve across
+consecutive nights. Compare upcoming nights and identify favourable windows for future
+astrophotography sessions.
+
+*Plan the nights ahead.*
+
+---
 
 Ephemerides come from [CosineKitty.AstronomyEngine](https://github.com/cosinekitty/astronomy)
-through `UnphasedCore`, evaluated for the observatory in your N.I.N.A. profile.
+through `UnphasedCore`, evaluated for the observatory in your N.I.N.A. profile. The planner
+visualises astronomical conditions independently of weather forecasts, atmospheric transparency
+and local light pollution.
 
-Status: **0.x beta**. It runs and is used, and the [changelog](CHANGELOG.md) says what is still rough.
+Status: **0.x beta**, under active development. It runs and is used, and the [changelog](CHANGELOG.md)
+says what is still rough.
 
 ## Requirements
 
@@ -39,8 +83,22 @@ GUID is permanent once published.
 
 ## Options
 
-*Panel night mode* re-colours the panel for use at the telescope. Sun, Moon and horizon colours can
-be set on the options page and the chart repaints as you pick them. Settings are global, stored at
+The options page puts the three perspectives above first, so the purpose of the plugin is read before
+its settings are offered. After them:
+
+*Observatory location* uses the observatory in your active N.I.N.A. profile, or pins a manual
+override — decimal degrees with *Apply location* and *Use N.I.N.A. profile location*.
+
+*Display palette* has three palettes: **N.I.N.A. theme** — a consistent appearance with the host
+application; **Night vision** — a red-toned display designed for use at the telescope, which the
+panel follows too; and **High contrast** — enhanced visual distinction between chart elements. The
+panel's header abbreviates these to *default*, *night* and *enhanced* because 86 DIP does not hold
+"N.I.N.A. theme", and its buttons say so in their tooltips.
+
+*Custom chart colours* sets **solar altitude**, **lunar altitude** and the **horizon**; the chart
+repaints as you pick them, and *Restore default colours* hands the colours back to the palette.
+
+Settings are global, stored at
 `%LOCALAPPDATA%\NINA\PluginSettings\09572065-E196-4DBA-B954-48F84B351DD1\settings.json`.
 
 ## Develop

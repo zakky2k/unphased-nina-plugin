@@ -246,7 +246,7 @@
                                 FontSize="13" FontWeight="SemiBold"
                                 Foreground="{DynamicResource ButtonForegroundBrush}"
                                 Command="{Binding DefaultSchemeCommand}"
-                                ToolTip="Paint the chart with the theme you picked in N.I.N.A."/>
+                                ToolTip="N.I.N.A. theme - paint the chart with the theme you picked in N.I.N.A. The button says default because this row is narrow; the options page, the description and the README all call it N.I.N.A. theme."/>
                         </Border>
                         <Border Padding="2" CornerRadius="2" BorderThickness="1" Margin="0,0,2,0">
                             <Border.Style>
@@ -265,7 +265,7 @@
                                 FontSize="13" FontWeight="SemiBold"
                                 Foreground="{DynamicResource ButtonForegroundBrush}"
                                 Command="{Binding NightSchemeCommand}"
-                                ToolTip="Red night-vision chart, in the same red palette N.I.N.A.'s own night button uses - for this panel only. The app-wide version is the eye button in N.I.N.A.'s title bar."/>
+                                ToolTip="Night vision - red night-vision chart, in the same red palette N.I.N.A.'s own night button uses - for this panel only. The app-wide version is the eye button in N.I.N.A.'s title bar. The button says night because this row is narrow; elsewhere it is Night vision."/>
                         </Border>
                         <Border Padding="2" CornerRadius="2" BorderThickness="1" Margin="0,0,0,0">
                             <Border.Style>
@@ -284,7 +284,7 @@
                                 FontSize="13" FontWeight="SemiBold"
                                 Foreground="{DynamicResource ButtonForegroundBrush}"
                                 Command="{Binding EnhancedSchemeCommand}"
-                                ToolTip="Navy chart: sun amber, moon pale blue, horizon teal. The three curves stay apart by hue rather than brightness, which is what a red-green viewer needs. Chart only - the panel keeps your N.I.N.A. colours."/>
+                                ToolTip="High contrast - navy chart: sun amber, moon pale blue, horizon teal. The three curves stay apart by hue rather than brightness, which is what a red-green viewer needs. Chart only - the panel keeps your N.I.N.A. colours. The button says enhanced because this row is narrow; elsewhere it is High contrast."/>
                         </Border>
                     </StackPanel>
                 </planner:ControlGroup>

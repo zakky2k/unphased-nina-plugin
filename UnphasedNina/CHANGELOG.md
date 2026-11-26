@@ -1,5 +1,36 @@
 # Changelog
 
+## Unreleased — round 12: the three pillars are the front page, and the drawings are ours
+
+The review asked for the plugin's purpose to be the centrepiece rather than a list of features: three pillars —
+**Astronomical darkness**, **Lunar conditions**, **Multi-night planning** — each with its own line drawing, its own
+sentence and its own italic line, sitting **above the settings** so a first-time visitor learns what the plugin is before
+being handed a form. Suite 100 → **108**. Not deployed (N.I.N.A. was running), not packaged, not re-tagged — the live
+0.7.0.0 archive is untouched.
+
+- **One identity, three surfaces.** The tagline, the lede, the three titles, the three bodies, the three taglines and the
+  three drawings are the same words and the same geometry on the options page, in `Plugin.props` (which is what N.I.N.A.
+  shows on its plugin page and in the store listing), in `README.md`, and in `assets/pillars/*.svg`. `PillarIdentityTests`
+  fails if any of the four drifts, including a check that the store listing still opens with the tagline and that the
+  page's order is lede → pillars → settings.
+- **The drawings are drawn, not borrowed.** No icon library, no image file: each is a `Canvas` of 64 × 64 units with
+  three or four `Path` strokes — 2-unit stroke, rounded caps and joins, foreground taken from `PrimaryBrush` so it follows
+  the theme and the night palette — shown in a 48 × 48 `Viewbox`. A test reads the XAML itself and fails on `<Image>`, on a
+  `pack://` URI and on the name of any icon set. The same path data is in the SVGs, compared stroke for stroke.
+- **One name per thing.** The palettes are **N.I.N.A. theme**, **Night vision** and **High contrast** in the description,
+  the README, the options page buttons and the panel's readout (`palette: N.I.N.A. theme`). The panel's *buttons* stay
+  `default` / `night` / `enhanced`, because 86 DIP does not hold the full name; their tooltips lead with the full name and
+  say the button is short because the row is narrow. This is a decision, and it is open for a round 13 layout that makes
+  the row wide enough to drop it.
+- **The settings are called what the panel calls them**: Observatory location with **Apply location** and **Use N.I.N.A.
+  profile location**; Display palette; Custom chart colours for **solar altitude**, **lunar altitude** and **horizon**;
+  **Restore default colours**. The round-8 names ("Apply site", "Panel night mode", "Sun path") are retired and a test
+  fails if one comes back.
+- **State of this build.** 108 tests, 0 failures. The page was rendered off-screen at 860 DIP — 860 × 1259 — and looked
+  at, and the three drawings were rendered again at 64 DIP on their own and looked at; the drawing check counts 1,241
+  painted pixels, which is honest but not generous, so a thinner stroke would trip it. Deploying to the live plugin folder
+  is still pending: N.I.N.A. was running and the copy is refused while it is.
+
 ## 0.7.0.0 — round 11: one control-group grammar for the header, and the round 10 that led to it
 
 Two layout rounds, landed in **one commit** because the second rewrote the first's file: round 10 un-crowded the header,

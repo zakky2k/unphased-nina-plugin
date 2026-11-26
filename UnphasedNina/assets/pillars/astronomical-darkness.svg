@@ -1,0 +1,15 @@
+<!-- Unphased Night Planner - "Astronomical darkness" pillar icon. Drawn for this plugin; no
+     third-party icon library. This Source Code Form is subject to the terms of the Mozilla
+     Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can
+     obtain one at https://mozilla.org/MPL/2.0/. -->
+<!-- The same geometry as the Path elements in Features/settings/Resources.xaml, and
+     PillarIdentityTests fails if the two stop matching. 64 x 64 canvas, stroke 2, rounded
+     caps and joins. stroke="currentColor" so the host page supplies the colour. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <path d="M8 44 H56 M22 44 A10 10 0 0 1 42 44"/>
+  <path d="M32 31 V27 M22.8 34.8 L20 32 M41.2 34.8 L44 32"/>
+  <path d="M12 50 H26 M38 50 H52 M16 56 H24 M40 56 H48"/>
+  <path d="M32 45 V58 M27 53 L32 58 L37 53"/>
+</svg>

@@ -130,8 +130,9 @@ namespace Zakfo.Unphased.Tests {
                         .Where(b => (b.GetBindingExpression(System.Windows.Controls.Primitives.ButtonBase.CommandProperty)
                             ?.ParentBinding?.Path?.Path ?? string.Empty).EndsWith("SchemeCommand", StringComparison.Ordinal))
                         .Select(b => b.Content as string),
-                    Is.EquivalentTo(new[] { "N.I.N.A. theme", "Night", "Enhanced" }),
-                    "each palette is named on the button that selects it");
+                    Is.EquivalentTo(new[] { "N.I.N.A. theme", "Night vision", "High contrast" }),
+                    "each palette is named on the button that selects it, in the words the description "
+                    + "and the README use - the panel abbreviates them and says so in its tooltips");
             });
         }
 

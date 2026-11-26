@@ -9,7 +9,122 @@
     xmlns:ninactrl="clr-namespace:NINA.CustomControlLibrary;assembly=NINA.CustomControlLibrary"
     xmlns:local="clr-namespace:Zakfo.Unphased.Features.settings">
     <DataTemplate x:Key="OptionsTemplate">
-        <StackPanel Margin="10">
+        <StackPanel Margin="10" MaxWidth="860" HorizontalAlignment="Left">
+
+            <!-- The page opens with what the plugin is for, before any control on it. N.I.N.A.
+                 draws its own heading above this template (name, short description, version and
+                 author, with the featured image), so this is the lede that follows it and not a
+                 repeated title. -->
+            <TextBlock TextWrapping="Wrap" FontSize="14"
+                Text="Visualise darkness, twilight and moonlight across consecutive nights in a single interactive astronomical chart." />
+
+            <!-- The three pillars. Same words, same order and same three drawings as the
+                 repository README and the release description, so the plugin, the page it lands
+                 on and the documentation describe the thing the same way. The drawings are
+                 declared here as plain Path geometry on a 64 x 64 canvas, stroked 2 with rounded
+                 caps and joins, and painted with the theme's own foreground - no icon package, no
+                 image file, and they scale without going soft. The same geometry is mirrored in
+                 assets/pillars/*.svg for the README, and PillarIdentityTests fails if the two
+                 drift apart. -->
+            <TextBlock Margin="0,16,0,0" FontSize="19" FontWeight="Bold"
+                Foreground="{DynamicResource PrimaryBrush}"
+                Text="Three perspectives. One view of the night." />
+
+            <Grid Margin="0,10,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Astronomical darkness: a setting Sun, the twilight bands beneath it, and the
+                     drop into darkness below the horizon. -->
+                <Viewbox Grid.Row="0" Width="48" Height="48" VerticalAlignment="Top">
+                    <Canvas Width="64" Height="64">
+                        <Path Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            Data="M8 44 H56 M22 44 A10 10 0 0 1 42 44" />
+                        <Path Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            Data="M32 31 V27 M22.8 34.8 L20 32 M41.2 34.8 L44 32" />
+                        <Path Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            Data="M12 50 H26 M38 50 H52 M16 56 H24 M40 56 H48" />
+                        <Path Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            Data="M32 45 V58 M27 53 L32 58 L37 53" />
+                    </Canvas>
+                </Viewbox>
+                <StackPanel Grid.Row="0" Grid.Column="1" Margin="14,0,0,0">
+                    <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"
+                        Text="Astronomical darkness" />
+                    <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" Opacity="0.85"
+                        Text="Visualise the transition from daylight through civil, nautical and astronomical twilight into astronomical darkness. Easily identify when darkness begins, when it ends and how much dark imaging time is available throughout each night." />
+                    <TextBlock Margin="0,4,0,0" FontStyle="Italic" Foreground="{DynamicResource SecondaryBrush}"
+                        Text="Understand the darkness." />
+                </StackPanel>
+
+                <!-- Lunar conditions: the Moon itself, the star it shares the sky with, the arc it
+                     travels, and the horizon it rises and sets against. -->
+                <Viewbox Grid.Row="2" Width="48" Height="48" VerticalAlignment="Top">
+                    <Canvas Width="64" Height="64">
+                        <Path Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            Data="M8 48 H56" />
+                        <Path Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            Data="M26 13 A11 11 0 1 0 26 35 A8.5 8.5 0 1 1 26 13 Z" />
+                        <Path Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            Data="M44 12 V20 M40 16 H48" />
+                        <Path Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            StrokeDashArray="2 4"
+                            Data="M8 42 C22 34 42 34 56 42" />
+                    </Canvas>
+                </Viewbox>
+                <StackPanel Grid.Row="2" Grid.Column="1" Margin="14,0,0,0">
+                    <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"
+                        Text="Lunar conditions" />
+                    <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" Opacity="0.85"
+                        Text="Explore the Moon's altitude, phase and illumination throughout the night. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities." />
+                    <TextBlock Margin="0,4,0,0" FontStyle="Italic" Foreground="{DynamicResource SecondaryBrush}"
+                        Text="Understand the Moon." />
+                </StackPanel>
+
+                <!-- Multi-night planning: a calendar carrying three altitude curves, because what
+                     this plugin compares from night to night is the shape of the sky, not a date. -->
+                <Viewbox Grid.Row="4" Width="48" Height="48" VerticalAlignment="Top">
+                    <Canvas Width="64" Height="64">
+                        <Path Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            Data="M14 16 H50 A2 2 0 0 1 52 18 V50 A2 2 0 0 1 50 52 H14 A2 2 0 0 1 12 50 V18 A2 2 0 0 1 14 16 Z" />
+                        <Path Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            Data="M20 11 V18 M44 11 V18 M12 24 H52" />
+                        <Path Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            Data="M16 46 Q20 31 24 46 M28 46 Q32 29 36 46 M40 46 Q44 31 48 46" />
+                    </Canvas>
+                </Viewbox>
+                <StackPanel Grid.Row="4" Grid.Column="1" Margin="14,0,0,0">
+                    <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"
+                        Text="Multi-night planning" />
+                    <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" Opacity="0.85"
+                        Text="Look beyond tonight and explore how astronomical darkness and lunar conditions evolve across consecutive nights. Compare upcoming nights and identify favourable windows for future astrophotography sessions." />
+                    <TextBlock Margin="0,4,0,0" FontStyle="Italic" Foreground="{DynamicResource SecondaryBrush}"
+                        Text="Plan the nights ahead." />
+                </StackPanel>
+            </Grid>
+
+            <Border Height="1" Margin="0,16,0,16" Background="{DynamicResource BorderBrush}" />
+
             <!-- The site. The boxes edit a draft: nothing is stored until Apply, so a
                  half-typed pair can no longer sit in the settings while the chart quietly
                  uses the profile instead. The boxes are pre-filled with whatever is in
@@ -17,9 +132,9 @@
                  UnitTextBox is N.I.N.A.'s own field (number plus a read-only unit); its
                  template sizes itself to its content, so the width is set here - otherwise
                  the pair stretches across the whole settings tab. -->
-            <TextBlock Text="Site" FontWeight="Bold" />
+            <TextBlock Text="Observatory location" FontWeight="Bold" FontSize="15" />
             <TextBlock TextWrapping="Wrap" Opacity="0.8" Margin="0,4,0,0"
-                Text="Decimal degrees. Apply pins this site for the planner; the profile's own astrometry site is used when nothing is pinned." />
+                Text="Use your active N.I.N.A. profile or specify an alternative observing location. Coordinates are decimal degrees." />
             <Grid Margin="0,8,0,0" HorizontalAlignment="Left">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -38,11 +153,11 @@
                     Text="{Binding Settings.SiteLonDraft, UpdateSourceTrigger=LostFocus}" />
             </Grid>
             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                <Button Content="Apply site" Padding="8,2"
-                    ToolTip="Store these two coordinates as this profile's pinned planner site"
+                <Button Content="Apply location" Padding="8,2"
+                    ToolTip="Store these two coordinates as this profile's pinned planner location"
                     Command="{Binding Settings.ApplySiteCommand}" />
-                <Button Margin="8,0,0,0" Padding="8,2" Content="Use this profile's site"
-                    ToolTip="Put the profile's astrometry coordinates in the boxes and stop pinning a site"
+                <Button Margin="8,0,0,0" Padding="8,2" Content="Use N.I.N.A. profile location"
+                    ToolTip="Put the profile's astrometry coordinates in the boxes and stop pinning a location"
                     Command="{Binding Settings.ResetSiteCommand}" />
             </StackPanel>
             <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.8"
@@ -57,20 +172,22 @@
                  readout at the end names the setting rather than the last click. Not
                  remembered between runs on purpose: night mode is what you want at 2am under
                  a torch, not what you want the next afternoon with the chart still open. A
-                 file saved by an older build that had night mode on opens once on night. -->
-            <TextBlock Text="Chart palette" FontWeight="Bold" Margin="0,12,0,0" />
+                 file saved by an older build that had night mode on opens once on night.
+                 The words on these buttons are the words in the description and the README;
+                 the panel abbreviates them to fit 86 DIP and points here in its tooltip. -->
+            <TextBlock Text="Display palette" FontWeight="Bold" FontSize="15" Margin="0,16,0,0" />
             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                 <Button Content="N.I.N.A. theme" Padding="8,2"
-                    ToolTip="Follow whatever palette you picked in N.I.N.A.'s settings"
+                    ToolTip="A consistent appearance with the host application: the chart follows whatever palette you picked in N.I.N.A.'s settings"
                     Command="{Binding Settings.DefaultSchemeCommand}" />
-                <Button Margin="8,0,0,0" Padding="8,2" Content="Night"
-                    ToolTip="Red night-vision chart, in the same red as N.I.N.A.'s own night button - this panel only. N.I.N.A.'s eye button in the title bar is the app-wide version."
+                <Button Margin="8,0,0,0" Padding="8,2" Content="Night vision"
+                    ToolTip="A red-toned display designed for use at the telescope - the panel follows it too. N.I.N.A.'s own eye button in the title bar is the app-wide version."
                     Command="{Binding Settings.NightSchemeCommand}" />
-                <Button Margin="8,0,0,0" Padding="8,2" Content="Enhanced"
-                    ToolTip="Navy chart: sun amber, moon pale blue, horizon teal, so the three curves stay apart by colour and not only by brightness. Chart only - the panel keeps your N.I.N.A. colours."
+                <Button Margin="8,0,0,0" Padding="8,2" Content="High contrast"
+                    ToolTip="Enhanced distinction between chart elements: navy chart, sun amber, moon pale blue, horizon teal, so the three curves stay apart by colour and not only by brightness. Chart only - the panel keeps your N.I.N.A. colours."
                     Command="{Binding Settings.EnhancedSchemeCommand}" />
                 <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Opacity="0.8"
-                    Text="{Binding Settings.Scheme}" />
+                    Text="{Binding Settings.SchemeName, StringFormat=palette in effect: {0}}" />
             </StackPanel>
 
             <!-- The three roles the chart is read by. The swatch is the control: click it
@@ -78,7 +195,7 @@
                  The exact value - the pick, or what the palette resolves to - is in the
                  tooltip. Hex stays settable through the settings object for anyone editing
                  the file by hand. -->
-            <TextBlock Text="Chart colours" FontWeight="Bold" Margin="0,12,0,0" />
+            <TextBlock Text="Custom chart colours" FontWeight="Bold" FontSize="15" Margin="0,16,0,0" />
             <TextBlock TextWrapping="Wrap" Opacity="0.8" Margin="0,4,0,0"
                 Text="Each swatch shows what the chart paints right now. Click one to change it; the chart then follows your colour instead of the palette." />
             <Grid Margin="0,8,0,0" HorizontalAlignment="Left">
@@ -94,7 +211,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Text="Sun path" VerticalAlignment="Center" />
+                <TextBlock Text="Solar altitude" VerticalAlignment="Center" />
                 <Button Grid.Column="1" Margin="8,0,0,0" Padding="4,3"
                     ToolTip="{Binding Settings.SunColorNote}"
                     Command="{Binding Settings.PickSunColorCommand}">
@@ -102,7 +219,7 @@
                         Background="{Binding Settings.SunColorBrush}" />
                 </Button>
 
-                <TextBlock Grid.Row="2" Text="Moon track" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="2" Text="Lunar altitude" VerticalAlignment="Center" />
                 <Button Grid.Row="2" Grid.Column="1" Margin="8,0,0,0" Padding="4,3"
                     ToolTip="{Binding Settings.MoonColorNote}"
                     Command="{Binding Settings.PickMoonColorCommand}">
@@ -119,9 +236,50 @@
                 </Button>
             </Grid>
             <Button Margin="0,8,0,0" Padding="8,2" HorizontalAlignment="Left"
-                Content="Reset colours to defaults"
+                Content="Restore default colours"
                 ToolTip="Clear every picked colour: sun and moon follow the N.I.N.A. palette again, the horizon returns to green"
                 Command="{Binding Settings.ResetColorsCommand}" />
+
+            <Border Height="1" Margin="0,16,0,16" Background="{DynamicResource BorderBrush}" />
+
+            <!-- The rest of the description, in the same words as the release description and
+                 the README. Everything here is stated as it behaves today; the development
+                 status says plainly that this is unfinished software. -->
+            <TextBlock Text="About Unphased Night Planner" FontWeight="Bold" FontSize="15" />
+
+            <TextBlock Text="Interactive night planning" FontWeight="Bold" Margin="0,10,0,0" />
+            <TextBlock Margin="10,4,0,0" Text="-  Combined solar and lunar altitude chart." />
+            <TextBlock Margin="10,2,0,0" Text="-  Colour-coded daylight, twilight and astronomical darkness periods." />
+            <TextBlock Margin="10,2,0,0" Text="-  Nighttime duration and astronomical darkness summaries." />
+            <TextBlock Margin="10,2,0,0" Text="-  Lunar culmination and illumination indicators." />
+            <TextBlock Margin="10,2,0,0" Text="-  Adjustable single-night and multi-night views." />
+            <TextBlock Margin="10,2,0,0" Text="-  Integrated calendar with date navigation and instant return to tonight." />
+            <TextBlock Margin="10,2,0,0" Text="-  Interactive time scrubber for inspecting conditions at specific times." />
+
+            <TextBlock Text="Display and customisation" FontWeight="Bold" Margin="0,10,0,0" />
+            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+                Text="The planner integrates with N.I.N.A.'s native colour scheme and provides three display palettes:" />
+            <TextBlock Margin="10,2,0,0" Text="-  N.I.N.A. theme - a consistent appearance with the host application." />
+            <TextBlock Margin="10,2,0,0" Text="-  Night vision - a red-toned display designed for use at the telescope." />
+            <TextBlock Margin="10,2,0,0" Text="-  High contrast - enhanced visual distinction between chart elements." />
+            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+                Text="Individual chart colours for solar altitude, lunar altitude and the horizon can be customised through the plugin options." />
+
+            <TextBlock Text="Observatory location" FontWeight="Bold" Margin="0,10,0,0" />
+            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+                Text="By default, astronomical conditions are calculated using the observatory location configured in the active N.I.N.A. profile." />
+            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+                Text="An optional manual location override allows you to explore nighttime conditions at alternative observing sites, making the planner useful for both local imaging and planning future astrophotography trips." />
+
+            <TextBlock Text="Astronomical calculations" FontWeight="Bold" Margin="0,10,0,0" />
+            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+                Text="Solar and lunar ephemerides are calculated locally using the Astronomy Engine (CosineKitty/AstronomyEngine), based on the selected observing location." />
+            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+                Text="The planner visualises astronomical conditions independently of weather forecasts, atmospheric transparency and local light pollution." />
+
+            <TextBlock Text="Development status" FontWeight="Bold" Margin="0,10,0,0" />
+            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+                Text="Unphased Night Planner is under active development, with ongoing improvements to functionality, visualisation and the user experience." />
         </StackPanel>
     </DataTemplate>
 </ResourceDictionary>

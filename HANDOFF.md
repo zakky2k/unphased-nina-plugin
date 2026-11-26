@@ -1,4 +1,4 @@
-# HANDOFF — Unphased Night Planner (N.I.N.A. plugin), state at 2026-11-26 (rounds 10–11 delivered; 0.7.0.0 released, main is ahead of that tag)
+# HANDOFF — Unphased Night Planner (N.I.N.A. plugin), state at 2026-11-26 (round 12 delivered: three-pillar identity on the options page, suite 108, not yet deployed or committed; 0.7.0.0 remains the released build, `main` is ahead of that tag)
 
 > **Moved on 26 Nov, round 9:** this tree is its own repository now — `github.com/zakky2k/unphased-nina-plugin`,
 > working path `C:\Users\zakfo\Documents\unphased-nina-plugin`. It was copied out of `AstroScripts/nina-plugin` at
@@ -1021,7 +1021,44 @@ colour). British English throughout, existing N.I.N.A. palette, no new dependenc
   panel buttons still read `default` / `night` / `enhanced`, the copy reads *N.I.N.A. theme / Night vision / High
   contrast* — decide once, in the panel and the page together, and say so in the changelog.
 
-## Open items and decisions
+## Round 12 delivered (26 Nov, late) — the three pillars are the front page; suite 108
+
+The brief was identity, not features: the description should *open* with three pillars that give the plugin a visual
+identity, with the previously agreed terminology, British spelling and the existing palette. Delivered, all in one round:
+
+- **Page order is now lede → "Three perspectives. One view of the night." → the three pillars → settings → About**, so a
+  first-time visitor meets the purpose before the form. Each pillar row is a 48 × 48 drawing, a bold title, the body
+  sentence and the italic line, with the drawing in an aligned left column.
+- **The same words and the same drawings live on four surfaces**: the options page template, `Plugin.props`
+  (`Description` = the tagline, which is the italic line N.I.N.A. draws under the plugin name and the store row text;
+  `PluginLongDescription` = the whole agreed body), `README.md`, and `UnphasedNina/assets/pillars/*.svg`.
+- **The drawings are ours.** 64 × 64 canvas, 2-unit strokes, rounded caps/joins, `DynamicResource PrimaryBrush` so they
+  follow the theme and the night palette, no image element, no icon library. Eleven strokes in total (4 / 4 / 3).
+- **The naming drift is resolved** (it was parked in the round-11 notes): one shared name per palette, in
+  `PluginSettings.SchemeName` — *N.I.N.A. theme*, *Night vision*, *High contrast* — used by the options buttons, the
+  options readout, the panel's readout (`palette: N.I.N.A. theme`), the README and the description. **The panel's buttons
+  stay `default` / `night` / `enhanced`** because 86 DIP cannot hold the full names; their tooltips lead with the full
+  name and explain the abbreviation. That is a decision to revisit only if the palette group gets wider in a later round.
+- **Settings renamed to match the panel**: *Observatory location* with **Apply location** / **Use N.I.N.A. profile
+  location**; *Display palette*; *Custom chart colours* for **solar altitude**, **lunar altitude**, **horizon**;
+  **Restore default colours**. `PillarIdentityTests` asserts the new words are present and the retired ones absent.
+- **Two new fixtures.** `Features/settings/PillarIdentityTests.cs` (7 tests: reading order, three drawings at 48 with a
+  64 × 64 canvas, every stroke 2 units with rounded caps and no fill, no borrowed-icon evidence in the XAML, SVG
+  geometry equal to the XAML geometry stroke-for-stroke, README wording, store listing = page opening line, settings
+  vocabulary). `Features/settings/OptionsPageRenderSmoke.cs` (`[Explicit]`, STA thread) writes
+  `%TEMP%\options-page-at-860.png`, `%TEMP%\options-page-pillars-at-860.png` and
+  `%TEMP%\pillar-icons-at-64.png`, and counts painted pixels in the drawings (1,241 at 64 DIP; threshold 1,200).
+- **Harness laws this round cost:** (1) a hand-rolled "depth-first" visual-tree walk using a `Stack` with children added
+  when pushed is **breadth-first** — the ordering tests were wrong until it became a real recursive descent; (2)
+  `XamlReader.Parse` into a `ContentPresenter` fails, it has no content property — wrap the fragment in a `Border`, take
+  `.Child`, then set `Child = $null` before re-parenting; (3) `ResourceDictionary` has `Contains`, not `ContainsKey`;
+  (4) with `System.IO` and `System.Windows.Shapes` both imported, bare `Path` is ambiguous — alias the shape one;
+  (5) README prose is wrapped, so compare sentences with whitespace collapsed or the test asserts where lines break;
+  (6) `PixelFormats.Pbgra32` is **blue first** — comparing index 0 against `Color.R` silently measures the wrong channel.
+- **State:** 108 tests green. Rendered and reviewed from the harness at 860 DIP. **Not deployed** — N.I.N.A. was running
+  (PID 25416) and `DeployPlugin` refuses while the app holds the DLL; **not committed** while the user reviews; **not
+  packaged, not re-tagged** — the 0.7.0.0 archive and its checksum are untouched, and any new release needs a new version.
+
 
 
 - **0.7.0.0 is both the deployed and the released build** (deployed 09:48 on 26 Nov from `c1e4384`; licence headers in

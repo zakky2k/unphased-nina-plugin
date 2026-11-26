@@ -142,9 +142,14 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                     "the panel opens on the theme palette");
                 Assert.That(root.Resources.Contains("BackgroundBrush"), Is.False,
                     "and it installs no chrome of its own while it is there");
-                Assert.That(Group(root, "DISPLAY PALETTE").Status, Is.EqualTo("palette: N.I.N.A."),
-                    "the cluster's own status box spells out the scheme in effect, so the outline "
-                    + "below is a shortcut rather than the only answer");
+                Assert.That(Group(root, "DISPLAY PALETTE").Status, Is.EqualTo("palette: N.I.N.A. theme"),
+                    "the cluster's own status box spells out the scheme in effect in the words the "
+                    + "options page and the description use, so the outline below is a shortcut rather "
+                    + "than the only answer");
+                Assert.That(paletteButtons.Select(b => b.Content), Is.EquivalentTo(new[] { "default", "night", "enhanced" }),
+                    "the buttons themselves keep the short forms - 86 DIP does not hold \"N.I.N.A. theme\" - "
+                    + "and their tooltips give the full names, so there is one name per palette with the "
+                    + "abbreviation pointing back at it");
                 Assert.That(paletteButtons.Select(OutlineOf).Count(Outlined), Is.EqualTo(1),
                     "exactly one palette button is outlined, and it is the one in effect");
                 Assert.That(Outlined(OutlineOf(paletteButtons.Single(b => (b.Content as string) == "default"))), Is.True,
@@ -158,7 +163,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                     "the panel root follows the setting, rather than a copy of it");
                 Assert.That(root.Resources.Contains("BackgroundBrush"), Is.True,
                     "night puts the red palette in this panel's own resources");
-                Assert.That(Visual<TextBlock>(root).Select(t => t.Text), Does.Contain("palette: night"),
+                Assert.That(Visual<TextBlock>(root).Select(t => t.Text), Does.Contain("palette: Night vision"),
                     "and the readout beside the buttons says so");
                 Assert.That(Outlined(OutlineOf(paletteButtons.Single(b => (b.Content as string) == "night"))), Is.True,
                     "the outline follows the scheme: it moved off `default` and onto `night`");

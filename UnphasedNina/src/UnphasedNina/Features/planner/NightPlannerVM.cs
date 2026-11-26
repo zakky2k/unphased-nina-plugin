@@ -156,12 +156,15 @@ namespace Zakfo.Unphased.Features.planner {
         /// The active scheme in words, next to the three header buttons. The buttons are
         /// the actions and this is the readout, so the panel never has to restyle
         /// N.I.N.A.'s own button to show which one is already on.
+        /// <para>
+        /// The words are the settings object's, not this class's: the panel's buttons say
+        /// "default"/"night"/"enhanced" because 86 DIP holds nothing longer, but this readout has
+        /// room for the names the options page, the description and the README use, and taking them
+        /// from <see cref="PluginSettings.SchemeName"/> is what stops the two spellings drifting
+        /// apart.
+        /// </para>
         /// </summary>
-        public string SchemeLabel => Scheme switch {
-            ChartScheme.Night => "palette: night",
-            ChartScheme.Enhanced => "palette: enhanced",
-            _ => "palette: N.I.N.A.",
-        };
+        public string SchemeLabel => "palette: " + settings.SchemeName;
 
         // Chart colour overrides, mirrored from the plugin options. Empty means "follow
         // the scheme", which for the sun and the moon means the live N.I.N.A. theme

@@ -13,17 +13,52 @@
     <Copyright>Copyright © 2026 zakky2k</Copyright>
     <Company>zakky2k</Company>
     <Authors>zakky2k</Authors>
-    <!-- Becomes the manifest's Descriptions.ShortDescription - the schema caps it at 256 characters. -->
-    <Description>Night planning chart: sun and moon altitude, twilight bands and moon phase across consecutive nights, with a calendar, zoom to a week, an hour scrub and three chart palettes.</Description>
-    <PluginLongDescription>A dockable panel that answers one question: what is worth shooting tonight, and how dark is it?
+    <!-- Becomes the manifest's Descriptions.ShortDescription - the schema caps it at 256 characters.
+         This is the identity line, not a feature list: it is what N.I.N.A. shows in italic under the
+         plugin name on the plugin's own page, and what the store row quotes. The sentence that says
+         what the plugin does lives one line lower, at the top of the options page and in the first
+         paragraph below, so both surfaces open with the same two lines in the same order. -->
+    <Description>Visualise the night. Plan your imaging.</Description>
+    <PluginLongDescription>Visualise the night. Plan your imaging.
 
-The chart draws the Sun and the Moon against the horizon and the astronomical twilight bands, over a frame you choose - one night, three nights or a week stitched together. A scrub marker steps through the night an hour at a time and reports where both bodies are and what phase the Moon is in; a glyph marks the Moon's highest point of the night with its illuminated fraction. A calendar chooses which night to look at, and the panel keeps the nights on either side of it in hand, widening as you page, so paging sideways never runs out.
+Visualise darkness, twilight and moonlight across consecutive nights in a single interactive astronomical chart.
 
-The panel follows N.I.N.A.'s colour scheme, and the chart can be drawn in three palettes: that scheme, a red night set that re-colours the panel too for use at the telescope, or a high-contrast set whose sun, moon and horizon are told apart by colour rather than brightness. Sun, Moon and horizon colours can be set on the plugin options page, and the chart repaints as you pick them.
+Unphased Night Planner is an interactive, dockable panel for N.I.N.A., designed to help astrophotographers visualise astronomical darkness and lunar conditions for tonight and the nights ahead.
 
-Ephemerides come from the Astronomy Engine (CosineKitty.AstronomyEngine), evaluated for the observatory location in your N.I.N.A. profile.
+By combining solar altitude, lunar altitude, Moon phase and twilight periods in a single interactive chart, the planner provides a clear and intuitive overview of the astronomical conditions that influence nighttime imaging.
 
-This is early software - version 0.x, feature complete for its own purpose but with rough edges listed in the changelog.</PluginLongDescription>
+Three perspectives. One view of the night.
+
+Astronomical darkness - Understand the darkness. Visualise the transition from daylight through civil, nautical and astronomical twilight into astronomical darkness. Easily identify when darkness begins, when it ends and how much dark imaging time is available throughout each night.
+
+Lunar conditions - Understand the Moon. Explore the Moon's altitude, phase and illumination throughout the night. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities.
+
+Multi-night planning - Plan the nights ahead. Look beyond tonight and explore how astronomical darkness and lunar conditions evolve across consecutive nights. Compare upcoming nights and identify favourable windows for future astrophotography sessions.
+
+Interactive night planning
+- Combined solar and lunar altitude chart.
+- Colour-coded daylight, twilight and astronomical darkness periods.
+- Nighttime duration and astronomical darkness summaries.
+- Lunar culmination and illumination indicators.
+- Adjustable single-night and multi-night views.
+- Integrated calendar with date navigation and instant return to tonight.
+- Interactive time scrubber for inspecting conditions at specific times.
+
+Display and customisation
+The planner integrates with N.I.N.A.'s native colour scheme and provides three display palettes:
+- N.I.N.A. theme - a consistent appearance with the host application.
+- Night vision - a red-toned display designed for use at the telescope.
+- High contrast - enhanced visual distinction between chart elements.
+Individual chart colours for solar altitude, lunar altitude and the horizon can be customised through the plugin options.
+
+Observatory location
+By default, astronomical conditions are calculated using the observatory location configured in the active N.I.N.A. profile. An optional manual location override allows you to explore nighttime conditions at alternative observing sites, making the planner useful for both local imaging and planning future astrophotography trips.
+
+Astronomical calculations
+Solar and lunar ephemerides are calculated locally using the Astronomy Engine (CosineKitty/AstronomyEngine), based on the selected observing location. The planner visualises astronomical conditions independently of weather forecasts, atmospheric transparency and local light pollution.
+
+Development status
+Unphased Night Planner is under active development, with ongoing improvements to functionality, visualisation and the user experience. The changelog lists what is still rough.</PluginLongDescription>
     <RepositoryUrl>https://github.com/zakky2k/unphased-nina-plugin</RepositoryUrl>
     <PluginHomepage>https://github.com/zakky2k/unphased-nina-plugin</PluginHomepage>
     <PluginTags>night planning,planner,sun,moon,twilight,altitude,ephemeris,chart,dockable</PluginTags>

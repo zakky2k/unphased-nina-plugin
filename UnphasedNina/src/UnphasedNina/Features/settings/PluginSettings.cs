@@ -110,6 +110,7 @@ namespace Zakfo.Unphased.Features.settings {
             initialized = true;
             if (carriedNightFlag) SaveGlobal();
             RaisePropertyChanged(nameof(Scheme));
+            RaisePropertyChanged(nameof(SchemeName));
             RaiseColours();
             RaiseSiteState();
         }
@@ -130,11 +131,26 @@ namespace Zakfo.Unphased.Features.settings {
                 if (scheme == value) return;
                 scheme = value;
                 RaisePropertyChanged();
+                RaisePropertyChanged(nameof(SchemeName));
                 // The scheme changes what an unpicked colour resolves to, so the
                 // options page has to repaint its swatches.
                 RaiseColours();
             }
         }
+
+        /// <summary>
+        /// The palette said in words, for the readout on the options page. The enum's own name is
+        /// "Default"/"Night"/"Enhanced", which are the panel's compact button labels - right inside
+        /// an 86 DIP button, wrong as the name of the thing: the description, the page and the
+        /// README all call these N.I.N.A. theme, Night vision and High contrast, and a readout has
+        /// the room to say so. The panel keeps the short forms and says the full names in its
+        /// tooltips; one palette, one name, and the abbreviations point back at the name.
+        /// </summary>
+        public string SchemeName => Scheme switch {
+            ChartScheme.Night => "Night vision",
+            ChartScheme.Enhanced => "High contrast",
+            _ => "N.I.N.A. theme",
+        };
 
         private IRelayCommand schemeDefault, schemeNight, schemeEnhanced;
 

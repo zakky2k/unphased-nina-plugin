@@ -1,0 +1,15 @@
+<!-- Unphased Night Planner - "Lunar conditions" pillar icon. Drawn for this plugin; no
+     third-party icon library. This Source Code Form is subject to the terms of the Mozilla
+     Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can
+     obtain one at https://mozilla.org/MPL/2.0/. -->
+<!-- The same geometry as the Path elements in Features/settings/Resources.xaml, and
+     PillarIdentityTests fails if the two stop matching. 64 x 64 canvas, stroke 2, rounded
+     caps and joins. stroke="currentColor" so the host page supplies the colour. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"
+     fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <path d="M8 48 H56"/>
+  <path d="M26 13 A11 11 0 1 0 26 35 A8.5 8.5 0 1 1 26 13 Z"/>
+  <path d="M44 12 V20 M40 16 H48"/>
+  <path d="M8 42 C22 34 42 34 56 42" stroke-dasharray="2 4"/>
+</svg>
