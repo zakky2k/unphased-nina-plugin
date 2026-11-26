@@ -95,6 +95,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             var row = new NightRowVM(PlannerFixture.Night(2026, 11, 24, 691, .99, moonEvents: crossings));
             Assert.That(row.MoonlessChip, Is.EqualTo("Moonless dark · 4 h 00 m"));
             var noDark = new NightRowVM(PlannerFixture.Night(2026, 11, 24, 0, .99, moonEvents: crossings));
+            Assert.That(noDark.DarkChip, Is.EqualTo("Total dark · No astronomical darkness"));
             Assert.That(noDark.MoonlessChip, Is.EqualTo("Moonless dark · 0 m"));
             var moonDown = new[] { PlannerFixture.Moon(2026, 11, 24, 22, 0, -10) };
             var allDark = new NightRowVM(PlannerFixture.Night(2026, 11, 24, 691, .99, moon: moonDown));

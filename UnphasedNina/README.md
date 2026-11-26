@@ -68,7 +68,7 @@ this plugin stays on the shipped 3.2 line until the app it targets is released.)
 The plugin is **not in N.I.N.A.'s plugin list yet**, deliberately — see *Release and the plugin
 catalogue* below. Until it is, install it from the GitHub release:
 
-1. Download `UnphasedNina.0.8.0.0.zip` from the
+1. Download `UnphasedNina.0.8.1.0.zip` from the
    [releases page](https://github.com/zakky2k/unphased-nina-plugin/releases).
 2. With N.I.N.A. closed, extract the files directly into
    `%LOCALAPPDATA%\NINA\Plugins\3.0.0\Unphased Night Planner\`, creating that folder if needed.
@@ -118,27 +118,34 @@ dotnet test tests\UnphasedNina.Tests\UnphasedNina.Tests.csproj -c Debug -f net8.
 Copy `local.props.example` to the ignored `local.props` and point `NinaExecutable` at your N.I.N.A.
 installation. Normal builds do not deploy; `DeployPlugin` does, and needs N.I.N.A. closed.
 
-Two things to know before running the suite: the settings tests write to the **live** settings file
-shown above, so re-pick your colours afterwards, and the process may hold exactly one
-`System.Windows.Application` — `CompositionTests` owns it, so a new fixture must not create another.
+The settings tests use a unique directory under the test working directory. Use the shared
+`WpfHost` for tests that need a `System.Windows.Application`.
 `PlannerChartRenderSmoke` is `[Explicit]`; run it with
 `--filter FullyQualifiedName~PlannerChartRenderSmoke` to write nine chart previews.
+
+The native astronomy comparison is also opt-in. With the N.I.N.A. installation's `External`
+folder copied beside the compiled test assembly, run
+`dotnet test tests/UnphasedNina.Tests/UnphasedNina.Tests.csproj -c Release --no-build --filter FullyQualifiedName~OverlayAltitudesAgreeWithIndependentEphemerisAndFollowTheLatestFrame`.
+Use the filter `FullyQualifiedName~CatalogTypeRequiresAnExactAliasAndMatchingPosition`
+to check against the installed N.I.N.A. catalogue.
 
 ## Release and the plugin catalogue
 
 ```powershell
-./build/Build-Release.ps1 -Tag v0.8.0.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta
+./build/Build-Release.ps1 -Tag v0.8.1.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta
 ```
 
 `-Repository` is what the archive's `Installer.URL` and the manifest's `Repository` are built from,
 so it must name **this** repository and the tag you are about to publish — without it the installer
 URL falls back to a placeholder the catalogue CI rejects.
 
-That restores, builds Release, runs the tests, zips the staged files, and writes
+Commit the release changes before running the script. It restores, builds Release, runs the tests, zips the staged files, and writes
 `artifacts\release\UnphasedNina.<version>.zip` plus `UnphasedNina.<version>.manifest.json`,
 validated against N.I.N.A.'s own manifest schema (`build\vendor\manifest.schema.json`, vendored
 unmodified — see [PROVENANCE.md](build/vendor/PROVENANCE.md)). Nothing is uploaded or tagged.
-`Verify-ReleaseArtifacts.ps1` re-checks an archive against its manifest (checksum, URL, version).
+The script verifies the exact versioned archive and manifest, including the checksum, installer URL,
+packaged DLL version and source revision, and the full MPL-2.0 text inside the ZIP. Tag the
+verified source commit when publishing.
 
 N.I.N.A. loads the Clear Horizon artwork from `assets/unphased-256.png`. The
 full-size artwork is `assets/unphased-featured.png`, and `assets/unphased.ico`
@@ -161,7 +168,7 @@ Then, by hand:
 2. Submit the manifest to the [N.I.N.A. plugin manifests repository](https://github.com/isbeorn/nina.plugin.manifests)
    — that repository *is* the catalogue; it holds JSON only, the binaries stay here. Fork it, add
    the manifest as
-   `manifests/U/Unphased Night Planner/3.2.0.9001/0.8.0.0/manifest.json`, and open a pull request.
+   `manifests/U/Unphased Night Planner/3.2.0.9001/0.8.1.0/manifest.json`, and open a pull request.
    Its CI validates against the schema and re-hashes the download; on merge, `gather.js` publishes
    the file to `https://nighttime-imaging.eu/wp-json/nina/v1/...`, which is what N.I.N.A. fetches
    (`PluginFetcher.cs:38`). A manifest that fails validation is simply never listed, so

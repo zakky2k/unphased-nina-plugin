@@ -23,7 +23,9 @@ namespace Zakfo.Unphased.Features.planner {
             SunsetChip = $"☉ ↓ {payload.Sunset.ToLocalTime():HH:mm}";
             SunriseChip = $"☉ ↑ {payload.Sunrise.ToLocalTime():HH:mm}";
             DarkIntervals = AstronomicalDarkIntervals(payload);
-            DarkChip = $"Total dark · {FormatDuration(payload.DarkMinutes)}";
+            DarkChip = payload.TrueDarkness
+                ? $"Total dark · {FormatDuration(payload.DarkMinutes)}"
+                : "Total dark · No astronomical darkness";
             MoonlessDarkIntervals = MoonlessIntervals(payload, DarkIntervals);
             int moonlessMinutes = WholeMinutes(MoonlessDarkIntervals.Sum(interval => interval.End - interval.Start));
             MoonlessChip = $"Moonless dark · {FormatDuration(moonlessMinutes)}";

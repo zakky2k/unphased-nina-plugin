@@ -24,7 +24,7 @@ namespace Zakfo.Unphased {
         public Features.settings.PluginSettings Settings => Features.settings.PluginSettings.For(ProfileService);
 
         public override Task Initialize() {
-            Settings.Initialize();
+            _ = Settings;
             return Task.CompletedTask;
         }
 

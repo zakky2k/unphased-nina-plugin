@@ -6,6 +6,7 @@ using Zakfo.Unphased.Features.planner;
 using Zakfo.Unphased.Features.settings;
 using Moq;
 using NINA.Profile.Interfaces;
+using System.IO;
 
 namespace Zakfo.Unphased.Tests.Features.settings {
     [NonParallelizable, Apartment(ApartmentState.STA)]
@@ -153,6 +154,101 @@ namespace Zakfo.Unphased.Tests.Features.settings {
             using var settings = new PluginSettings(profiles.Object);
             settings.Initialize();
             Assert.That(settings.EffectiveSite(), Is.Null);
+        }
+
+        [Test]
+        public void SettingsCanStartBeforeAProfileIsActive() {
+            var profiles = new Mock<IProfileService>();
+            using var settings = new PluginSettings(profiles.Object);
+            settings.Initialize();
+            settings.SiteLatDraft = "52";
+            settings.SiteLonDraft = "16";
+            Assert.Multiple(() => {
+                Assert.That(settings.EffectiveSite(), Is.Null);
+                Assert.That(settings.ApplySiteCommand.CanExecute(null), Is.False);
+                Assert.That(settings.ResetSiteCommand.CanExecute(null), Is.False);
+            });
+            settings.ApplySite();
+            settings.ResetSite();
+            Assert.That(settings.SiteNotice, Is.Empty);
+
+            var active = ProfilesWithAstrometry(50, 14).Object.ActiveProfile;
+            var identifier = Guid.Parse(new Plugin().Identifier);
+            active.PluginSettings.SetValue(identifier, nameof(PluginSettings.SiteLatOverride), "51");
+            active.PluginSettings.SetValue(identifier, nameof(PluginSettings.SiteLonOverride), "15");
+            profiles.SetupGet(p => p.ActiveProfile).Returns(active);
+            profiles.Raise(p => p.ProfileChanged += null, EventArgs.Empty);
+            Assert.Multiple(() => {
+                Assert.That(settings.EffectiveSite(), Is.EqualTo((51d, 15d)));
+                Assert.That(settings.SiteLatDraft, Is.EqualTo("51"));
+                Assert.That(settings.SiteLonDraft, Is.EqualTo("15"));
+                Assert.That(settings.ApplySiteCommand.CanExecute(null), Is.True);
+                Assert.That(settings.ResetSiteCommand.CanExecute(null), Is.True);
+            });
+        }
+
+        [Test]
+        public void FailedSharedInitializationDetachesAndCanBeRetried() {
+            PluginSettings.Shared?.Dispose();
+            var profiles = new Mock<IProfileService>();
+            profiles.SetupGet(p => p.ActiveProfile).Throws(new InvalidOperationException("Profile unavailable"));
+            Assert.Throws<InvalidOperationException>(() => PluginSettings.For(profiles.Object));
+            Assert.That(PluginSettings.Shared, Is.Null);
+            profiles.VerifyRemove(p => p.ProfileChanged -= It.IsAny<EventHandler>(), Times.Once);
+            profiles.VerifyRemove(p => p.HorizonChanged -= It.IsAny<EventHandler>(), Times.Once);
+
+            profiles.SetupGet(p => p.ActiveProfile).Returns((IProfile)null);
+            using var settings = PluginSettings.For(profiles.Object);
+            Assert.That(PluginSettings.For(profiles.Object), Is.SameAs(settings));
+        }
+
+        [TestCase("{")]
+        [TestCase("null")]
+        [TestCase("[]")]
+        [TestCase("5")]
+        public void InvalidGlobalSettingsLeaveTheFileInPlace(string contents) {
+            WithSettingsFile(contents, path => {
+                using var settings = new PluginSettings(ProfilesWithAstrometry(50, 14).Object);
+                settings.Initialize();
+                Assert.Multiple(() => {
+                    Assert.That(settings.SunColor, Is.Empty);
+                    Assert.That(settings.ChartDefaults.Value, Is.EqualTo(ChartElements.Default));
+                    Assert.That(File.ReadAllText(path), Is.EqualTo(contents));
+                });
+            });
+        }
+
+        [Test]
+        public void LockedGlobalSettingsCanBeReadAndSavedAfterTheLockClears() {
+            const string contents = "{\"sunColor\":\"#112233\"}";
+            WithSettingsFile(contents, path => {
+                using var settings = new PluginSettings(ProfilesWithAstrometry(50, 14).Object);
+                using (File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) {
+                    settings.Initialize();
+                    Assert.That(settings.SunColor, Is.Empty);
+                    settings.SunColor = "#445566";
+                    Assert.That(settings.SunColor, Is.EqualTo("#445566"));
+                    Assert.That(Directory.GetFiles(Path.GetDirectoryName(path), "settings.json.*.tmp"), Is.Empty);
+                }
+                Assert.That(File.ReadAllText(path), Is.EqualTo(contents));
+                settings.SunColor = "#778899";
+                using var reopened = new PluginSettings(ProfilesWithAstrometry(50, 14).Object);
+                reopened.Initialize();
+                Assert.That(reopened.SunColor, Is.EqualTo("#778899"));
+            });
+        }
+
+        private static void WithSettingsFile(string contents, Action<string> test) {
+            var path = Path.Combine(TestEnvironment.Root, "PluginSettings", new Plugin().Identifier, "settings.json");
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            var previous = File.Exists(path) ? File.ReadAllBytes(path) : null;
+            try {
+                File.WriteAllText(path, contents);
+                test(path);
+            } finally {
+                if (previous == null) File.Delete(path);
+                else File.WriteAllBytes(path, previous);
+            }
         }
 
         [Test]

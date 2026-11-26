@@ -22,11 +22,13 @@ $uri = [uri]$InstallerUrl
 if (!$uri.IsAbsoluteUri -or $uri.Scheme -ne 'https') { throw 'InstallerUrl must be an absolute HTTPS URL.' }
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $OutputDirectory = (Resolve-Path -LiteralPath $OutputDirectory).Path
-Push-Location $OutputDirectory
+$workDirectory = Join-Path $OutputDirectory ([guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $workDirectory | Out-Null
+$zip = Join-Path $workDirectory "$archiveName.zip"
+$manifestPath = Join-Path $workDirectory "$archiveName.manifest.json"
+Push-Location $workDirectory
 try {
     # The staging ownership marker must not enter the distributable archive.
-    $zip = Join-Path $OutputDirectory "$archiveName.zip"
-    if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip }
     $files = @(Get-ChildItem -LiteralPath $Stage -Force | Where-Object Name -ne '.nina-template-stage')
     Compress-Archive -LiteralPath $files.FullName -DestinationPath $zip
     & "$PSScriptRoot/vendor/CreateManifest.ps1" -file $assembly -installerUrl $InstallerUrl -beta:($Channel -eq 'Beta') | Out-Null
@@ -37,8 +39,16 @@ try {
     $manifest.Installer.ChecksumType = 'SHA256'
     $json = $manifest | ConvertTo-Json -Depth 20
     if (!(Test-Json -Json $json -SchemaFile "$PSScriptRoot/vendor/manifest.schema.json" -ErrorAction Stop)) { throw 'Manifest schema validation failed.' }
-    $manifestPath = Join-Path $OutputDirectory "$archiveName.manifest.json"
     Set-Content -LiteralPath $manifestPath -Value $json -Encoding utf8
-    Remove-Item -LiteralPath 'manifest.json'
-    Write-Host "Created $zip and $manifestPath"
-} finally { Pop-Location }
+    $finalZip = Join-Path $OutputDirectory "$archiveName.zip"
+    $finalManifest = Join-Path $OutputDirectory "$archiveName.manifest.json"
+    [IO.File]::Move($zip, $finalZip, $true)
+    [IO.File]::Move($manifestPath, $finalManifest, $true)
+    Write-Host "Created $finalZip and $finalManifest"
+} finally {
+    Pop-Location
+    foreach ($path in @($zip, $manifestPath, (Join-Path $workDirectory 'manifest.json'))) {
+        [IO.File]::Delete($path)
+    }
+    [IO.Directory]::Delete($workDirectory)
+}

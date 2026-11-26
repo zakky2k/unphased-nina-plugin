@@ -1,4 +1,10 @@
-# HANDOFF — Unphased Night Planner (N.I.N.A. plugin), state at 2026-11-26 (round 13 delivered: settings lead the options page, three pillars above About, Lunar phases first, suite 108, deployed to the live plugin folder; 0.7.0.0 remains the released build, `main` is ahead of that tag)
+# Handoff — Unphased Night Planner
+
+The 0.8.1.0 beta addresses settings startup and persistence, includes the full MPL-2.0 licence,
+and verifies installer contents and source revision before publication. See the
+[changelog](UnphasedNina/CHANGELOG.md) for current changes and the
+[release guide](UnphasedNina/README.md#release-and-the-plugin-catalogue) for packaging.
+The notes below describe earlier development rounds.
 
 > **Moved on 26 Nov, round 9:** this tree is its own repository now — `github.com/zakky2k/unphased-nina-plugin`,
 > working path `C:\Users\zakfo\Documents\unphased-nina-plugin`. It was copied out of `AstroScripts/nina-plugin` at

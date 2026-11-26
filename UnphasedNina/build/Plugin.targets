@@ -32,7 +32,10 @@
   <Target Name="DeployPlugin" DependsOnTargets="StagePlugin">
     <Exec Command="pwsh -NoProfile -File &quot;$(MSBuildThisFileDirectory)Deploy-Plugin.ps1&quot; -Stage &quot;$(PluginStageDirectory)&quot; -AssemblyName &quot;$(TargetFileName)&quot; -Destination &quot;$(PluginDeployDirectory)&quot; -NinaExe &quot;$(NinaExecutable)&quot;" />
   </Target>
-  <Target Name="PackagePlugin" DependsOnTargets="StagePlugin">
+  <Target Name="RequireReleaseConfiguration">
+    <Error Condition="'$(Configuration)' != 'Release'" Text="PackagePlugin requires Configuration=Release." />
+  </Target>
+  <Target Name="PackagePlugin" DependsOnTargets="RequireReleaseConfiguration;StagePlugin">
     <Exec Command="pwsh -NoProfile -File &quot;$(MSBuildThisFileDirectory)Package-Plugin.ps1&quot; -Stage &quot;$(PluginStageDirectory)&quot; -AssemblyName &quot;$(TargetFileName)&quot; -OutputDirectory &quot;$(PluginArtifactDirectory)/release&quot; -InstallerUrl &quot;$(PluginInstallerUrl)&quot; -Channel &quot;$(PluginChannel)&quot;" />
   </Target>
 </Project>

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.1.0 Beta
+
+- The plugin can start before a N.I.N.A. profile is active and recover when it becomes available.
+- Unreadable or invalid global settings fall back to defaults. A failed save keeps the in-memory settings and leaves the existing file in place.
+- Nights without astronomical darkness are labelled explicitly in the summary.
+- The installer includes the full MPL-2.0 licence. Release packaging checks the archive contents, checksum and source revision.
+
 ## 0.8.0.0 Beta
 
 - Clear Horizon is the new plugin artwork. Its crescent Moon sits at the peak of

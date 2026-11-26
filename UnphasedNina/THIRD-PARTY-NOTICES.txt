@@ -3,6 +3,8 @@ Third-party notices for Unphased Night Planner
 
 This plugin ships other people's code alongside its own. The plugin's own source is MPL-2.0
 (see LICENSE.txt); the parts below keep their own licences.
+Plugin source is available from https://github.com/zakky2k/unphased-nina-plugin/releases
+under the tag matching the installer version.
 
 Astronomy Engine — bundled as astronomy.dll
 -------------------------------------------

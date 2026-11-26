@@ -59,10 +59,11 @@ namespace Zakfo.Unphased.Features.settings {
         /// </summary>
         public static PluginSettings For(IProfileService profiles) {
             lock (SharedGate) {
-                Shared ??= new PluginSettings(profiles);
-                // Idempotent and cheap: whoever asks first gets the file read.
-                Shared.Initialize();
-                return Shared;
+                if (Shared != null) return Shared;
+                var settings = new PluginSettings(profiles);
+                settings.Initialize();
+                Shared = settings;
+                return settings;
             }
         }
 
@@ -84,44 +85,51 @@ namespace Zakfo.Unphased.Features.settings {
         }
 
         public void Initialize() {
-            if (initialized) return;
-            var carriedNightFlag = false;
-            if (File.Exists(globalPath)) {
+            lock (SharedGate) {
+                if (initialized) return;
+                bool carriedNightFlag = LoadGlobal();
                 try {
-                    using var doc = JsonDocument.Parse(File.ReadAllText(globalPath));
-                    // Migration only. Before the three-way scheme this file carried a
-                    // single night flag, so a file written by an older build reads across to
-                    // Night - and then the key has to come out of the file, because the
-                    // scheme itself is deliberately not saved and a key left behind would
-                    // put night mode back on at every launch. ValueKind rather than
-                    // GetBoolean so a file holding "darkMode": "yes" is ignored, not thrown.
-                    if (doc.RootElement.TryGetProperty("darkMode", out var dark)) {
-                        if (dark.ValueKind == JsonValueKind.True)
-                            scheme = ChartScheme.Night;
-                        carriedNightFlag = true;
-                    }
-                    // The file is written from the fields below, so its keys are camelCase
-                    // like "sunColor"; nameof(SunColor) would look for a key never written.
-                    sunColor = ReadHex(doc, "sunColor");
-                    moonColor = ReadHex(doc, "moonColor");
-                    horizonColor = ReadHex(doc, "horizonColor");
-                    if (doc.RootElement.TryGetProperty("chartDefaults", out var defaults) && defaults.ValueKind == JsonValueKind.Number
-                        && defaults.TryGetInt32(out int flags) && flags >= 0)
-                        ChartDefaults.Value = (ChartElements)flags;
-                } catch (JsonException) {
-                    // Corrupt settings file: keep defaults rather than crash the plugin.
+                    profiles.ProfileChanged += OnProfileChanged;
+                    profiles.HorizonChanged += OnHorizonChanged;
+                    ChartDefaults.PropertyChanged += OnChartDefaultsChanged;
+                    SeedSiteDrafts();
+                    initialized = true;
+                    if (carriedNightFlag) SaveGlobal();
+                    RaisePropertyChanged(nameof(Scheme));
+                    RaisePropertyChanged(nameof(SchemeName));
+                    RaiseColours();
+                    RaiseSiteState();
+                } catch {
+                    DetachSettingsHandlers();
+                    throw;
                 }
             }
-            profiles.ProfileChanged += OnProfileChanged;
-            profiles.HorizonChanged += OnHorizonChanged;
-            ChartDefaults.PropertyChanged += OnChartDefaultsChanged;
-            SeedSiteDrafts();
-            initialized = true;
-            if (carriedNightFlag) SaveGlobal();
-            RaisePropertyChanged(nameof(Scheme));
-            RaisePropertyChanged(nameof(SchemeName));
-            RaiseColours();
-            RaiseSiteState();
+        }
+
+        private bool LoadGlobal() {
+            try {
+                using var doc = JsonDocument.Parse(File.ReadAllText(globalPath));
+                var root = doc.RootElement;
+                if (root.ValueKind != JsonValueKind.Object)
+                    throw new JsonException("Expected a settings object.");
+
+                // Import the old night flag once. The current palette is session-only.
+                bool carriedNightFlag = root.TryGetProperty("darkMode", out var dark);
+                if (carriedNightFlag && dark.ValueKind == JsonValueKind.True)
+                    scheme = ChartScheme.Night;
+                sunColor = ReadHex(doc, "sunColor");
+                moonColor = ReadHex(doc, "moonColor");
+                horizonColor = ReadHex(doc, "horizonColor");
+                if (root.TryGetProperty("chartDefaults", out var defaults) && defaults.ValueKind == JsonValueKind.Number
+                    && defaults.TryGetInt32(out int flags) && flags >= 0)
+                    ChartDefaults.Value = (ChartElements)flags;
+                return carriedNightFlag;
+            } catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) {
+                return false;
+            } catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException) {
+                Logger.Error($"Unphased could not read settings at {globalPath}", ex);
+                return false;
+            }
         }
 
         /// <summary>
@@ -319,14 +327,23 @@ namespace Zakfo.Unphased.Features.settings {
         /// astrometry settings". Stored as an invariant-culture decimal string.
         /// </summary>
         public string SiteLatOverride {
-            get => profileOptions.GetValueString(nameof(SiteLatOverride), string.Empty);
-            set { profileOptions.SetValueString(nameof(SiteLatOverride), value ?? string.Empty); RaisePropertyChanged(); }
+            get => ReadSiteOverride(nameof(SiteLatOverride));
+            set => WriteSiteOverride(nameof(SiteLatOverride), value);
         }
 
         /// <summary>Longitude override; empty means "from the profile".</summary>
         public string SiteLonOverride {
-            get => profileOptions.GetValueString(nameof(SiteLonOverride), string.Empty);
-            set { profileOptions.SetValueString(nameof(SiteLonOverride), value ?? string.Empty); RaisePropertyChanged(); }
+            get => ReadSiteOverride(nameof(SiteLonOverride));
+            set => WriteSiteOverride(nameof(SiteLonOverride), value);
+        }
+
+        private string ReadSiteOverride(string key) => profiles.ActiveProfile == null ? string.Empty
+            : profileOptions.GetValueString(key, string.Empty);
+
+        private void WriteSiteOverride(string key, string value) {
+            if (profiles.ActiveProfile == null) return;
+            profileOptions.SetValueString(key, value ?? string.Empty);
+            RaisePropertyChanged(key);
         }
 
         internal string OverlayTargetsJson {
@@ -407,7 +424,9 @@ namespace Zakfo.Unphased.Features.settings {
         }
 
         /// <summary>Both boxes hold a usable number, so Apply has something honest to store.</summary>
-        public bool CanApplySite() => TryCoord(siteLatDraft, out _) && TryCoord(siteLonDraft, out _);
+        public bool CanApplySite() => CanResetSite() && TryCoord(siteLatDraft, out _) && TryCoord(siteLonDraft, out _);
+
+        private bool CanResetSite() => profiles.ActiveProfile != null;
 
         private IRelayCommand applySite, resetSite;
 
@@ -415,7 +434,7 @@ namespace Zakfo.Unphased.Features.settings {
         public IRelayCommand ApplySiteCommand => applySite ??= new RelayCommand(ApplySite, CanApplySite);
 
         /// <summary>Put this profile's site in the boxes and stop pinning one.</summary>
-        public IRelayCommand ResetSiteCommand => resetSite ??= new RelayCommand(ResetSite);
+        public IRelayCommand ResetSiteCommand => resetSite ??= new RelayCommand(ResetSite, CanResetSite);
 
         /// <summary>
         /// Write the drafted pair to the per-profile override. Out-of-range values are
@@ -423,6 +442,7 @@ namespace Zakfo.Unphased.Features.settings {
         /// pretending the number typed is the number stored.
         /// </summary>
         public void ApplySite() {
+            if (!CanResetSite()) return;
             if (!TryCoord(siteLatDraft, out var lat) || !TryCoord(siteLonDraft, out var lon)) {
                 SiteNotice = IncompleteSite;
                 return;
@@ -455,6 +475,7 @@ namespace Zakfo.Unphased.Features.settings {
         /// of presenting two empty fields.
         /// </summary>
         public void ResetSite() {
+            if (!CanResetSite()) return;
             SiteLatOverride = string.Empty;
             SiteLonOverride = string.Empty;
             siteLatDraft = siteLonDraft = string.Empty;
@@ -490,7 +511,7 @@ namespace Zakfo.Unphased.Features.settings {
 
         private void RaiseSite() {
             RaiseSiteState();
-            if (!CanApplySite() && (siteLatDraft.Length != 0 || siteLonDraft.Length != 0)) {
+            if (CanResetSite() && !CanApplySite() && (siteLatDraft.Length != 0 || siteLonDraft.Length != 0)) {
                 SiteNotice = IncompleteSite;
             } else if (!string.IsNullOrEmpty(siteNotice) && siteNotice != IncompleteSite) {
                 SiteNotice = string.Empty;
@@ -504,6 +525,7 @@ namespace Zakfo.Unphased.Features.settings {
             RaisePropertyChanged(nameof(SiteReadout));
             RaisePropertyChanged(nameof(SiteOverrideActive));
             applySite?.NotifyCanExecuteChanged();
+            resetSite?.NotifyCanExecuteChanged();
         }
 
         /// <summary>
@@ -529,14 +551,19 @@ namespace Zakfo.Unphased.Features.settings {
         }
 
         private void SaveGlobal() {
+            var temporaryPath = $"{globalPath}.{Guid.NewGuid():N}.tmp";
             try {
                 Directory.CreateDirectory(Path.GetDirectoryName(globalPath));
                 var payload = JsonSerializer.Serialize(new { sunColor, moonColor, horizonColor, chartDefaults = (int)ChartDefaults.Value });
-                var temporaryPath = globalPath + ".tmp";
                 File.WriteAllText(temporaryPath, payload);
                 File.Move(temporaryPath, globalPath, true);
-            } catch (IOException) {
-                // Settings persistence is best-effort; in-memory state stays correct.
+            } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+                Logger.Error($"Unphased could not save settings at {globalPath}", ex);
+                try {
+                    File.Delete(temporaryPath);
+                } catch (Exception cleanupError) when (cleanupError is IOException or UnauthorizedAccessException) {
+                    Logger.Error($"Unphased could not remove temporary settings at {temporaryPath}", cleanupError);
+                }
             }
         }
 
@@ -545,27 +572,24 @@ namespace Zakfo.Unphased.Features.settings {
             RaisePropertyChanged(nameof(ActiveHorizon));
             RaisePropertyChanged(nameof(SiteLatOverride));
             RaisePropertyChanged(nameof(SiteLonOverride));
-            // A different profile means a different site to follow, so the boxes move with
-            // it - unless this profile pins its own.
-            if (!SiteOverrideActive) {
-                siteLatDraft = siteLonDraft = string.Empty;
-                SeedSiteDrafts();
-            }
+            siteLatDraft = siteLonDraft = string.Empty;
+            SeedSiteDrafts();
 
             siteNotice = string.Empty;
             RaiseSiteState();
             RaisePropertyChanged(nameof(SiteNotice));
         }
 
-        public void Dispose() {
-            if (!initialized) return;
+        private void DetachSettingsHandlers() {
             profiles.ProfileChanged -= OnProfileChanged;
             profiles.HorizonChanged -= OnHorizonChanged;
             ChartDefaults.PropertyChanged -= OnChartDefaultsChanged;
             initialized = false;
-            // Stop handing out a stopped object: if the plugin is reloaded within one run of
-            // N.I.N.A., For() builds a fresh one that reads the file again.
+        }
+
+        public void Dispose() {
             lock (SharedGate) {
+                if (initialized) DetachSettingsHandlers();
                 if (ReferenceEquals(Shared, this)) Shared = null;
             }
         }
