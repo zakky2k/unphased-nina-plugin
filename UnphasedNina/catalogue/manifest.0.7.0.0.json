@@ -1,0 +1,47 @@
+{
+  "Name": "Unphased Night Planner",
+  "Identifier": "09572065-E196-4DBA-B954-48F84B351DD1",
+  "Version": {
+    "Major": "0",
+    "Minor": "7",
+    "Patch": "0",
+    "Build": "0"
+  },
+  "Author": "zakky2k",
+  "Homepage": "https://github.com/zakky2k/unphased-nina-plugin",
+  "Repository": "https://github.com/zakky2k/unphased-nina-plugin",
+  "License": "MPL-2.0",
+  "LicenseURL": "https://www.mozilla.org/en-US/MPL/2.0/",
+  "ChangelogURL": "https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/UnphasedNina/CHANGELOG.md",
+  "Tags": [
+    "night planning",
+    "planner",
+    "sun",
+    "moon",
+    "twilight",
+    "altitude",
+    "ephemeris",
+    "chart",
+    "dockable"
+  ],
+  "MinimumApplicationVersion": {
+    "Major": "3",
+    "Minor": "2",
+    "Patch": "0",
+    "Build": "9001"
+  },
+  "Descriptions": {
+    "ShortDescription": "Night planning chart: sun and moon altitude, twilight bands and moon phase across consecutive nights, with a calendar, zoom to a week, an hour scrub and three chart palettes.",
+    "LongDescription": "A dockable panel that answers one question: what is worth shooting tonight, and how dark is it?\r\n\r\nThe chart draws the Sun and the Moon against the horizon and the astronomical twilight bands, over a frame you choose - one night, three nights or a week stitched together. A scrub marker steps through the night an hour at a time and reports where both bodies are and what phase the Moon is in; a glyph marks the Moon's highest point of the night with its illuminated fraction. A calendar chooses which night to look at, and the panel keeps the nights on either side of it in hand, widening as you page, so paging sideways never runs out.\r\n\r\nThe panel follows N.I.N.A.'s colour scheme, and the chart can be drawn in three palettes: that scheme, a red night set that re-colours the panel too for use at the telescope, or a high-contrast set whose sun, moon and horizon are told apart by colour rather than brightness. Sun, Moon and horizon colours can be set on the plugin options page, and the chart repaints as you pick them.\r\n\r\nEphemerides come from the Astronomy Engine (CosineKitty.AstronomyEngine), evaluated for the observatory location in your N.I.N.A. profile.\r\n\r\nThis is early software - version 0.x, feature complete for its own purpose but with rough edges listed in the changelog.\r\n\r\nDevelopment of this plugin has been materially AI-assisted (Anthropic's Claude acting as programmer), with the human maintainer reviewing, testing and maintaining every change.",
+    "FeaturedImageURL": "https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/UnphasedNina/assets/unphased-256.png",
+    "ScreenshotURL": "",
+    "AltScreenshotURL": ""
+  },
+  "Installer": {
+    "URL": "https://github.com/zakky2k/unphased-nina-plugin/releases/download/v0.7.0.0/UnphasedNina.0.7.0.0.zip",
+    "Type": "ARCHIVE",
+    "Checksum": "7DA5FD2421F93B54D540A7460A8E6EB43BBF2258B6B456BE2BB5186E602C0D1F",
+    "ChecksumType": "SHA256"
+  },
+  "Channel": "Beta"
+}

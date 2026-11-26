@@ -846,7 +846,8 @@ the options page in the live app and accepted the build as 0.7.0.0.**
    (**31 nights → 41**) holds `Busy` for **46 ms** on this machine; the cold first window takes **186 ms**.
    The readout is there for the first open and for slow machines, not for the arrow keys. Not yet seen in
    the live app, and the `DatePicker` at other panel widths is still unreviewed.
-4. **Packaging — not run.** Any of the above changes the DLL, so this is last:
+4. **Packaging — ran on 26 Nov 09:52**; the result, and the catalogue being parked, is the section below this one.
+   Any of the above changes the DLL, so it was left to last:
    `.\UnphasedNina\build\Build-Release.ps1 -Tag v0.7.0.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta`,
    then `Verify-ReleaseArtifacts.ps1`, the GitHub release on **this** repository (the archive must stay
    byte-identical afterwards — catalogue CI re-hashes `Installer.URL`), then the manifest PR at
@@ -880,7 +881,80 @@ that. Suite **98** (97 + `LicenceHeaderTests`). Against the standing caution tha
 file: that file still holds the user's picked colours (`sunColor #FEF80E`, `moonColor #00FFFF`, `horizonColor ""`) and
 was last written at **00:56:14**, by N.I.N.A. itself, not by any suite run since.
 
+**Load proof for that deploy, in the end, came from the module list.** The relaunched N.I.N.A. (PID 34608, up since
+09:50:26, `Responding=True`, main window titled "N.I.N.A. - Nighttime Imaging 'N' Astronomy") has
+`UnphasedNina.dll` and `UnphasedCore.dll` mapped from
+`%LOCALAPPDATA%\NINA\Plugins\3.0.0\Unphased Night Planner\`. That is the proof round 8 wanted: not "it started" but
+"these files are the ones in memory". (A module-enumeration failure means the process is gone, not that the plugin
+failed — the 09:48 instance had simply exited, with no crash event anywhere near it.)
+
+## Round 9 packaging — 0.7.0.0 released, catalogue parked on purpose
+
+Packaging ran 26 Nov 09:52 against a tree with **no open question left**: the last undecided item, per-file MPL-2.0
+headers, was finished first (`235205f` — 39 `.cs`/`.xaml` files, `LicenceHeaderTests`, README; suite **98**), because
+headers change the DLL, and the DLL sets the ZIP, and the ZIP sets the checksum.
+
+- **Tag then build, in that order.** `git tag v0.7.0.0` on `235205f`, `git push origin main --tags`, then
+  `Build-Release.ps1 -Tag v0.7.0.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta`. The order matters only in
+  that the assembly stamps itself with the commit: the DLLs inside the archive carry
+  `FileVersion 0.7.0.0`, `ProductVersion 0.7.0.0+235205f0e32c746aa4583365df6639185f092a5a` — the tag commit, verbatim,
+  read out of the archive rather than assumed.
+- **Archive:** `artifacts/release/UnphasedNina.0.7.0.0.zip`, **154,585 B**, exactly six entries
+  (`astronomy.dll`, `LICENSE.txt`, `THIRD-PARTY-NOTICES.txt`, `UnphasedCore.dll`, `UnphasedNina.dll`,
+  `UnphasedNina.pdb`), `SHA256 7DA5FD2421F93B54D540A7460A8E6EB43BBF2258B6B456BE2BB5186E602C0D1F` and the manifest's
+  `Installer.Checksum` the same string. Sizes are not comparable to the deployed Debug build — Release
+  `UnphasedNina.dll` is 84,992 B where the Debug deploy is 91,648 B, and that is the optimiser, not a missing feature.
+- **`Verify-ReleaseArtifacts.ps1` takes three arguments**, not one:
+  `-Directory artifacts/release -Repository zakky2k/unphased-nina-plugin -Tag v0.7.0.0` → "Verified release archive and
+  manifest." Running it with only `-Tag` fails on missing mandatory parameters.
+- **The release is live**: `https://github.com/zakky2k/unphased-nina-plugin/releases/tag/v0.7.0.0`, notes from the
+  round-9 changelog, one asset (the ZIP, 154,585 B). Written with `gh`, authenticating with the same GCM-stored
+  fine-grained PAT git pushes with — `git credential fill` into `$env:GH_TOKEN` inside a single call, never printed.
+  That works now that the PAT's scope covers the repository; `gh auth login` itself remains unused.
+- **Hash re-checked after upload, not before only**: the asset was downloaded back out of the release and hashed —
+  hosted == local == manifest, all `7da5fd24…`, 154,585 B. This is the only check that matters for the catalogue, whose
+  CI does the same download itself.
+- **Catalogue submission is validated and parked.** Prepared at
+  `manifests/U/Unphased Night Planner/3.2.0.9001/0.7.0.0/manifest.json` (path pattern copied from a current
+  submission, `manifests/Q/Quick Actions/3.2.0.9001/0.9.0.0/manifest.json` — that one is also MPL-2.0, `Channel: Beta`
+  and discloses AI authorship in `LongDescription`, so it is a fair template). Run through the catalogue's own tooling
+  on a local clone: `node validate-latest-manifest.js` exits 0, which means schema-valid **and** its own re-hash of
+  `Installer.URL` matched; `node gather.js` reports **482 total, 482 successful, 0 failed, 0 invalid**, no GUID
+  collision, and the entry lands in `Plugins/Beta/manifests.json` among 31 with `Channel` stripped. Working copy was
+  `%TEMP%\nina-manifests-pr` (branch `unphased-night-planner-0.7.0.0`, commit `8be70d5`) — TEMP, so it is already gone
+  or will be; the manifest itself is committed here at **`UnphasedNina/catalogue/manifest.0.7.0.0.json`**, and
+  rebuilding the working copy is clone + copy that file into the path above.
+- **Why parked, in the user's words**: "not comfortable enough yet to make it publicly appear in the official nina list
+  of plugins, there is still some ui enhancements i'd like to finish and some next phase enhancements." The question
+  behind it — does every change need their approval? — answered honestly: **yes, one PR per listed version, reviewed
+  and merged by a N.I.N.A. maintainer**; the fork is yours and needs nothing from them, the entry is the gate. And
+  nothing depends on it: the catalogue holds JSON, the binary always comes from this repository, an unlisted or rejected
+  manifest changes nothing about whether the plugin works — only whether N.I.N.A. offers it and announces updates.
+- **Fork route blocker, for next time**: a fine-grained PAT cannot fork a repository outside its scope —
+  `POST /repos/isbeorn/nina.plugin.manifests/forks` returns `403 Resource not accessible by personal access token`,
+  and `gh repo fork` surfaces exactly that. Either fork in the web UI first and add the fork to the PAT, or use a token
+  that may fork. `gh api user` with the same credential identifies `zakky2k`, and read access to the catalogue repo is
+  fine — so clone, commit and validate upstream read-only, which is what was done.
+- **README now leads with the release ZIP** (`## Install`: download, unzip into
+  `%LOCALAPPDATA%\NINA\Plugins\3.0.0\Unphased Night Planner\`, restart), says plainly that the plugin is not in N.I.N.A.'s
+  list yet and links the *Release and the plugin catalogue* section for why, where the parked manifest lives and what
+  submitting it later costs.
+- **Screenshots are still unhosted**, as decided: `ScreenshotURL`/`AltScreenshotURL` stay empty strings in the manifest;
+  `FeaturedImageURL` is `assets/unphased-256.png` in this repository and answers HTTP 200 (10,908 B), so the store tile
+  would show the icon if it were listed.
+
 ## Open items and decisions
+- **0.7.0.0 is both the deployed and the released build** (deployed 09:48 on 26 Nov from `c1e4384`; licence headers in
+  `235205f`; `main` and tag `v0.7.0.0` pushed). Deployed Debug `UnphasedNina.dll` **91,648 B**; the released archive
+  carries **84,992 B** because it is the Release configuration — sizes are not comparable across the two. The relaunched
+  N.I.N.A. (PID 34608, up 09:50:26) has `UnphasedNina.dll` **and** `UnphasedCore.dll` mapped out of the plugin folder:
+  that is the module-list load proof earlier rounds wanted. Suite **98**.
+- **Round 10 — ask, do not guess.** The user's words: "there is still some ui enhancements i'd like to finish and some
+  next phase enhancements". So the first job next session is to get the list from them. Small known ones carried forward:
+  the moon glyph crowding its chip in the night palette; the `DatePicker` unreviewed at other panel widths; `computing…`
+  never observed in the live app (46 ms of paging is simply too quick). **Catalogue submission is parked** until they are
+  happy — the validated manifest is committed at `UnphasedNina/catalogue/manifest.0.7.0.0.json`, and the fork step needs
+  either a web-UI fork added to the PAT or a token allowed to fork.
 - **0.6.2.0 is the deployed build** (deployed 21:46 on 25 Nov, after `8cdcce1`): `UnphasedNina.dll` **74,240 B**,
   `ProductVersion 0.6.2.0+8cdcce1…`, and now **six** files in the folder — `THIRD-PARTY-NOTICES.txt` (2,799 B) sits beside
   LICENSE.txt — every one SHA256-identical to `artifacts\stage\Debug`. N.I.N.A. was relaunched at 21:45:44 (PID 13672,

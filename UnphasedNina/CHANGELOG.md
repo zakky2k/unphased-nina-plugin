@@ -34,6 +34,21 @@ looked at again (crops at 620 DIP, plus a busy-state render).
   the walk found at least 38 files (a walk that quietly finds nothing would otherwise pass), and keeps
   `build/vendor/` out of the walk — unmodified third-party code carrying its own licence.
 
+**State of this build.** Packaged and published as a GitHub release: tag `v0.7.0.0`, `Build-Release.ps1 -Channel Beta`,
+`UnphasedNina.0.7.0.0.zip` (154,585 bytes) whose SHA256 `7da5fd2421f93b54d540a7460a8e6eb43bbf2258b6b456be2bb5186e602c0d1f`
+was re-checked by downloading the asset back out of the release. Install by unzipping it into
+`%LOCALAPPDATA%\NINA\Plugins\3.0.0\Unphased Night Planner\`; there is no N.I.N.A. listing yet.
+
+**Not in the plugin catalogue, deliberately.** The catalogue manifest is written and passes the catalogue's own
+validation (schema, plus its own re-hash of the hosted archive — 482 of 482 manifests valid with this one added, landing
+in the Beta index), and is kept at `catalogue/manifest.0.7.0.0.json`. It is not submitted because being listed means a
+pull request into N.I.N.A.'s manifest repository, reviewed and merged by a maintainer, once per version — and there are
+UI refinements and a next phase still wanted before asking strangers to install this. Nothing depends on the catalogue:
+it holds JSON, never code, and the archive always comes from this repository.
+
+Next: the remaining UI items from the visual rounds (the moon glyph crowding its chip in the night palette, the calendar
+at other panel widths), then the next phase.
+
 ## 0.7.0.0 — a calendar, a taller chart, three palettes, and no Refresh button
 
 Round 8, straight from the 0.6.2.0 visual review. Seven commits, one per item, suite green after
