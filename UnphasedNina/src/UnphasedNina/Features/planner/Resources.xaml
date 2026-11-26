@@ -1,0 +1,192 @@
+<ResourceDictionary x:Class="Zakfo.Unphased.Features.planner.Resources"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:planner="clr-namespace:Zakfo.Unphased.Features.planner">
+
+    <!-- Data template for the plugin's dockable panel. N.I.N.A.'s pane
+         template selector looks up "<VM type full name>_Dockable" in the
+         merged application resources, which is what the code-behind below
+         registers. Colours here are DynamicResource on N.I.N.A.'s own brush
+         keys, so the panel follows the user's palette; when the palette buttons are set
+         to night, PlannerViewGlue.NightPalette installs the values of N.I.N.A.'s red
+         "Dark" scheme in this panel's own resource dictionary and the lookup
+         stops there, leaving every other tab alone. That reach is exactly as
+         far as the plugin's own markup: N.I.N.A.'s control styles bound their
+         palette when the application started, so a plugin cannot recolour them
+         without changing the palette for everyone. The chart repaints itself
+         through NightChartControl in any of the three schemes, and Enhanced
+          leaves the panel's chrome exactly as N.I.N.A. left it. -->
+    <DataTemplate x:Key="PlannerDockableTemplate">
+        <Grid Margin="4" planner:PlannerViewGlue.NightPalette="{Binding Planner.Scheme}"
+            planner:PlannerViewGlue.KeyboardScope="True"
+            Background="{DynamicResource BackgroundBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Date navigation: the calendar is the primary control and the arrows nudge
+                 the same value it shows, so they can never drift apart. The calendar is a
+                 stock WPF DatePicker - no new dependency: N.I.N.A. styles it app-wide
+                 (NINA.WPF.Base/Resources/Styles/DatePicker.xaml, merged in App.xaml) and its
+                 own SkyAtlas view uses the same control, so the panel looks like the rest of
+                 the application. TargetPlanning and the night-summary plugins pick dates the
+                 same way. It carries the chart attachment because it replaced the night list,
+                 which is where the first-computation kick-off used to live. The buttons name their own Foreground
+                  rather than leaving it to N.I.N.A.'s button style: in the normal scheme that
+                  resolves to the very brush the style would have used, so nothing changes, and
+                  at night it picks up the shadowed night-vision value. The button bodies are
+                  deliberately left alone - recolouring those means overriding N.I.N.A.'s own
+                  style, which would either flatten the hover feedback or leak into the app
+                  palette.  There is no Refresh button: the panel works a
+                   window out when it loads and widens it by ten nights when the calendar gets
+                   near an edge, so pressing one had nothing left to do. -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="2,2,2,4">
+                <Button Content="&lt;" Padding="8,2" Margin="0,0,4,0"
+                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                    Command="{Binding PrevNightCommand}"/>
+                <DatePicker Width="112" Margin="0,0,4,0" VerticalAlignment="Center"
+                    SelectedDate="{Binding Planner.SelectedDateForPicker, Mode=TwoWay}"
+                    planner:PlannerViewGlue.Chart="{Binding ElementName=NightChart}"
+                    ToolTip="Pick the night by calendar day (the day the night ends on). The arrows step one night either way."/>
+                <Button Content="&gt;" Padding="8,2" Margin="0,0,8,0"
+                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                    Command="{Binding NextNightCommand}"/>
+                <Button Content="Tonight" Padding="8,2" Margin="0,0,4,0"
+                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                    Command="{Binding TonightCommand}"/>
+                <TextBlock VerticalAlignment="Center" FontSize="14"
+                    Text="{Binding Planner.SelectedDateLabel}"
+                    Foreground="{DynamicResource PrimaryBrush}"/>
+            </StackPanel>
+
+            <!-- Hour-by-hour scrub. Dragging on the chart, the mouse wheel over it and
+                 the left/right arrow keys move the same marker; these buttons are the
+                 clickable form of it, and the label is the readout. -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="2,0,2,4">
+                <Button Content="&lt; hr" Padding="8,2" Margin="0,0,4,0"
+                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                    Command="{Binding ScrubBackCommand}"
+                    ToolTip="Scrub one hour earlier (also: left arrow, mouse wheel, dragging on the chart)"/>
+                <Button Content="hr &gt;" Padding="8,2" Margin="0,0,4,0"
+                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                    Command="{Binding ScrubForwardCommand}"
+                    ToolTip="Scrub one hour later (also: right arrow, mouse wheel, dragging on the chart)"/>
+                <Button Content="off" Padding="8,2" Margin="0,0,8,0"
+                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                    Command="{Binding ScrubClearCommand}"
+                    ToolTip="Remove the scrub marker (also: Escape over the chart)"/>
+                <TextBlock VerticalAlignment="Center" FontSize="13"
+                    Text="{Binding Planner.ScrubLabel}"
+                    Foreground="{DynamicResource SecondaryBrush}"/>
+            </StackPanel>
+
+            <!-- Chart frame length. One night is noon to noon, like the desktop
+                 planner; a week fits the same pixels. The panel width is not allowed to
+                 decide this on its own - a wide panel used to show two nights
+                 unasked. Enabled state is bound to the view model rather than left to
+                 the commands: in a dockable pane a click on + did not re-query the -
+                 button, which left it greyed out and the frame could only ever grow. -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="2,0,2,4">
+                <Button Content="-" Padding="8,2" Margin="0,0,4,0"
+                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                    IsEnabled="{Binding Planner.CanZoomIn}"
+                    Command="{Binding ZoomInCommand}"
+                    ToolTip="Fewer nights on the chart (down to one night, noon to noon)"/>
+                <Button Content="+" Padding="8,2" Margin="0,0,8,0"
+                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                    IsEnabled="{Binding Planner.CanZoomOut}"
+                    Command="{Binding ZoomOutCommand}"
+                    ToolTip="More nights on the chart (up to a week)"/>
+                <TextBlock VerticalAlignment="Center" FontSize="13"
+                    Text="{Binding Planner.ZoomLabel}"
+                    Foreground="{DynamicResource SecondaryBrush}"/>
+                <!-- The panel's own palette, in three buttons rather than a night switch:
+                     there is no off for a palette, and a switch has nowhere to put a third
+                     scheme. They are exclusive because one setting sits behind them, and the
+                     label reads that setting rather than the last click because the same
+                     choice also exists on the plugin's options page. Night recolours the chart
+                     and this panel's chrome; Enhanced is chart-only and leaves the panel
+                     looking like N.I.N.A. They belong here rather than beside the calendar:
+                     the date row is already full, and at a 620 DIP panel five buttons plus the
+                     label pushed the night's title out of sight. -->
+                <Button Content="default" Padding="8,2" Margin="12,0,4,0"
+                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                    Command="{Binding DefaultSchemeCommand}"
+                    ToolTip="Paint the chart with the theme you picked in N.I.N.A."/>
+                <Button Content="night" Padding="8,2" Margin="0,0,4,0"
+                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                    Command="{Binding NightSchemeCommand}"
+                    ToolTip="Red night-vision chart, in the same red palette N.I.N.A.'s own night button uses - for this panel only. The app-wide version is the eye button in N.I.N.A.'s title bar."/>
+                <Button Content="enhanced" Padding="8,2" Margin="0,0,4,0"
+                    Foreground="{DynamicResource ButtonForegroundBrush}"
+                    Command="{Binding EnhancedSchemeCommand}"
+                    ToolTip="Navy chart: sun amber, moon pale blue, horizon teal. The three curves stay apart by hue rather than brightness, which is what a red-green viewer needs. Chart only - the panel keeps your N.I.N.A. colours."/>
+                <TextBlock VerticalAlignment="Center" FontSize="12"
+                    Text="{Binding Planner.SchemeLabel}"
+                    Foreground="{DynamicResource SecondaryBrush}"/>
+            </StackPanel>
+
+            <!-- The selected night's own figures. The night list used to put these on every
+                 row; with the calendar there is one night on screen, so it gets its numbers
+                 spelled out: when the night runs, how much of it is properly dark, and when
+                 the moon is at its best. They follow the highlighted night, not the zoom, so
+                 widening the chart to a week does not quietly change what the chips claim.
+                 The brushes are the same four keys the night palette overrides, so the chips
+                 stay legible in red night vision instead of turning into white boxes. -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="2,0,2,4">
+                <Border Padding="6,2" Margin="0,0,6,0" CornerRadius="3"
+                    Background="{DynamicResource SecondaryBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                    <TextBlock Text="{Binding Planner.SelectedNight.SunChip}" FontSize="13"
+                        Foreground="{DynamicResource PrimaryBrush}"/>
+                </Border>
+                <Border Padding="6,2" Margin="0,0,6,0" CornerRadius="3"
+                    Background="{DynamicResource SecondaryBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                    <TextBlock Text="{Binding Planner.SelectedNight.DarkChip}" FontSize="13"
+                        Foreground="{DynamicResource PrimaryBrush}"/>
+                </Border>
+                <Border Padding="6,2" Margin="0,0,6,0" CornerRadius="3"
+                    Background="{DynamicResource SecondaryBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                    <TextBlock Text="{Binding Planner.SelectedNight.MoonChip}" FontSize="13"
+                        Foreground="{DynamicResource PrimaryBrush}"/>
+                </Border>
+            </StackPanel>
+
+            <!-- Status line, and the one sign that a window is being worked out. Nights
+                 arrive from a background thread, so between asking for a wider window and
+                 getting it the panel would otherwise look stuck rather than busy. Shown by a
+                 trigger rather than a converter because the plugin ships no converter and
+                 N.I.N.A.'s are not guaranteed to be in scope inside a plugin template; the
+                 collapsed element takes no room, so the row is unchanged while idle. -->
+            <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="2,0,2,4">
+                <TextBlock FontSize="11"
+                    Text="{Binding Planner.StatusText}"
+                    Foreground="{DynamicResource SecondaryBrush}"/>
+                <TextBlock FontSize="11" Margin="8,0,0,0" Text="computing..."
+                    Foreground="{DynamicResource SecondaryBrush}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Planner.Busy}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+
+            <!-- The chart takes the whole of the remaining panel now the night strip is
+                 gone; it no longer has to share the row with a scrolling list. -->
+            <planner:NightChartControl x:Name="NightChart" Grid.Row="5" Margin="2" MinHeight="160"/>
+        </Grid>
+    </DataTemplate>
+</ResourceDictionary>

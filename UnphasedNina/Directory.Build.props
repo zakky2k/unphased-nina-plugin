@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Only for the colour dialog in the plugin options: WPF has no colour picker.
+         WinForms ships inside the WindowsDesktop framework N.I.N.A. already runs on, so
+         the deploy list (dll/pdb/core/astronomy/LICENSE) does not change. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <NinaPackageVersion>3.2.0.9001</NinaPackageVersion>
+    <Deterministic>true</Deterministic>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+</Project>

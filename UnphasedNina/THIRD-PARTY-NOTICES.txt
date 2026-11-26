@@ -1,0 +1,51 @@
+Third-party notices for Unphased Night Planner
+==============================================
+
+This plugin ships other people's code alongside its own. The plugin's own source is MPL-2.0
+(see LICENSE.txt); the parts below keep their own licences.
+
+Astronomy Engine — bundled as astronomy.dll
+-------------------------------------------
+Author: Don Cross (CosineKitty), copyright (c) 2019-2022.
+Source: https://github.com/cosinekitty/astronomy
+NuGet package: CosineKitty.AstronomyEngine 2.1.19, declared licence MIT
+(https://licenses.nuget.org/MIT), as recorded in the package's own .nuspec.
+
+All sun, moon and twilight ephemerides in the chart come from this library, evaluated at the
+observatory location in the active N.I.N.A. profile. Nothing in the plugin modifies it.
+
+MIT licence text:
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+  and associated documentation files (the "Software"), to deal in the Software without
+  restriction, including without limitation the rights to use, copy, modify, merge, publish,
+  distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+  Software is furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies or
+  substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+  BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+UnphasedCore — bundled as UnphasedCore.dll
+------------------------------------------
+This plugin's own ephemeris-orchestration library, written for this project and released under
+the same MPL-2.0 as the plugin. It has no third-party code in it beyond the reference to the
+Astronomy Engine above.
+
+N.I.N.A. assemblies
+-------------------
+NINA.Plugin and the other N.I.N.A. assemblies are referenced, never redistributed: they are not
+in the plugin folder, the release archive, or the plugin's dependency list. N.I.N.A. itself is
+MPL-2.0.
+
+Build tooling in this repository (not shipped to users)
+------------------------------------------------------
+UnphasedNina/build/vendor/ holds manifest.schema.json, CreateManifest.ps1 and LICENSE copied
+unmodified from https://github.com/isbeorn/nina.plugin.manifests (MPL-2.0, N.I.N.A. project).
+The revision is pinned in build/vendor/PROVENANCE.md. They are build inputs and are not part of
+the plugin archive.

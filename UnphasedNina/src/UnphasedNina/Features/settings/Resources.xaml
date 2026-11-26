@@ -1,0 +1,122 @@
+<ResourceDictionary x:Class="Zakfo.Unphased.Features.settings.Resources"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ninactrl="clr-namespace:NINA.CustomControlLibrary;assembly=NINA.CustomControlLibrary"
+    xmlns:local="clr-namespace:Zakfo.Unphased.Features.settings">
+    <DataTemplate x:Key="OptionsTemplate">
+        <StackPanel Margin="10">
+            <!-- The site. The boxes edit a draft: nothing is stored until Apply, so a
+                 half-typed pair can no longer sit in the settings while the chart quietly
+                 uses the profile instead. The boxes are pre-filled with whatever is in
+                 effect, which is why they are no longer blank when a site exists.
+                 UnitTextBox is N.I.N.A.'s own field (number plus a read-only unit); its
+                 template sizes itself to its content, so the width is set here - otherwise
+                 the pair stretches across the whole settings tab. -->
+            <TextBlock Text="Site" FontWeight="Bold" />
+            <TextBlock TextWrapping="Wrap" Opacity="0.8" Margin="0,4,0,0"
+                Text="Decimal degrees. Apply pins this site for the planner; the profile's own astrometry site is used when nothing is pinned." />
+            <Grid Margin="0,8,0,0" HorizontalAlignment="Left">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Latitude" VerticalAlignment="Center" />
+                <ninactrl:UnitTextBox Grid.Column="1" Margin="8,0,0,0" Width="90" MaxLength="9" Unit="°"
+                    VerticalAlignment="Center" ToolTip="Latitude, -90 to 90"
+                    Text="{Binding Settings.SiteLatDraft, UpdateSourceTrigger=LostFocus}" />
+                <TextBlock Grid.Column="3" Text="Longitude" VerticalAlignment="Center" />
+                <ninactrl:UnitTextBox Grid.Column="4" Margin="8,0,0,0" Width="90" MaxLength="9" Unit="°"
+                    VerticalAlignment="Center" ToolTip="Longitude, -180 to 180"
+                    Text="{Binding Settings.SiteLonDraft, UpdateSourceTrigger=LostFocus}" />
+            </Grid>
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <Button Content="Apply site" Padding="8,2"
+                    ToolTip="Store these two coordinates as this profile's pinned planner site"
+                    Command="{Binding Settings.ApplySiteCommand}" />
+                <Button Margin="8,0,0,0" Padding="8,2" Content="Use this profile's site"
+                    ToolTip="Put the profile's astrometry coordinates in the boxes and stop pinning a site"
+                    Command="{Binding Settings.ResetSiteCommand}" />
+            </StackPanel>
+            <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.8"
+                Text="{Binding Settings.SiteReadout}" />
+            <TextBlock Margin="0,2,0,0" TextWrapping="Wrap" FontStyle="Italic"
+                Text="{Binding Settings.SiteNotice}" />
+
+            <!-- Which palette the chart paints with. Three buttons because there is one
+                 setting behind them and no off for a palette: the night switch this
+                 replaces had nowhere to put the third scheme. The same three buttons are on
+                 the panel and they are the same command, so the two cannot disagree - the
+                 readout at the end names the setting rather than the last click. Not
+                 remembered between runs on purpose: night mode is what you want at 2am under
+                 a torch, not what you want the next afternoon with the chart still open. A
+                 file saved by an older build that had night mode on opens once on night. -->
+            <TextBlock Text="Chart palette" FontWeight="Bold" Margin="0,12,0,0" />
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <Button Content="N.I.N.A. theme" Padding="8,2"
+                    ToolTip="Follow whatever palette you picked in N.I.N.A.'s settings"
+                    Command="{Binding Settings.DefaultSchemeCommand}" />
+                <Button Margin="8,0,0,0" Padding="8,2" Content="Night"
+                    ToolTip="Red night-vision chart, in the same red as N.I.N.A.'s own night button - this panel only. N.I.N.A.'s eye button in the title bar is the app-wide version."
+                    Command="{Binding Settings.NightSchemeCommand}" />
+                <Button Margin="8,0,0,0" Padding="8,2" Content="Enhanced"
+                    ToolTip="Navy chart: sun amber, moon pale blue, horizon teal, so the three curves stay apart by colour and not only by brightness. Chart only - the panel keeps your N.I.N.A. colours."
+                    Command="{Binding Settings.EnhancedSchemeCommand}" />
+                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Opacity="0.8"
+                    Text="{Binding Settings.Scheme}" />
+            </StackPanel>
+
+            <!-- The three roles the chart is read by. The swatch is the control: click it
+                 and the colour dialog opens seeded with what the chart paints right now.
+                 The exact value - the pick, or what the palette resolves to - is in the
+                 tooltip. Hex stays settable through the settings object for anyone editing
+                 the file by hand. -->
+            <TextBlock Text="Chart colours" FontWeight="Bold" Margin="0,12,0,0" />
+            <TextBlock TextWrapping="Wrap" Opacity="0.8" Margin="0,4,0,0"
+                Text="Each swatch shows what the chart paints right now. Click one to change it; the chart then follows your colour instead of the palette." />
+            <Grid Margin="0,8,0,0" HorizontalAlignment="Left">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="4" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="4" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Sun path" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Margin="8,0,0,0" Padding="4,3"
+                    ToolTip="{Binding Settings.SunColorNote}"
+                    Command="{Binding Settings.PickSunColorCommand}">
+                    <Border Width="44" Height="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                        Background="{Binding Settings.SunColorBrush}" />
+                </Button>
+
+                <TextBlock Grid.Row="2" Text="Moon track" VerticalAlignment="Center" />
+                <Button Grid.Row="2" Grid.Column="1" Margin="8,0,0,0" Padding="4,3"
+                    ToolTip="{Binding Settings.MoonColorNote}"
+                    Command="{Binding Settings.PickMoonColorCommand}">
+                    <Border Width="44" Height="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                        Background="{Binding Settings.MoonColorBrush}" />
+                </Button>
+
+                <TextBlock Grid.Row="4" Text="Horizon" VerticalAlignment="Center" />
+                <Button Grid.Row="4" Grid.Column="1" Margin="8,0,0,0" Padding="4,3"
+                    ToolTip="{Binding Settings.HorizonColorNote}"
+                    Command="{Binding Settings.PickHorizonColorCommand}">
+                    <Border Width="44" Height="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                        Background="{Binding Settings.HorizonColorBrush}" />
+                </Button>
+            </Grid>
+            <Button Margin="0,8,0,0" Padding="8,2" HorizontalAlignment="Left"
+                Content="Reset colours to defaults"
+                ToolTip="Clear every picked colour: sun and moon follow the N.I.N.A. palette again, the horizon returns to green"
+                Command="{Binding Settings.ResetColorsCommand}" />
+        </StackPanel>
+    </DataTemplate>
+</ResourceDictionary>

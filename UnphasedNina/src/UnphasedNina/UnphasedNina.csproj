@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../Plugin.props" />
+  <PropertyGroup>
+    <RootNamespace>Zakfo.Unphased</RootNamespace>
+    <AssemblyName>UnphasedNina</AssemblyName>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CosineKitty.AstronomyEngine" Version="2.1.19" />
+    <PackageReference Include="NINA.Plugin" Version="$(NinaPackageVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\UnphasedCore\UnphasedCore.csproj" />
+  </ItemGroup>
+  <Import Project="../../build/Plugin.targets" />
+</Project>

@@ -1,0 +1,13 @@
+# .NET build output for every project under here
+bin/
+obj/
+artifacts/
+TestResults/
+.vs/
+*.user
+
+# Machine-local build settings (see local.props.example)
+local.props
+
+# Scratch dumps
+reflect/out.txt

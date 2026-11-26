@@ -1,0 +1,11 @@
+<Project>
+  <!-- UseWindowsForms is on for one thing: the colour dialog on the plugin options page,
+       which WPF does not ship. The SDK reacts to that property by adding System.Drawing
+       and System.Windows.Forms to the implicit usings, and those collide with WPF's
+       Brush/Size/Point across every file in the project. Drop them again; the dialog is
+       named fully at its one call site. -->
+  <ItemGroup>
+    <Using Remove="System.Drawing" />
+    <Using Remove="System.Windows.Forms" />
+  </ItemGroup>
+</Project>

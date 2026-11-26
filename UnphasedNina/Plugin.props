@@ -1,0 +1,60 @@
+<Project>
+  <!-- This is the single editable source of plugin identity and manifest metadata. -->
+  <PropertyGroup>
+    <PluginId>09572065-E196-4DBA-B954-48F84B351DD1</PluginId>
+    <!-- Early beta: the panel works and the chart is through several review
+         rounds, but the plugin is not feature complete, so the version stays 0.x. -->
+    <Version Condition="'$(Version)' == ''">0.7.0.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+    <Title>Unphased Night Planner</Title>
+    <AssemblyTitle>$(Title)</AssemblyTitle>
+    <Product>$(Title)</Product>
+    <Copyright>Copyright © 2026 zakky2k</Copyright>
+    <Company>zakky2k</Company>
+    <Authors>zakky2k</Authors>
+    <!-- Becomes the manifest's Descriptions.ShortDescription - the schema caps it at 256 characters. -->
+    <Description>Night planning chart: sun and moon altitude, twilight bands and moon phase across consecutive nights, with a calendar, zoom to a week, an hour scrub and three chart palettes.</Description>
+    <PluginLongDescription>A dockable panel that answers one question: what is worth shooting tonight, and how dark is it?
+
+The chart draws the Sun and the Moon against the horizon and the astronomical twilight bands, over a frame you choose - one night, three nights or a week stitched together. A scrub marker steps through the night an hour at a time and reports where both bodies are and what phase the Moon is in; a glyph marks the Moon's highest point of the night with its illuminated fraction. A calendar chooses which night to look at, and the panel keeps the nights on either side of it in hand, widening as you page, so paging sideways never runs out.
+
+The panel follows N.I.N.A.'s colour scheme, and the chart can be drawn in three palettes: that scheme, a red night set that re-colours the panel too for use at the telescope, or a high-contrast set whose sun, moon and horizon are told apart by colour rather than brightness. Sun, Moon and horizon colours can be set on the plugin options page, and the chart repaints as you pick them.
+
+Ephemerides come from the Astronomy Engine (CosineKitty.AstronomyEngine), evaluated for the observatory location in your N.I.N.A. profile.
+
+This is early software - version 0.x, feature complete for its own purpose but with rough edges listed in the changelog.</PluginLongDescription>
+    <RepositoryUrl>https://github.com/zakky2k/AstroScripts</RepositoryUrl>
+    <PluginHomepage>https://github.com/zakky2k/AstroScripts/tree/main/nina-plugin</PluginHomepage>
+    <PluginTags>night planning,planner,sun,moon,twilight,altitude,ephemeris,chart,dockable</PluginTags>
+    <MinimumNinaVersion>3.2.0.9001</MinimumNinaVersion>
+    <PluginLicense>MPL-2.0</PluginLicense>
+    <PluginLicenseUrl>https://www.mozilla.org/en-US/MPL/2.0/</PluginLicenseUrl>
+    <PluginChangelogUrl>https://raw.githubusercontent.com/zakky2k/AstroScripts/main/nina-plugin/UnphasedNina/CHANGELOG.md</PluginChangelogUrl>
+    <!-- The plugin icon. N.I.N.A. reads this from the DLL (FeaturedImageURL assembly metadata) and shows it
+         at 25 px in the plugin list and 150 px on the plugin's settings page. It is the 256 px frame of
+         assets/unphased.ico, re-encoded as a 256x256 PNG with transparency; the URL must stay live, because
+         a non-empty but unreachable URL renders a blank rather than falling back to the default image. -->
+    <PluginFeaturedImageUrl>https://raw.githubusercontent.com/zakky2k/AstroScripts/main/nina-plugin/UnphasedNina/assets/unphased-256.png</PluginFeaturedImageUrl>
+    <!-- Left empty on purpose: there is no hosted screenshot yet. Fill these with real
+          panel screenshots (a GitHub release asset works) once one exists - the store
+          page shows them, and a made-up URL would only 404 there. -->
+    <PluginScreenshotUrl></PluginScreenshotUrl>
+    <PluginAltScreenshotUrl></PluginAltScreenshotUrl>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.InteropServices.GuidAttribute"><_Parameter1>$(PluginId)</_Parameter1></AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.InteropServices.ComVisibleAttribute"><_Parameter1>false</_Parameter1></AssemblyAttribute>
+    <AssemblyMetadata Include="MinimumApplicationVersion" Value="$(MinimumNinaVersion)" />
+    <AssemblyMetadata Include="License" Value="$(PluginLicense)" />
+    <AssemblyMetadata Include="LicenseURL" Value="$(PluginLicenseUrl)" />
+    <AssemblyMetadata Include="Repository" Value="$(RepositoryUrl)" />
+    <AssemblyMetadata Include="Homepage" Value="$(PluginHomepage)" />
+    <AssemblyMetadata Include="Tags" Value="$(PluginTags)" />
+    <AssemblyMetadata Include="LongDescription" Value="$(PluginLongDescription)" />
+    <AssemblyMetadata Include="ChangelogURL" Value="$(PluginChangelogUrl)" />
+    <AssemblyMetadata Include="FeaturedImageURL" Value="$(PluginFeaturedImageUrl)" />
+    <AssemblyMetadata Include="ScreenshotURL" Value="$(PluginScreenshotUrl)" />
+    <AssemblyMetadata Include="AltScreenshotURL" Value="$(PluginAltScreenshotUrl)" />
+  </ItemGroup>
+</Project>
