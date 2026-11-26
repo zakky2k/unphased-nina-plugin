@@ -54,9 +54,9 @@ namespace Zakfo.Unphased.Tests.Features.settings {
             // The order is a decision, not an accident: the Moon is what decides whether a night is
             // worth setting up for, so it leads. Round 13 put it first and renamed two of the three.
             (
-                "Lunar phases",
-                "Explore the dynamic phases of the Moon along with its altitude and illumination. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities.",
-                "Understand the Moon.",
+                "Lunar and planetary phases",
+                "Explore the dynamic phases of the Moon, Mercury and Venus alongside their altitude curves. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities.",
+                "Understand the Moon and inner planets.",
                 "lunar-phases.svg"),
             (
                 "Astronomical darkness",

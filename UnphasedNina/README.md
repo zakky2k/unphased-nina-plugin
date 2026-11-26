@@ -16,15 +16,15 @@ art — `assets/pillars/`, 64 × 64 units, 2-unit stroke, rounded caps and joins
 and they are the same geometry the page draws in WPF; `PillarIdentityTests` fails if the two drift
 apart. They are drawn with `currentColor`, so the page or document you are reading sets the colour.
 
-### Lunar phases
+### Lunar and planetary phases
 
 <img src="assets/pillars/lunar-phases.svg" width="64" height="64" alt="A crescent Moon with its trajectory across the horizon">
 
-Explore the dynamic phases of the Moon along with its altitude and illumination. Identify periods
+Explore the dynamic phases of the Moon, Mercury and Venus alongside their altitude curves. Identify periods
 when the Moon is below the horizon, assess potential moonlight interference and discover moon-free
 imaging opportunities.
 
-*Understand the Moon.*
+*Understand the Moon and inner planets.*
 
 ### Astronomical darkness
 

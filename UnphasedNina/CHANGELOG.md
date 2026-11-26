@@ -15,6 +15,8 @@
   Default restores the preset saved in the plugin’s Options.
 - The opt-in Custom horizon layer shades below the active N.I.N.A. profile’s horizon,
   projected along a selectable object’s azimuth across the visible time window.
+- The night summary reports time the custom-horizon reference spends above the
+  obstruction line during astronomical darkness on the selected night.
 - Enabled Framing Assistant targets show a glyph beside their switch and on the chart's
   scrub line. If Framing Assistant omits the object type, Unphased looks it up in N.I.N.A.'s
   catalog for both new and saved targets. Unmatched coordinates use the crosshair.

@@ -32,7 +32,7 @@ namespace Zakfo.Unphased.Features.planner {
         }
 
         /// <summary>"11 h 31 m" for a night's dark minutes; short nights drop the hours.</summary>
-        private static string FormatDuration(int minutes) =>
+        internal static string FormatDuration(int minutes) =>
             minutes >= 60 ? $"{minutes / 60} h {minutes % 60:00} m" : $"{minutes} m";
 
         /// <summary>

@@ -528,6 +528,22 @@
                         <TextBlock Text="{Binding Planner.SelectedNight.DarkChip}" FontSize="13"
                             Foreground="{DynamicResource PrimaryBrush}"/>
                     </Border>
+                    <Border x:Name="HorizonDarkChip" Padding="6,2" Margin="0,0,6,0" CornerRadius="3"
+                            Background="{DynamicResource SecondaryBackgroundBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                            ToolTip="Total time the reference object is above the custom horizon during astronomical darkness (Sun below −18°) on the selected night.">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Planner.HorizonDarkChip}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding Planner.HorizonDarkChip}" FontSize="13" MaxWidth="260" TextTrimming="CharacterEllipsis"
+                                   Foreground="{DynamicResource PrimaryBrush}"/>
+                    </Border>
                     <Border Padding="6,2" Margin="0,0,6,0" CornerRadius="3"
                         Background="{DynamicResource SecondaryBackgroundBrush}"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">

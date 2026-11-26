@@ -23,6 +23,15 @@ namespace Zakfo.Unphased.Tests.Features.planner {
     [NonParallelizable, Apartment(ApartmentState.STA)]
     public class OverlayTests {
         [Test]
+        public void ClearTimeCountsOnlyThePartsOfTheDarkWindowAboveTheHorizon() {
+            var samples = new[] { (0.0, 2.0), (10.0, -2.0), (20.0, 2.0) };
+            Assert.That(NightPlannerVM.TimeAboveHorizon(samples, 2, 18), Is.EqualTo(6));
+            Assert.That(NightPlannerVM.TimeAboveHorizon(samples, 6, 14), Is.Zero);
+            Assert.That(NightPlannerVM.TimeAboveHorizon(samples, 2, 4), Is.EqualTo(2));
+            Assert.That(NightPlannerVM.TimeAboveHorizon(samples, 10, 18), Is.EqualTo(3));
+        }
+
+        [Test]
         public void PlanetSwitchesShowTheirSelectedGlyphStyleOnlyWhileEnabled() {
             WpfHost.Ensure();
             PluginSettings.Shared?.Dispose();
@@ -181,7 +190,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                     var equatorial = Astronomy.Equator(body, astroTime, observer, EquatorEpoch.OfDate, Aberration.Corrected);
                     var expected = Astronomy.Horizon(astroTime, observer, equatorial.ra, equatorial.dec, Refraction.None);
                     var actual = OverlayEphemeris.PlanetAltitude(planet, site, new DateTimeOffset(astroTime.ToUtcDateTime()));
-                    var azimuth = OverlayEphemeris.PlanetAzimuth(planet, site, new DateTimeOffset(astroTime.ToUtcDateTime()));
+                    var azimuth = OverlayEphemeris.PlanetHorizontal(planet, site, new DateTimeOffset(astroTime.ToUtcDateTime())).Azimuth;
                     Assert.That(actual, Is.EqualTo(expected.altitude).Within(.05), $"{planet} at {site}");
                     Assert.That(Math.IEEERemainder(azimuth - expected.azimuth, 360), Is.EqualTo(0).Within(.05), $"{planet} azimuth at {site}");
                 }
@@ -189,7 +198,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 Assert.That(OverlayEphemeris.TargetAltitude(orion, site, new DateTimeOffset(astroTime.ToUtcDateTime())),
                     Is.EqualTo(targetExpected.altitude).Within(.05), $"{orion.Name} at {site}");
                 Assert.That(Math.IEEERemainder(
-                    OverlayEphemeris.TargetAzimuth(orion, site, new DateTimeOffset(astroTime.ToUtcDateTime())) - targetExpected.azimuth, 360),
+                    OverlayEphemeris.TargetHorizontal(orion, site, new DateTimeOffset(astroTime.ToUtcDateTime())).Azimuth - targetExpected.azimuth, 360),
                     Is.EqualTo(0).Within(.05), $"{orion.Name} azimuth at {site}");
             }
             var planner = PlannerFixture.WindowOfThreeNights();

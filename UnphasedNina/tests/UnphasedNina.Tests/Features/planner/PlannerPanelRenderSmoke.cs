@@ -90,6 +90,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 planner.ShowCustomHorizon = true;
                 Assert.That(planner.HorizonReference.Name, Is.EqualTo("M 31"));
                 Assert.That(planner.HorizonStatus, Does.Contain("No custom horizon"));
+                Assert.That(planner.HorizonDarkChip, Is.Empty);
                 using var horizonData = new System.IO.StringReader("0 16\n40 45\n120 12\n180 8\n245 36\n290 13\n360 16");
                 horizon = NINA.Core.Model.CustomHorizon.FromReader_Standard(horizonData);
                 profiles.Raise(service => service.HorizonChanged += null, EventArgs.Empty);
@@ -98,17 +99,22 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 Assert.That(targetHorizon[0].Minutes, Is.Zero);
                 Assert.That(targetHorizon[^1].Minutes, Is.EqualTo(planner.SelectedNight.Chart.FrameMinutes));
                 Assert.That(targetHorizon.Select(sample => sample.Altitude).Distinct().Count(), Is.GreaterThan(1));
+                Assert.That(planner.HorizonDarkChip, Does.StartWith("M 31 · ").And.EndWith(" dark & clear"));
+                Assert.That(planner.HorizonDarkChip, Is.Not.EqualTo("M 31 · 0 m dark & clear"));
                 paths.Add(Render(panel, 900, "planner-custom-horizon", 850));
 
                 planner.HorizonReference = planner.HorizonReferenceOptions.First(choice => choice.Name == "Moon");
                 PumpUntil(() => planner.CustomHorizonSamples.Count > 0, "the Moon horizon arrived");
                 Assert.That(planner.CustomHorizonSamples, Is.Not.EqualTo(targetHorizon));
+                var moonDarkTime = planner.HorizonDarkChip;
                 planner.SetZoom(2);
                 PumpUntil(() => planner.CustomHorizonSamples.Count > 0, "the zoomed horizon arrived");
                 Assert.That(planner.CustomHorizonSamples[^1].Minutes, Is.EqualTo(NightChartVM.FrameMinutesAtZoom(2)));
+                Assert.That(planner.HorizonDarkChip, Is.EqualTo(moonDarkTime));
                 horizon = null;
                 profiles.Raise(service => service.HorizonChanged += null, EventArgs.Empty);
                 Assert.That(planner.CustomHorizonSamples, Is.Empty);
+                Assert.That(planner.HorizonDarkChip, Is.Empty);
                 planner.ShowDefaultChartElementsCommand.Execute(null);
                 Assert.That(planner.ShowCustomHorizon, Is.False);
                 paths.Add(RenderWhilePagingGrowsTheWindow(profiles.Object));
@@ -188,6 +194,9 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 "the horizon picker must inherit the same N.I.N.A. style as the glyph picker");
             Assert.That(((FrameworkElement)horizonPicker.Parent).Visibility,
                 Is.EqualTo(panel.Planner.ShowCustomHorizon && panel.Planner.HasCustomHorizon ? Visibility.Visible : Visibility.Collapsed));
+            var darkChip = (Border)root.FindName("HorizonDarkChip");
+            Assert.That(darkChip.Visibility, Is.EqualTo(string.IsNullOrEmpty(panel.Planner.HorizonDarkChip)
+                ? Visibility.Collapsed : Visibility.Visible));
 
             var rtb = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
             rtb.Render(root);

@@ -170,7 +170,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- Lunar phases, first because the Moon is the thing that decides whether a night
+                <!-- Lunar and planetary phases, first because the Moon can decide whether a night
                      is worth driving to: the Moon itself, the star it shares the sky with, the arc it
                      travels, and the horizon it rises and sets against. -->
                 <Viewbox Grid.Row="0" Width="48" Height="48" VerticalAlignment="Top">
@@ -192,11 +192,11 @@
                 </Viewbox>
                 <StackPanel Grid.Row="0" Grid.Column="1" Margin="14,0,0,0">
                     <TextBox Style="{StaticResource SelectableTextStyle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"
-                        Text="Lunar phases" />
+                        Text="Lunar and planetary phases" />
                     <TextBox Style="{StaticResource SelectableTextStyle}" Margin="0,3,0,0" TextWrapping="Wrap" Opacity="0.85"
-                        Text="Explore the dynamic phases of the Moon along with its altitude and illumination. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities." />
+                        Text="Explore the dynamic phases of the Moon, Mercury and Venus alongside their altitude curves. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities." />
                     <TextBox Style="{StaticResource SelectableTextStyle}" Margin="0,4,0,0" FontStyle="Italic" Foreground="{DynamicResource SecondaryBrush}"
-                        Text="Understand the Moon." />
+                        Text="Understand the Moon and inner planets." />
                 </StackPanel>
 
                 <!-- Astronomical darkness: a setting Sun, the twilight bands beneath it, and the
@@ -259,7 +259,8 @@
             <TextBox Style="{StaticResource SelectableTextStyle}" Text="About Unphased Night Planner" FontWeight="Bold" FontSize="15" />
 
             <TextBox Style="{StaticResource SelectableTextStyle}" Text="Interactive night planning" FontWeight="Bold" Margin="0,10,0,0" />
-            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,4,0,0" Text="-  Combined solar and lunar altitude chart." />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,4,0,0" TextWrapping="Wrap"
+                     Text="-  Dynamic altitude chart for combined solar, lunar, planetary and deep-sky paths through the sky." />
             <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  Colour-coded daylight, twilight and astronomical darkness periods." />
             <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  Nighttime duration and astronomical darkness summaries." />
             <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  Lunar culmination and illumination indicators." />

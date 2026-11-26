@@ -156,12 +156,13 @@ namespace Zakfo.Unphased.Features.planner {
             return Astronomy.Horizon(time, observer, coordinates.ra, coordinates.dec, Refraction.None);
         }
 
-        internal static double SolarAzimuth(NOVAS.Body body, Site site, DateTimeOffset time) {
+        internal static (double Altitude, double Azimuth) SolarHorizontal(NOVAS.Body body, Site site, DateTimeOffset time) {
             var at = new AstroTime(time.UtcDateTime);
             var observer = new Observer(site.Lat, site.Lon, site.Elev);
             var solarBody = body == NOVAS.Body.Sun ? Body.Sun : Body.Moon;
             var position = Astronomy.Equator(solarBody, at, observer, EquatorEpoch.OfDate, Aberration.None);
-            return Astronomy.Horizon(at, observer, position.ra, position.dec, Refraction.None).azimuth;
+            var horizontal = Astronomy.Horizon(at, observer, position.ra, position.dec, Refraction.None);
+            return (horizontal.altitude, horizontal.azimuth);
         }
 
         internal static double PlanetAltitude(NOVAS.Body planet, Site site, DateTimeOffset time) {
@@ -169,10 +170,10 @@ namespace Zakfo.Unphased.Features.planner {
             return AstroUtil.GetAltitude(hourAngle, site.Lat, declination);
         }
 
-        internal static double PlanetAzimuth(NOVAS.Body planet, Site site, DateTimeOffset time) {
+        internal static (double Altitude, double Azimuth) PlanetHorizontal(NOVAS.Body planet, Site site, DateTimeOffset time) {
             var (hourAngle, declination) = PlanetPosition(planet, site, time);
             double altitude = AstroUtil.GetAltitude(hourAngle, site.Lat, declination);
-            return AstroUtil.GetAzimuth(hourAngle, altitude, site.Lat, declination);
+            return (altitude, AstroUtil.GetAzimuth(hourAngle, altitude, site.Lat, declination));
         }
 
         private static (double HourAngle, double Declination) PlanetPosition(NOVAS.Body planet, Site site, DateTimeOffset time) {
@@ -206,12 +207,9 @@ namespace Zakfo.Unphased.Features.planner {
         }
 
         internal static double TargetAltitude(FramingTarget target, Site site, DateTimeOffset time) =>
-            TargetPosition(target, site, time).Altitude;
+            TargetHorizontal(target, site, time).Altitude;
 
-        internal static double TargetAzimuth(FramingTarget target, Site site, DateTimeOffset time) =>
-            TargetPosition(target, site, time).Azimuth;
-
-        private static (double Altitude, double Azimuth) TargetPosition(FramingTarget target, Site site, DateTimeOffset time) {
+        internal static (double Altitude, double Azimuth) TargetHorizontal(FramingTarget target, Site site, DateTimeOffset time) {
             const double degreesToRadians = Math.PI / 180;
             double azimuth = 0, zenithDistance = 0, hourAngle = 0, dec = 0, ra = 0, origins = 0;
             short status = SOFA.CelestialToTopocentric(target.RightAscensionHours * 15 * degreesToRadians,

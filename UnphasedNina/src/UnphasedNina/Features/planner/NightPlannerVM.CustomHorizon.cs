@@ -4,9 +4,12 @@
 using NINA.Astrometry;
 using NINA.Core.Model;
 using NINA.Core.Utility;
+using Zakfo.Unphased.Core;
 
 namespace Zakfo.Unphased.Features.planner {
     public sealed partial class NightPlannerVM {
+        private sealed record HorizonProjection(IReadOnlyList<(double Minutes, double Altitude)> Samples, int ClearDarkMinutes);
+
         private readonly OverlayChoice horizonMoon = new("Moon", 0, planet: NOVAS.Body.Moon);
         private readonly OverlayChoice horizonSun = new("Sun", 0, planet: NOVAS.Body.Sun);
         private OverlayChoice horizonReference;
@@ -54,6 +57,8 @@ namespace Zakfo.Unphased.Features.planner {
         internal IReadOnlyList<(double Minutes, double Altitude)> CustomHorizonSamples { get; private set; } =
             Array.Empty<(double, double)>();
 
+        public string HorizonDarkChip { get; private set; } = string.Empty;
+
         private OverlayChoice DefaultHorizonReference() =>
             Targets.FirstOrDefault(choice => choice.Enabled) ?? Planets.FirstOrDefault(choice => choice.Enabled) ?? horizonMoon;
 
@@ -70,14 +75,18 @@ namespace Zakfo.Unphased.Features.planner {
             RefreshCustomHorizon();
         }
 
-        private void PublishCustomHorizon(IReadOnlyList<(double Minutes, double Altitude)> samples) {
-            CustomHorizonSamples = samples;
+        private void PublishCustomHorizon(HorizonProjection projection, OverlayChoice reference = null) {
+            CustomHorizonSamples = projection?.Samples ?? Array.Empty<(double, double)>();
+            HorizonDarkChip = projection == null
+                ? string.Empty
+                : $"{reference.Name} · {NightRowVM.FormatDuration(projection.ClearDarkMinutes)} dark & clear";
             RaisePropertyChanged(nameof(CustomHorizonSamples));
+            RaisePropertyChanged(nameof(HorizonDarkChip));
         }
 
         private void RefreshCustomHorizon() {
             int revision = Interlocked.Increment(ref horizonRevision);
-            if (CustomHorizonSamples.Count > 0) PublishCustomHorizon(Array.Empty<(double, double)>());
+            if (CustomHorizonSamples.Count > 0) PublishCustomHorizon(null);
             var row = selectedNight;
             var reference = horizonReference;
             var horizon = settings.ActiveHorizon;
@@ -86,9 +95,9 @@ namespace Zakfo.Unphased.Features.planner {
 
             _ = Task.Run(async () => {
                 await overlayWorker.WaitAsync().ConfigureAwait(false);
-                IReadOnlyList<(double Minutes, double Altitude)> samples = null;
+                HorizonProjection projection = null;
                 try {
-                    samples = ProjectHorizon(row, reference, horizon, () => revision != Volatile.Read(ref horizonRevision));
+                    projection = ProjectHorizon(row, reference, horizon, () => revision != Volatile.Read(ref horizonRevision));
                 } catch (Exception ex) {
                     Logger.Error("Unphased could not project the custom horizon", ex);
                 } finally {
@@ -97,31 +106,77 @@ namespace Zakfo.Unphased.Features.planner {
                 if (revision != Volatile.Read(ref horizonRevision)) return;
                 OnUi(() => {
                     if (revision != Volatile.Read(ref horizonRevision)) return;
-                    if (samples != null) PublishCustomHorizon(samples);
+                    if (projection != null) PublishCustomHorizon(projection, reference);
                     else HorizonStatus = "Could not draw the custom horizon for this object.";
                 });
             });
         }
 
-        internal static IReadOnlyList<(double Minutes, double Altitude)> ProjectHorizon(NightRowVM row,
+        private static HorizonProjection ProjectHorizon(NightRowVM row,
             OverlayChoice reference, CustomHorizon horizon, Func<bool> cancelled) {
             const int sampleMinutes = 5;
             var site = row.Payload.Location;
-            var result = new List<(double Minutes, double Altitude)>();
-            double end = row.Chart.FrameMinutes;
-            for (double minutes = 0; ; minutes = Math.Min(minutes + sampleMinutes, end)) {
+            var dark = SelectedNightDarkIntervals(row.Payload);
+            var samples = new List<(double Minutes, double Altitude)>();
+            var clearance = new List<(double Minutes, double Clearance)>();
+            double frameEnd = row.Chart.FrameMinutes;
+            double darkEnd = dark.Count == 0 ? 0 : dark[^1].End;
+            double end = Math.Max(frameEnd, darkEnd);
+            for (double minutes = 0; ;) {
                 if (cancelled()) return null;
                 var time = row.Chart.TimeAtMinutes(minutes);
-                double azimuth = reference.Planet switch {
-                    NOVAS.Body.Sun or NOVAS.Body.Moon => OverlayEphemeris.SolarAzimuth(reference.Planet.Value, site, time),
-                    { } planet => OverlayEphemeris.PlanetAzimuth(planet, site, time),
-                    _ => OverlayEphemeris.TargetAzimuth(reference.Target, site, time)
+                var (altitude, azimuth) = reference.Planet switch {
+                    NOVAS.Body.Sun or NOVAS.Body.Moon => OverlayEphemeris.SolarHorizontal(reference.Planet.Value, site, time),
+                    { } planet => OverlayEphemeris.PlanetHorizontal(planet, site, time),
+                    _ => OverlayEphemeris.TargetHorizontal(reference.Target, site, time)
                 };
-                double altitude = horizon.GetAltitude(azimuth);
-                if (!double.IsFinite(altitude)) throw new InvalidOperationException("No custom horizon altitude at the reference azimuth.");
-                result.Add((minutes, altitude));
-                if (minutes == end) return result;
+                double horizonAltitude = horizon.GetAltitude(azimuth);
+                if (!double.IsFinite(horizonAltitude) || !double.IsFinite(altitude))
+                    throw new InvalidOperationException("The reference altitude or custom horizon is unavailable.");
+                if (minutes <= frameEnd) samples.Add((minutes, horizonAltitude));
+                if (dark.Count > 0 && (clearance.Count == 0 || clearance[^1].Minutes < darkEnd))
+                    clearance.Add((minutes, altitude - horizonAltitude));
+                if (minutes == end) break;
+                minutes = Math.Min(minutes + sampleMinutes, minutes < frameEnd ? frameEnd : end);
             }
+            double clearDarkMinutes = dark.Sum(interval => TimeAboveHorizon(clearance, interval.Start, interval.End));
+            return new HorizonProjection(samples, (int)Math.Floor(clearDarkMinutes + 1e-9));
+        }
+
+        private static List<(double Start, double End)> SelectedNightDarkIntervals(NightPayload payload) {
+            var intervals = new List<(double, double)>();
+            double? start = null;
+            foreach (var transition in payload.Events) {
+                if (transition.Time < payload.NightStart || transition.Time > payload.NightEnd || transition.Band != "astronomical")
+                    continue;
+                double minutes = (transition.Time - payload.FrameNoon).TotalMinutes;
+                if (transition.Edge == "start") start = minutes;
+                else if (transition.Edge == "end" && start.HasValue && minutes > start.Value) {
+                    intervals.Add((start.Value, minutes));
+                    start = null;
+                }
+            }
+            return intervals;
+        }
+
+        internal static double TimeAboveHorizon(IReadOnlyList<(double Minutes, double Clearance)> samples, double start, double end) {
+            double duration = 0;
+            for (int i = 1; i < samples.Count; i++) {
+                var (before, low) = samples[i - 1];
+                var (after, high) = samples[i];
+                if (after <= start) continue;
+                if (before >= end) break;
+                if (low <= 0 && high <= 0) continue;
+                // Clearance is linear within each sample interval. Trim its positive portion
+                // to the exact astronomical twilight crossings before adding it to the total.
+                if (low <= 0 || high <= 0) {
+                    double crossing = before - low / (high - low) * (after - before);
+                    if (low <= 0) before = crossing;
+                    else after = crossing;
+                }
+                duration += Math.Max(0, Math.Min(after, end) - Math.Max(before, start));
+            }
+            return duration;
         }
     }
 }
