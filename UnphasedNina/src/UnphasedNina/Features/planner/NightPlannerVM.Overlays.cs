@@ -17,6 +17,7 @@ namespace Zakfo.Unphased.Features.planner {
             NOVAS.Body.Saturn, NOVAS.Body.Uranus, NOVAS.Body.Neptune
         };
         private readonly ObservableCollection<OverlayChoice> targets = new();
+        private readonly Func<FramingTarget, string> resolveTargetType;
         private readonly SemaphoreSlim overlayWorker = new(1);
         private IReadOnlyList<OverlayTrack> overlayTracks = Array.Empty<OverlayTrack>();
         private int overlayRevision;
@@ -97,6 +98,7 @@ namespace Zakfo.Unphased.Features.planner {
             OverlayNotice = string.Empty;
             RaisePropertyChanged(nameof(TargetSelection));
             RefreshOverlays();
+            ResolveMissingTargetTypes(targets.ToArray());
         }
 
         internal void AddFramingTarget(FramingTarget target) {
@@ -118,6 +120,31 @@ namespace Zakfo.Unphased.Features.planner {
             var added = AddTargetChoice(target);
             SaveTargets();
             added.Enabled = true;
+            ResolveMissingTargetTypes(new[] { added });
+        }
+
+        private void ResolveMissingTargetTypes(IReadOnlyList<OverlayChoice> choices) {
+            if (resolveTargetType == null) return;
+            var pending = choices.Select(choice => (Choice: choice, Target: choice.Target))
+                .Where(item => string.IsNullOrWhiteSpace(item.Target.ObjectType)).ToArray();
+            if (pending.Length == 0) return;
+            _ = Task.Run(() => {
+                foreach (var (choice, target) in pending) {
+                    try {
+                        var type = resolveTargetType(target);
+                        if (string.IsNullOrWhiteSpace(type)) continue;
+                        OnUi(() => {
+                            // The user may have removed the entry, changed profiles, or supplied its type.
+                            if (!targets.Contains(choice) || !ReferenceEquals(choice.Target, target)) return;
+                            choice.SetTargetType(type);
+                            SaveTargets();
+                            RaisePropertyChanged(nameof(OverlayTracks));
+                        });
+                    } catch (Exception ex) {
+                        Logger.Error($"Unphased could not look up the catalog type of {target.Name}", ex);
+                    }
+                }
+            });
         }
 
         private OverlayChoice AddTargetChoice(FramingTarget target) {

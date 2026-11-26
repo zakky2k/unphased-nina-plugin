@@ -153,6 +153,16 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             Assert.That(planner.Targets.Single().Target.Id, Is.EqualTo("M31"));
         }
 
+        [TestCase("M 31", 10.68470833, 41.26875, "GALXY")]
+        [TestCase("M 33", 23.4621, 30.65994167, "GALXY")]
+        [TestCase("M 13", 250.423475, 36.46131944, "GLOCL")]
+        [TestCase("M 13", 10.68470833, 41.26875, null)]
+        [Explicit("Reads the installed N.I.N.A. catalog.")]
+        public void CatalogTypeRequiresAnExactAliasAndMatchingPosition(string name, double raDegrees, double dec, string expected) {
+            var target = new FramingTarget(name, name, raDegrees / 15, dec);
+            Assert.That(TargetCatalog.FindType(target), Is.EqualTo(expected));
+        }
+
         [Test, Explicit("Requires N.I.N.A.'s External NOVAS, SOFA and JPLEPH files beside the test assembly.")]
         public void OverlayAltitudesAgreeWithIndependentEphemerisAndFollowTheLatestFrame() {
             WpfHost.Ensure();

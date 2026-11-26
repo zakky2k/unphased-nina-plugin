@@ -46,7 +46,7 @@ namespace Zakfo.Unphased.Features.planner {
         /// Lazily built because the effective site depends on the active
         /// profile, which is not ready at MEF construction time.
         /// </summary>
-        public NightPlannerVM Planner => planner ??= new NightPlannerVM(settings);
+        public NightPlannerVM Planner => planner ??= new NightPlannerVM(settings, TargetCatalog.FindType);
 
         private IRelayCommand addFramingTarget;
         public IRelayCommand AddFramingTargetCommand => addFramingTarget ??= new RelayCommand(

@@ -121,8 +121,11 @@ namespace Zakfo.Unphased.Features.planner {
             }
         }
 
-        public NightPlannerVM(PluginSettings settings) {
+        public NightPlannerVM(PluginSettings settings) : this(settings, null) { }
+
+        internal NightPlannerVM(PluginSettings settings, Func<FramingTarget, string> resolveTargetType) {
             this.settings = settings;
+            this.resolveTargetType = resolveTargetType;
             selectedDate = DateTimeOffset.Now.Date;
             Nights = new ObservableCollection<NightRowVM>();
             InitializeChartElements();

@@ -12,8 +12,8 @@
 - Chart elements has separate switches for each Sun and Moon altitude curve, rise and
   set label, and scrub glyph. All eight start enabled, and Reset turns them all back on.
 - Enabled Framing Assistant targets show a glyph beside their switch and on the chart's
-  scrub line. The glyph follows the catalog object type. Older targets acquire their type
-  when added again from Framing Assistant.
+  scrub line. If Framing Assistant omits the object type, Unphased looks it up in N.I.N.A.'s
+  catalog for both new and saved targets. Unmatched coordinates use the crosshair.
 
 ## Unreleased — round 13: the settings lead the page, and the pillars move to the end
 
