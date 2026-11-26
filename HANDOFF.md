@@ -821,27 +821,44 @@ to `artifacts\stage\Debug`. N.I.N.A. 3.2.1.3002 started at 00:56:10 and that run
 list — load proof stronger than the banner-only calibration under "Evidence rules". **The user looked at the panel and
 the options page in the live app and accepted the build as 0.7.0.0.**
 
-**Round 9 starts here.**
-1. **Button sizing: the agreed design has not been applied to the symbol buttons.** Round 8's decision 4.a asked for
-   buttons at **min height 30 DIP, width ≈34–44 DIP, 14 DIP semibold text, word labels, tooltip on every control**.
-   The four symbol buttons — `<` and `>` (previous / next night) and `-` / `+` (zoom) — still set only
-   `Padding="8,2"` (`Features/planner/Resources.xaml:49,56,95,100`), so the glyph decides how big the button ends up.
-   The user's review words: *"symbols < > + - used as the size of the button instead of design we agreed"*. Tooltips
-   are already there on all four; what is missing is the minimum size and the word labels. `< hr`, `hr >` and `off` in
-   row 2 are the same category, so decide once for the whole panel: fixed-size buttons with symbols inside, or words —
-   remembering that an explicit `Style` on a `Button` kills N.I.N.A.'s implicit template (see the rule above), so the
-   size has to come from `MinHeight`/`MinWidth`/`Padding` attributes, not a style.
-2. `Build-Release.ps1 -Tag v0.7.0.0 -Repository zakky2k/AstroScripts -Channel Beta`, `Verify-ReleaseArtifacts.ps1`, the
-   GitHub release (the archive must stay byte-identical afterwards — catalogue CI re-hashes `Installer.URL`), then the
-   manifest PR at `manifests/U/Unphased Night Planner/3.2.0.9001/0.7.0.0/manifest.json`. Screenshots are still not
-   hosted, so the listing shows the icon only.
-3. Still not seen in the live panel: whether the "computing..." readout ever visibly appears while paging sideways
-   past the edge of the window (its markup and the flag it triggers on are pinned by tests only), and what the
-   `DatePicker` looks like at other panel widths. Re-check the user's picked colours afterwards — the suite writes the
-   live settings file.
-4. Still undecided, carried forward: per-file MPL-2.0 headers; the wheel over the chart stealing panel scroll; the
-   moon glyph overlapping its chip in night mode; whether to move to apparent-horizon sunrise/sunset (the user chose
-   to keep geometric 0°, and changing it would invalidate every fixture the web planner shares).
+**Round 9, in progress.** Suite **97** (`92 → 97`).
+1. **Button sizing — done** (`67169b0`). The design round 8 agreed is now on every pressable control in
+   the panel: `MinHeight="30"`, `MinWidth="40"` (44 where the word is longer), `Padding="6,4"`, centred
+   14 DIP semibold text, tooltip on all eleven buttons plus the `DatePicker` and the chart. Symbols stay
+   symbols (`‹ ›` `-` `+` `< hr` `hr >` `off`) — the user chose "fixed-size buttons with symbols inside".
+   The size comes from **attributes only**: an explicit `Style` on a `Button` kills N.I.N.A.'s implicit
+   template (rule above). `PlannerPanelWiringTests.EveryPanelButtonIsTheAgreedSizeAndSaysWhatItDoes` walks
+   the real template and asserts **`ActualHeight`**, not the attribute, because an attribute the chrome
+   then ignores is the failure the user saw; it also pins `Style == null` so the rule cannot be broken
+   silently later. The stock `DatePicker`'s own popup button is excluded from the walk.
+2. **The wheel — done** (`67169b0`). The chart used to handle every wheel message, and it is the tallest
+   thing in the panel, so the page could not be scrolled with the pointer over it and a wheel aimed at
+   scrolling silently moved the hour marker. Now **Shift + wheel scrubs** and the **bare wheel is left
+   unhandled** so it bubbles to N.I.N.A.'s scroll viewer (`NightChartControl.OnMouseWheel` →
+   `TakeWheelScrub`). The rule sits in `TakeWheelScrub(delta, modifiers)` because `Keyboard.Modifiers`
+   reads the live keyboard and a test cannot hold Shift down for it; `PlannerWheelTests` covers Shift
+   stepping by an hour, bare/Control leaving the scrub alone, and a real routed wheel message arriving
+   with `Handled == false`.
+3. **"computing..." while paging — measured, and the honest answer is *almost never visible*** (`67169b0`).
+   `PlannerPanelRenderSmoke` now renders the panel on purpose while `Busy` is up
+   (`%TEMP%\planner-panel-computing-at-620.png` shows `computing…` beside
+   `Site 50.0880, 14.4208 - window 31 nights`), and times it: the walk past the edge of a computed window
+   (**31 nights → 41**) holds `Busy` for **46 ms** on this machine; the cold first window takes **186 ms**.
+   The readout is there for the first open and for slow machines, not for the arrow keys. Not yet seen in
+   the live app, and the `DatePicker` at other panel widths is still unreviewed.
+4. **Packaging — not run.** Any of the above changes the DLL, so this is last:
+   `.\UnphasedNina\build\Build-Release.ps1 -Tag v0.7.0.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta`,
+   then `Verify-ReleaseArtifacts.ps1`, the GitHub release on **this** repository (the archive must stay
+   byte-identical afterwards — catalogue CI re-hashes `Installer.URL`), then the manifest PR at
+   `manifests/U/Unphased Night Planner/3.2.0.9001/0.7.0.0/manifest.json`. Screenshots stay unhosted, so the
+   listing shows the icon only. **Blocked on credentials:** `git push -u origin main` on this repository
+   returns `Permission to zakky2k/unphased-nina-plugin.git denied to zakky2k` (403). The stored GCM
+   credential is a fine-grained PAT scoped to selected repositories, and this repository is not one of them;
+   the same credential pushes AstroScripts. Fix by adding the repository to the PAT (Contents: Read and
+   write) or by `gh auth login`, then push `67169b0`.
+5. Still undecided, carried forward: per-file MPL-2.0 headers (33 `.cs` + 2 `.xaml` outside `obj`/`bin`); the
+   moon glyph overlapping its chip in night mode; whether to move to apparent-horizon sunrise/sunset (the
+   user chose to keep geometric 0°, and changing it would invalidate every fixture the web planner shares).
 
 ## Open items and decisions
 - **0.6.2.0 is the deployed build** (deployed 21:46 on 25 Nov, after `8cdcce1`): `UnphasedNina.dll` **74,240 B**,
