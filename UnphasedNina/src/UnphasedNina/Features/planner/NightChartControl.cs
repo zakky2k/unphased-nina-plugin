@@ -103,6 +103,7 @@ namespace Zakfo.Unphased.Features.planner {
         private void PlannerChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e) {
             if (e.PropertyName == nameof(NightPlannerVM.Scheme)) SetScheme(hookedPlanner.Scheme);
             if (e.PropertyName == nameof(NightPlannerVM.ScrubMinutes)) SetScrub(hookedPlanner.ScrubMinutes);
+            if (e.PropertyName == nameof(NightPlannerVM.OverlayTracks)) RequestRerender();
             if (e.PropertyName is nameof(NightPlannerVM.SunColor) or nameof(NightPlannerVM.MoonColor)
                 or nameof(NightPlannerVM.HorizonColor)) {
                 // All three are re-read together: the palette resolves every role against
@@ -173,11 +174,19 @@ namespace Zakfo.Unphased.Features.planner {
             DrawGrid(dc, w, h, sx, sy, spanMinutes);
             DrawCurve(dc, row.Chart.SunPolyline, palette.SunTrack(scheme), 1.6, sx, sy);
             DrawCurve(dc, row.Chart.MoonPolyline, palette.MoonTrack(scheme), 1.2, sx, sy);
+            foreach (var track in VisibleOverlays) {
+                int style = track.Choice.StyleIndex;
+                DrawCurve(dc, track.Polyline, OverlayStyle.BrushFor(style, scheme), 1.4, sx, sy, OverlayStyle.DashFor(style));
+            }
             DrawSunMarkers(dc, w, h, sx, sy);
             DrawMoonMarkers(dc, w, h, sx, sy);
             DrawScrub(dc, w, h, sx, sy, spanMinutes);
             DrawLegend(dc);
         }
+
+        private IReadOnlyList<OverlayTrack> VisibleOverlays =>
+            hookedPlanner != null && ReferenceEquals(row, hookedPlanner.SelectedNight)
+                ? hookedPlanner.OverlayTracks : Array.Empty<OverlayTrack>();
 
         /// <summary>
         /// Boxes the axis labels (hour clock, degrees) already occupy. They are drawn
@@ -277,7 +286,8 @@ namespace Zakfo.Unphased.Features.planner {
         /// bridged by a line hugging the edge - the flat horizontal line that looked
         /// like a feature of the sky.
         /// </summary>
-        private void DrawCurve(DrawingContext dc, string polyline, Brush brush, double thickness, double sx, double sy) {
+        private void DrawCurve(DrawingContext dc, string polyline, Brush brush, double thickness, double sx, double sy,
+            DashStyle dash = null) {
             if (string.IsNullOrEmpty(polyline)) return;
             var geo = new StreamGeometry();
             using (var ctx = geo.Open()) {
@@ -301,7 +311,9 @@ namespace Zakfo.Unphased.Features.planner {
                 }
             }
             geo.Freeze();
-            dc.DrawGeometry(null, new Pen(brush, thickness), geo);
+            var pen = new Pen(brush, thickness);
+            if (dash != null) pen.DashStyle = dash;
+            dc.DrawGeometry(null, pen, geo);
         }
 
         /// <summary>
@@ -408,6 +420,10 @@ namespace Zakfo.Unphased.Features.planner {
             var chart = row.Chart;
             var instant = chart.TimeAtMinutes(minutes);
             DrawScrubDot(dc, x, NightChartVM.YSun(chart.SunAltitudeAt(instant)) * sy, palette.SunTrack(scheme), h);
+            foreach (var track in VisibleOverlays) {
+                var altitude = NightChartVM.AltitudeAt(track.Samples, instant);
+                DrawScrubDot(dc, x, NightChartVM.YSun(altitude) * sy, OverlayStyle.BrushFor(track.Choice.StyleIndex, scheme), h);
+            }
             double moonY = NightChartVM.YMoon(chart.MoonAltitudeAt(instant)) * sy;
             if (!double.IsNaN(moonY) && moonY >= 0 && moonY <= h) {
                 // The chart's moon glyph, sitting on the track at the scrubbed hour: the

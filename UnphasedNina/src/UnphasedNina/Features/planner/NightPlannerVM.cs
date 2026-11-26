@@ -19,7 +19,7 @@ namespace Zakfo.Unphased.Features.planner {
     /// sideways never runs out of chart. Computation runs on a background thread so the
     /// UI never blocks.
     /// </summary>
-    public sealed class NightPlannerVM : BaseINPC {
+    public sealed partial class NightPlannerVM : BaseINPC {
         // Nights either side of the selection in the window that is computed first. Forward
         // is deeper on purpose: the panel is a planning tool, and a zoomed-out (multi-night)
         // frame near the end of the window has nothing left to stitch from, which shows up as
@@ -125,6 +125,7 @@ namespace Zakfo.Unphased.Features.planner {
             this.settings = settings;
             selectedDate = DateTimeOffset.Now.Date;
             Nights = new ObservableCollection<NightRowVM>();
+            InitializeOverlays();
             settings.PropertyChanged += (_, e) => {
                 if (e.PropertyName is nameof(PluginSettings.SiteLatOverride) or nameof(PluginSettings.SiteLonOverride))
                     RequestRecompute();
@@ -135,10 +136,13 @@ namespace Zakfo.Unphased.Features.planner {
                         // chart paints another.
                         RaisePropertyChanged(nameof(Scheme));
                         RaisePropertyChanged(nameof(SchemeLabel));
+                        RaisePropertyChanged(nameof(OverlayLegend));
                     });
                 if (e.PropertyName is nameof(PluginSettings.SunColor) or nameof(PluginSettings.MoonColor)
                     or nameof(PluginSettings.HorizonColor))
                     OnUi(() => RaisePropertyChanged(e.PropertyName));
+                if (e.PropertyName == nameof(PluginSettings.OverlayTargetsJson))
+                    OnUi(ReloadTargets);
             };
         }
 
@@ -227,6 +231,7 @@ namespace Zakfo.Unphased.Features.planner {
                 RaisePropertyChanged(nameof(SelectedDateLabel));
                 // The scrub readout quotes the selected night, so it follows it too.
                 RaisePropertyChanged(nameof(ScrubLabel));
+                RefreshOverlays();
             }
         }
 
@@ -408,6 +413,7 @@ namespace Zakfo.Unphased.Features.planner {
             scrubMinutes = null;
             RaisePropertyChanged(nameof(ScrubMinutes));
             RaisePropertyChanged(nameof(ScrubLabel));
+            RaisePropertyChanged(nameof(OverlayLegend));
         }
 
         /// <summary>The one place the scrub value changes: snapped to the hour, clamped to the visible span.</summary>
@@ -417,6 +423,7 @@ namespace Zakfo.Unphased.Features.planner {
             scrubMinutes = clamped;
             RaisePropertyChanged(nameof(ScrubMinutes));
             RaisePropertyChanged(nameof(ScrubLabel));
+            RaisePropertyChanged(nameof(OverlayLegend));
         }
 
         /// <summary>

@@ -12,5 +12,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\UnphasedCore\UnphasedCore.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="UnphasedNina.Tests" />
+  </ItemGroup>
   <Import Project="../../build/Plugin.targets" />
 </Project>

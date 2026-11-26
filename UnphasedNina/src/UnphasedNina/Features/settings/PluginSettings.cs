@@ -320,6 +320,14 @@ namespace Zakfo.Unphased.Features.settings {
             set { profileOptions.SetValueString(nameof(SiteLonOverride), value ?? string.Empty); RaisePropertyChanged(); }
         }
 
+        internal string OverlayTargetsJson {
+            get => profiles.ActiveProfile == null ? string.Empty
+                : profileOptions.GetValueString(nameof(OverlayTargetsJson), string.Empty);
+            set {
+                if (profiles.ActiveProfile != null) profileOptions.SetValueString(nameof(OverlayTargetsJson), value);
+            }
+        }
+
         // ---- The two boxes on the options page --------------------------------------------
         // They edit drafts, never the stored pair. Until now the boxes wrote straight into
         // SiteLatOverride/SiteLonOverride, so a half-typed or mistyped pair sat in the
@@ -520,6 +528,7 @@ namespace Zakfo.Unphased.Features.settings {
         }
 
         private void OnProfileChanged(object sender, EventArgs args) {
+            RaisePropertyChanged(nameof(OverlayTargetsJson));
             RaisePropertyChanged(nameof(SiteLatOverride));
             RaisePropertyChanged(nameof(SiteLonOverride));
             // A different profile means a different site to follow, so the boxes move with

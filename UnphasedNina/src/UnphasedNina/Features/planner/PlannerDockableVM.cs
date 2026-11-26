@@ -4,6 +4,7 @@
 using CommunityToolkit.Mvvm.Input;
 using NINA.Equipment.Interfaces.Mediator;
 using NINA.Profile.Interfaces;
+using NINA.WPF.Base.Interfaces.ViewModel;
 using NINA.WPF.Base.ViewModel;
 using System.ComponentModel.Composition;
 using System.Windows.Input;
@@ -22,18 +23,21 @@ namespace Zakfo.Unphased.Features.planner {
 
         private readonly PluginSettings settings;
         private readonly ITelescopeMediator telescope;
+        private readonly IFramingAssistantVM framingAssistant;
 
         private NightPlannerVM planner;
         private IRelayCommand prev, next, tonight, scrubBack, scrubForward, scrubClear, zoomOut, zoomIn, resetZoom;
 
         [ImportingConstructor]
-        public PlannerDockableVM(IProfileService profileService, ITelescopeMediator telescope)
+        public PlannerDockableVM(IProfileService profileService, ITelescopeMediator telescope,
+            [Import(AllowDefault = true)] IFramingAssistantVM framingAssistant = null)
             : base(profileService) {
             // For(), not an import: N.I.N.A. composes the manifest and the parts of a plugin
             // in two different containers, so an imported part would be a second settings
             // object that the options page never writes to.
             this.settings = PluginSettings.For(profileService);
             this.telescope = telescope;
+            this.framingAssistant = framingAssistant;
             Title = "Unphased Night Planner";
             CanClose = true;
         }
@@ -43,6 +47,10 @@ namespace Zakfo.Unphased.Features.planner {
         /// profile, which is not ready at MEF construction time.
         /// </summary>
         public NightPlannerVM Planner => planner ??= new NightPlannerVM(settings);
+
+        private IRelayCommand addFramingTarget;
+        public IRelayCommand AddFramingTargetCommand => addFramingTarget ??= new RelayCommand(
+            () => Planner.AddFramingTarget(FramingTarget.FromObject(framingAssistant?.DSO)));
 
         public IRelayCommand PrevNightCommand => prev ??= new RelayCommand(() => Planner.PrevNight(), () => true);
         public IRelayCommand NextNightCommand => next ??= new RelayCommand(() => Planner.NextNight(), () => true);
