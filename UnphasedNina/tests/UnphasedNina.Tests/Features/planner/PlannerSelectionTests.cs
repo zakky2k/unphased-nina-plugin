@@ -288,13 +288,20 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             var planner = PlannerFixture.WindowOfThreeNights();
             planner.SelectedDate = PlannerFixture.Local(2026, 11, 26, 0, 0);
             planner.SetScrub(20 * 60);
-            Assert.That(planner.ScrubLabel, Does.StartWith("Scrub "));
+            // Round 11: the TIME SCRUB box names where the marker is and nothing else. It used to
+            // be a sentence ("Scrub off - click the chart or use the hour buttons"), which the
+            // caption above the cluster and the arrows' tooltips now cover, and which a 230 DIP
+            // status box cut off mid-phrase.
+            Assert.That(planner.ScrubLabel, Does.Match("^[0-2][0-9]:[0-5][0-9]$"),
+                "the box shows a clock time while the marker is on");
+            Assert.That(planner.SelectedNight.Chart.ScrubReadout(20 * 60), Does.StartWith(planner.ScrubLabel),
+                "and it is the same time the chart prints at the scrub line, not a second reading");
 
             planner.ClearScrub();
 
             Assert.Multiple(() => {
                 Assert.That(planner.ScrubMinutes, Is.Null);
-                Assert.That(planner.ScrubLabel, Does.Contain("Scrub off"));
+                Assert.That(planner.ScrubLabel, Is.EqualTo("off"), "off is a one-word answer");
             });
         }
 

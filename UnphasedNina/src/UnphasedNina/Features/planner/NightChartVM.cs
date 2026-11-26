@@ -340,6 +340,14 @@ namespace Zakfo.Unphased.Features.planner {
             return $"{t.LocalDateTime:HH:mm}  sun {Signed(SunAltitudeAt(t))}  moon {Signed(MoonAltitudeAt(t))}{phase}";
         }
 
+        /// <summary>
+        /// Just the clock time at a scrub position. The panel's TIME SCRUB box wants where the
+        /// marker is and nothing else: the sun and moon altitudes are printed at the scrub line on
+        /// the chart itself, and the whole sentence would not fit a 230 DIP status box without
+        /// turning into an ellipsis.
+        /// </summary>
+        public string ScrubTime(double minutes) => $"{TimeAtMinutes(minutes).LocalDateTime:HH:mm}";
+
         private static string Signed(double altitude) =>
             double.IsNaN(altitude) ? "n/a"
             : altitude >= 0 ? $"+{altitude:F0}\u00b0" : $"{altitude:F0}\u00b0";

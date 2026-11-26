@@ -372,11 +372,17 @@ namespace Zakfo.Unphased.Features.planner {
         /// <summary>How wide a span the chart is drawing: the zoomed frame, 1 night to a week.</summary>
         public double VisibleSpanMinutes => NightChartVM.FrameMinutesAtZoom(zoomNights);
 
-        /// <summary>Header readout: what the scrub is pointing at, or how to start one.</summary>
+        /// <summary>
+        /// The TIME SCRUB cluster's status box: where the marker is, as a clock time, or "off".
+        /// Round 11 shortened this from a sentence. The cluster is captioned TIME SCRUB above the
+        /// buttons and the arrows' tooltips say how to move the marker, so the box only has to
+        /// answer one question - and a 230 DIP box is where the old sentence kept losing its own
+        /// ending. The altitudes at the marker are printed on the chart, at the scrub line.
+        /// </summary>
         public string ScrubLabel =>
             scrubMinutes == null || selectedNight == null
-                ? "Scrub off - click the chart or use the hour buttons"
-                : "Scrub " + selectedNight.Chart.ScrubReadout(scrubMinutes.Value);
+                ? "off"
+                : selectedNight.Chart.ScrubTime(scrubMinutes.Value);
 
         /// <summary>Put the marker at a minute offset from local noon, snapped to the nearest whole hour.</summary>
         public void SetScrub(double minutes) => MoveScrub(NightChartVM.SnapToHour(minutes));

@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.7.0.0 — round 11: one control-group grammar for the header, and the round 10 that led to it
+
+Two layout rounds, landed in **one commit** because the second rewrote the first's file: round 10 un-crowded the header,
+round 11 replaced it with a template. Suite 97 → **100**, rendered at 1200 / 900 / 620 DIP and looked at, then deployed
+into a running N.I.N.A. and reviewed there. **Not packaged, not re-tagged** — see "State of this build" at the end.
+
+- **Round 10 first: three rows, `reset zoom` between `-` and `+`, buttons that match.** The review said "all controls
+  crowded into the left side"; the header became three rows and the palette got a bounding box. That round's lesson is
+  the reason round 11 exists: the buttons were given **`MinWidth`**, and a minimum is a floor, not an equaliser — three
+  buttons asking for different amounts came out three different widths and looked mis-set by hand.
+- **Round 11: the header is now four identical clusters** — DATE, ZOOM, TIME SCRUB, DISPLAY PALETTE — each
+  *modifier / central control / modifier*, with its own readout in a thin outlined box directly beneath its own buttons.
+  `1 night` sits under the zoom buttons, `off` under the hour buttons, `palette: N.I.N.A.` under the palettes; the long
+  scrub sentence is gone, the box just says `off` or `08:00`. The agreed numbers: modifier **48**, central **126**,
+  palette trio **86**, height **32**, 4 between buttons, 12 between clusters, status box **26** tall, 1 outline,
+  2 corners. Every width is an explicit **`Width`**, never a minimum, so equal buttons are actually equal.
+- **The grammar lives in a control, not in copy-paste** (`Features/planner/ControlGroup.cs`). `ControlGroup` is a
+  `HeaderedContentControl` — caption, content, status box — and the cluster template is defined once. It is a *container
+  control* on purpose: nothing in it touches the buttons inside, because a `Style` on a `Button` replaces N.I.N.A.'s
+  implicit template and the button loses its chrome. That rule survived two rounds of temptation.
+- **Two WPF findings worth their own paragraph.** (1) An *implicit* `<Style TargetType="ControlGroup">` in the plugin
+  dictionary only reaches the visual tree through the resource chain, which exists inside N.I.N.A. and does **not** exist
+  when a test or the render smoke pulls the data template out and hosts it alone — so the groups rendered template-less
+  and the tests saw zero buttons. The style is keyed and applied explicitly on each group; the same template works both
+  ways. (2) The outline around the active palette is a `Border` **around** each palette button (a Border has no chrome
+  to lose) and it toggles `BorderBrush`, never `BorderThickness`, so choosing a scheme never shifts anything. For that
+  to work the brush must be owned by the style: a local `BorderBrush` attribute outranks a style trigger and outlined all
+  three at once. Debugging it took a probe, because the test window had no theme brushes at all, an unresolved
+  `{DynamicResource}` in a trigger setter looks exactly like a trigger that never fired — the wiring host now seeds the
+  same stand-in brushes the render smoke uses.
+- **Narrow docks wrap, they do not squeeze.** The four clusters ask for about 1140 DIP in a row, so they sit in a
+  `WrapPanel`: at 900 the palette drops to a second line, at 620 the header is 2×2 and nothing is clipped. A test counts
+  the wrap rather than trusting the picture.
+- **The render smoke grew.** Three widths instead of two, and its stand-in `ButtonForegroundBrush` is now dark: the host
+  has no N.I.N.A. button chrome, WPF paints light-grey boxes, and light text on light grey made the labels unreadable in
+  the pictures. The previews show the layout, not the live colours.
+
+**State of this build.** Rounds 10 and 11 are **deployed and reviewed**, not released: the plugin folder now holds a
+**Release** build — `UnphasedNina.dll` **87,040 B** (SHA256 `5FE7E49D…`), `UnphasedCore.dll` **24,064 B** (`8E4EA47A…`) —
+loaded by a running N.I.N.A. (PID 25416) whose module list names both files out of the plugin folder, with the usual
+1,153-byte banner-only log. The published `v0.7.0.0` archive is untouched and its checksum
+`7da5fd24…` still describes the code as it was at `235205f` — **it no longer matches `main`**, which is why the
+catalogue entry stays parked and nothing was re-tagged.
+
+Next: the plugin's own page — the three pillars as the centrepiece, three purpose-drawn vector icons, and the agreed
+copy — across the options page, the README and future documentation.
+
+
 ## 0.7.0.0 — round 9: buttons with a size of their own, and a wheel that scrolls
 
 The two round-8 loose ends, plus the move. Suite 92 → 97, and the panel was rendered in-process and

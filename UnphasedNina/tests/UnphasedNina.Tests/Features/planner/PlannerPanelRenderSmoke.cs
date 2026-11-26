@@ -39,7 +39,12 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 app.Resources["PrimaryBrush"] = new SolidColorBrush(Color.FromRgb(0xE8, 0xEE, 0xF6));
                 app.Resources["SecondaryBrush"] = new SolidColorBrush(Color.FromRgb(0x9C, 0xAC, 0xC2));
                 app.Resources["BorderBrush"] = new SolidColorBrush(Color.FromArgb(0x80, 0x5A, 0x6E, 0x8C));
-                app.Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(0xE8, 0xEE, 0xF6));
+                // N.I.N.A.'s own button chrome is not available to a test host, so the buttons
+                // here are painted by WPF's default style: light grey boxes. Their text therefore
+                // has to be dark to be legible in the picture, even though inside N.I.N.A. the same
+                // key resolves to a light colour on the navy chrome. The picture shows the layout,
+                // not the live colours.
+                app.Resources["ButtonForegroundBrush"] = new SolidColorBrush(Color.FromRgb(0x16, 0x1B, 0x24));
 
                 var profiles = new Mock<IProfileService>();
                 var profile = new Mock<IProfile>();
@@ -67,14 +72,17 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 panel.Planner.ShowWindow(nights);
                 panel.Planner.SelectedDate = new DateTime(2026, 11, 25);
 
-                foreach (var width in new[] { 1200, 620 }) paths.Add(Render(panel, width, "planner-panel"));
+                // 1200 shows the four clusters on one line; 900 and 620 are where the WrapPanel
+                // earns its keep, because the clusters ask for about 1140 DIP between them and a
+                // narrow dock has to drop whole clusters to a second line rather than clip a button.
+                foreach (var width in new[] { 1200, 900, 620 }) paths.Add(Render(panel, width, "planner-panel"));
                 paths.Add(RenderWhilePagingGrowsTheWindow(profiles.Object));
             });
             worker.SetApartmentState(ApartmentState.STA);
             worker.Start();
             worker.Join();
 
-            Assert.That(paths, Has.Count.EqualTo(3));
+            Assert.That(paths, Has.Count.EqualTo(4));
             foreach (var path in paths) Assert.That(new System.IO.FileInfo(path).Length, Is.GreaterThan(2000));
             TestContext.Progress.WriteLine(string.Join(Environment.NewLine, paths));
         }

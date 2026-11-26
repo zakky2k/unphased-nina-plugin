@@ -24,7 +24,7 @@ namespace Zakfo.Unphased.Features.planner {
         private readonly ITelescopeMediator telescope;
 
         private NightPlannerVM planner;
-        private IRelayCommand prev, next, tonight, scrubBack, scrubForward, scrubClear, zoomOut, zoomIn;
+        private IRelayCommand prev, next, tonight, scrubBack, scrubForward, scrubClear, zoomOut, zoomIn, resetZoom;
 
         [ImportingConstructor]
         public PlannerDockableVM(IProfileService profileService, ITelescopeMediator telescope)
@@ -80,6 +80,17 @@ namespace Zakfo.Unphased.Features.planner {
 
         public IRelayCommand ZoomInCommand => zoomIn ??= new RelayCommand(
             () => { Planner.ZoomIn(); CommandManager.InvalidateRequerySuggested(); }, () => true);
+
+        /// <summary>
+        /// Straight back to one night, from however wide the frame currently is. Seven
+        /// presses of `-` to get home from a week is not a reset, it is a chore, and the
+        /// button sits between `-` and `+` so the group is one gesture in three places.
+        /// Like the pair, it is a no-op rather than a limit at the end: the button's
+        /// IsEnabled binds to Planner.CanZoomIn, which is exactly "is there anything left
+        /// to shrink", and SetZoom clamps whatever arrives.
+        /// </summary>
+        public IRelayCommand ResetZoomCommand => resetZoom ??= new RelayCommand(
+            () => { Planner.SetZoom(1); CommandManager.InvalidateRequerySuggested(); }, () => true);
 
         /// <summary>
         /// The panel's three palette buttons. They are exclusive because there is one

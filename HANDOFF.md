@@ -1,4 +1,4 @@
-# HANDOFF — Unphased Night Planner (N.I.N.A. plugin), state at 2026-11-26 (round 8 delivered, version 0.7.0.0)
+# HANDOFF — Unphased Night Planner (N.I.N.A. plugin), state at 2026-11-26 (rounds 10–11 delivered; 0.7.0.0 released, main is ahead of that tag)
 
 > **Moved on 26 Nov, round 9:** this tree is its own repository now — `github.com/zakky2k/unphased-nina-plugin`,
 > working path `C:\Users\zakfo\Documents\unphased-nina-plugin`. It was copied out of `AstroScripts/nina-plugin` at
@@ -943,7 +943,87 @@ headers change the DLL, and the DLL sets the ZIP, and the ZIP sets the checksum.
   `FeaturedImageURL` is `assets/unphased-256.png` in this repository and answers HTTP 200 (10,908 B), so the store tile
   would show the icon if it were listed.
 
+## Rounds 10 and 11 (26 Nov) — the header grammar, deployed but not released
+
+Round 10 ("all controls crowded into the left side") made the header three rows and put `reset zoom` between `-` and `+`.
+Round 11 replaced it entirely: *"redesign this around a reusable, symmetrical control-group template, preserving your
+existing N.I.N.A. colour palette and compact astronomy application aesthetic."* The user's grammar, kept exactly:
+modifier down — fixed-width button / central control — wider fixed-width button / modifier up — same dimensions /
+dynamic status — red text inside a thin, subtly outlined container, **every group the same structure wherever possible**.
+Four questions were asked before building and all four recommendations were taken: narrow dock **wraps to 2×2**
+(`WrapPanel`, not squeezing), groups **are labelled** (DATE / ZOOM / TIME SCRUB / DISPLAY PALETTE, long scrub hint
+dropped), night figures stay **bordered chips**, the active palette is **outlined and keeps its status box**.
+
+- **What it is now.** Four clusters in a `WrapPanel`, each *modifier / central / modifier* with the cluster's own readout
+  in a 26-DIP outlined box directly under its own buttons: `Tue 24 Nov → Wed 25 Nov 2026`, `1 night`, `off` or `08:00`,
+  `palette: N.I.N.A.`. Numbers as agreed: **48** modifier, **126** central, **86** palette trio, **32** high, **4**
+  between buttons, **12** between clusters, status box **26** × 1 outline × 2 corners. About **1140 DIP** for one row.
+- **Round 10's lesson, in the code now:** `MinWidth` is a floor, not an equaliser — three buttons with three different
+  minima came out three different widths. Round 11 uses explicit `Width` on every button and the test asserts
+  `ActualWidth` per width class (`48 / 126 / 86`), plus that every label fits its button with 12 DIP to spare.
+- **`Features/planner/ControlGroup.cs`** is the reusable piece: a `HeaderedContentControl` (caption / content /
+  `Status` box). It is a container control so it can be templated once **without ever styling the buttons inside it** —
+  a `Style` on a `Button` replaces N.I.N.A.'s implicit template and the chrome goes flat. That rule is now enforced by a
+  test that every panel button has `Style == null`.
+- **Two WPF findings, do not lose them.** (1) An *implicit* style for a custom control in the plugin dictionary resolves
+  inside N.I.N.A. (the dictionary is merged into `Application.Resources` by MEF) but **not** in a test or the render
+  smoke, which pull the data template out with `LoadContent()` and host it in a bare window — the groups then render
+  template-less, and the symptom is "zero buttons, no DatePicker, no status Border". Fix: `x:Key="ControlGroupStyle"` and
+  `Style="{StaticResource ControlGroupStyle}"` on every group. (2) The active-palette outline is a `Border` **around**
+  each palette button (a Border has no chrome to lose) toggling `BorderBrush`, never thickness. The brush must be owned
+  by the style — a local `BorderBrush` attribute outranks a style trigger and outlined all three at once. And a trigger
+  setter holding an unresolved `{DynamicResource}` looks identical to a trigger that never fired: the wiring host now
+  seeds the same stand-in theme brushes as the render smoke, otherwise palette tests are blind.
+- **Suite 97 → 100.** New/changed: `EveryPanelButtonIsTheAgreedSizeAndSaysWhatItDoes` (12 buttons, height 32, the three
+  width classes, tooltips, `Style == null`, text-fit), `EachClusterCarriesItsOwnReadoutBelowItsOwnButtons` (four groups,
+  status boxes 26 × 1, box left edge aligned to its cluster, box below the buttons, the 1140 total, **rows ≥ 2 at 900**,
+  chips and `computing…` still present), the palette test now counts outlines (exactly one, and it moves to `night`),
+  and `TurningTheScrubOffClearsItAndSaysSoInHeader` checks `ScrubLabel` really is a `HH:mm`. New VM members:
+  `NightChartVM.ScrubTime(minutes)` and `NightPlannerVM.ScrubLabel` (`off`, or the scrubbed hour).
+- **Rendered and looked at**: `--filter "FullyQualifiedName~PlannerPanelRenderSmoke"` now writes `-at-1200`, `-at-900`,
+  `-at-620` (900 shows 3 + 1, 620 shows 2×2, nothing clipped). Its `ButtonForegroundBrush` stand-in is **dark**, because
+  the host paints WPF's light-grey default chrome and light text on light grey made the labels unreadable. Previews show
+  layout, not live colours; the app shows the red readouts.
+- **Deployed, reviewed, approved** ("looks very good"). Plugin folder holds a **Release** build now:
+  `UnphasedNina.dll` **87,040 B** SHA256 `5FE7E49D21ED4D10…`, `UnphasedCore.dll` **24,064 B** `8E4EA47AED084D81…`,
+  loaded by N.I.N.A. PID 25416 (module list names both paths, `FileVersion 0.7.0.0`), log
+  `20261126-115139-3.2.1.3002.25416-202611.log` **1,153 B** banner-only. The earlier deploy was a Debug build (94,208 B),
+  so the shrink is the optimiser, not a lost feature — the same effect round 9 noted.
+- **Nothing was re-packaged or re-tagged.** The live `v0.7.0.0` archive and its checksum `7da5fd24…` describe `235205f`,
+  **not `main`** any more; that is a reason the catalogue entry stays parked, and if a release is ever cut from this
+  code it must be a new version with a new checksum.
+
+### Round 12 brief, agreed 26 Nov ~12:15 (not started)
+
+The plugin's **own page** (options / description) becomes the identity piece: the three pillars above the settings, so a
+first-time reader understands the purpose before meeting the controls. Two reference screenshots came with it (pillars
+as three cards; then pillars as three rows with a 48-DIP icon, title, one sentence, and the tagline in the accent
+colour). British English throughout, existing N.I.N.A. palette, no new dependencies.
+
+- **Identity.** `Unphased Night Planner` — *Visualise the night. Plan your imaging.* — lede: "Visualise darkness,
+  twilight and moonlight across consecutive nights in a single interactive astronomical chart." Section line:
+  **Three perspectives. One view of the night.**
+- **Pillar 1 — Astronomical darkness** / *Understand the darkness.* Twilight bands into astronomical darkness; when it
+  starts, when it ends, how much dark imaging time the night holds.
+- **Pillar 2 — Lunar conditions** / *Understand the Moon.* Altitude, phase, illumination; Moon below the horizon,
+  moonlight interference, moon-free windows.
+- **Pillar 3 — Multi-night planning** / *Plan the nights ahead.* Tonight and the nights after it, how darkness and the
+  Moon change night to night, where the favourable windows are.
+- **Icons: drawn here, not borrowed.** Native WPF XAML geometry, 64 × 64 canvas, **stroke 2**, rounded caps and joins,
+  48 × 48 standard / 64 × 64 large, transparent or theme-controlled background, theme-aware foreground, and they must
+  inherit the night palette. Darkness = descending Sun + twilight bands + down arrow; Lunar = crescent + trajectory +
+  horizon; Multi-night = a calendar holding three altitude curves (the user wants this one kept — the curves are what
+  make it specific). No third-party icon library, so no licence to carry; the user has **not** audited N.I.N.A.'s own
+  assets for visual similarity, so nothing claims absolute uniqueness.
+- Full replacement body copy (features list, palettes as *N.I.N.A. theme / Night vision / High contrast*, observatory
+  location with the manual override, Astronomy Engine credit, development status) is in the 26 Nov brief and goes into
+  the options page **and** the README so both say the same thing. Note the naming drift to resolve while doing it: the
+  panel buttons still read `default` / `night` / `enhanced`, the copy reads *N.I.N.A. theme / Night vision / High
+  contrast* — decide once, in the panel and the page together, and say so in the changelog.
+
 ## Open items and decisions
+
+
 - **0.7.0.0 is both the deployed and the released build** (deployed 09:48 on 26 Nov from `c1e4384`; licence headers in
   `235205f`; `main` and tag `v0.7.0.0` pushed). Deployed Debug `UnphasedNina.dll` **91,648 B**; the released archive
   carries **84,992 B** because it is the Release configuration — sizes are not comparable across the two. The relaunched
