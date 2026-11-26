@@ -169,7 +169,8 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             var planner = PlannerWithAWindow(out _);
             planner.EnsureComputed();
             Assert.That(WaitFor(() => !planner.Busy), "nothing was left running");
-            Assert.That(planner.StatusText, Does.StartWith("Site "), "the status line names the site being used");
+            Assert.That(planner.SiteDetails, Does.StartWith("Observatory "), "the date tooltip identifies the site being used");
+            Assert.That(planner.StatusText, Is.Empty, "a successful window load needs no visible status notice");
         }
 
         /// <summary>

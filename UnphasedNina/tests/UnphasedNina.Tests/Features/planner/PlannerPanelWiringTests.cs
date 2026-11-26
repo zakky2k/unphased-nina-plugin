@@ -110,9 +110,10 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             var texts = Visual<TextBlock>(root).Select(t => t.Text).ToList();
 
             Assert.Multiple(() => {
-                Assert.That(texts, Does.Contain(row.SunChip), "the sunset-to-sunrise chip is not on the panel");
+                Assert.That(texts, Does.Contain(row.SunsetChip));
+                Assert.That(texts, Does.Contain(row.SunriseChip));
                 Assert.That(texts, Does.Contain(row.DarkChip), "the dark-hours chip is not on the panel");
-                Assert.That(texts, Does.Contain(row.MoonChip), "the moon chip is not on the panel");
+                Assert.That(texts, Does.Contain(row.MoonlessChip));
             });
         }
 
@@ -444,7 +445,8 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                     "no cluster is wider than the panel holding it, which is what a clipped button starts as");
             });
 
-            var figures = new[] { "Planner.SelectedNight.SunChip", "Planner.SelectedNight.DarkChip", "Planner.SelectedNight.MoonChip" };
+            var figures = new[] { "Planner.SelectedNight.SunsetChip", "Planner.SelectedNight.SunriseChip",
+                "Planner.SelectedNight.DarkChip", "Planner.SelectedNight.MoonlessChip" };
             var chipBoxes = Visual<Border>(root)
                 .Where(b => Visual<TextBlock>(b).Any(t => figures.Contains(TextSource(t))))
                 .ToList();
@@ -455,11 +457,12 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                     "clusters, figures, chart - the header is one band now, not three rows of loose controls");
                 Assert.That(Grid.GetRow(Only<NightChartControl>(root)), Is.EqualTo(2),
                     "and the chart still gets the rest of the panel");
-                Assert.That(chipBoxes, Has.Count.EqualTo(3), "the night figures are still three bordered chips");
+                Assert.That(chipBoxes, Has.Count.EqualTo(3), "Sun times, total dark and moonless dark each have a chip");
+                Assert.That(chipStrip, Is.TypeOf<WrapPanel>(), "the chips can wrap without clipping");
                 Assert.That(chipStrip.Parent, Is.SameAs(status.Parent),
-                    "they share their line with the status readout, one line for the night's news");
-                Assert.That(status.TextTrimming, Is.EqualTo(System.Windows.TextTrimming.CharacterEllipsis),
-                    "and it ellipsises when the panel is narrow, which is what 620 DIP needs");
+                    "the summary and status messages share the band above the chart");
+                Assert.That(status.TextWrapping, Is.EqualTo(System.Windows.TextWrapping.Wrap),
+                    "a status message stays readable in a narrow dock");
             });
         }
 

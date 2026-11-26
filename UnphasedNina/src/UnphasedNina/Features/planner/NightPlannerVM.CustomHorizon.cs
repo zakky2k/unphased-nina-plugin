@@ -4,11 +4,11 @@
 using NINA.Astrometry;
 using NINA.Core.Model;
 using NINA.Core.Utility;
-using Zakfo.Unphased.Core;
 
 namespace Zakfo.Unphased.Features.planner {
     public sealed partial class NightPlannerVM {
-        private sealed record HorizonProjection(IReadOnlyList<(double Minutes, double Altitude)> Samples, int ClearDarkMinutes);
+        private sealed record HorizonProjection(IReadOnlyList<(double Minutes, double Altitude)> Samples,
+            int ClearDarkMinutes, int ClearMoonlessMinutes);
 
         private readonly OverlayChoice horizonMoon = new("Moon", 0, planet: NOVAS.Body.Moon);
         private readonly OverlayChoice horizonSun = new("Sun", 0, planet: NOVAS.Body.Sun);
@@ -58,6 +58,7 @@ namespace Zakfo.Unphased.Features.planner {
             Array.Empty<(double, double)>();
 
         public string HorizonDarkChip { get; private set; } = string.Empty;
+        public string HorizonMoonlessChip { get; private set; } = string.Empty;
 
         private OverlayChoice DefaultHorizonReference() =>
             Targets.FirstOrDefault(choice => choice.Enabled) ?? Planets.FirstOrDefault(choice => choice.Enabled) ?? horizonMoon;
@@ -79,9 +80,13 @@ namespace Zakfo.Unphased.Features.planner {
             CustomHorizonSamples = projection?.Samples ?? Array.Empty<(double, double)>();
             HorizonDarkChip = projection == null
                 ? string.Empty
-                : $"{reference.Name} · {NightRowVM.FormatDuration(projection.ClearDarkMinutes)} dark & clear";
+                : $"{reference.Name} · Dark & clear {NightRowVM.FormatDuration(projection.ClearDarkMinutes)}";
+            HorizonMoonlessChip = projection == null
+                ? string.Empty
+                : $"Moonless & clear {NightRowVM.FormatDuration(projection.ClearMoonlessMinutes)}";
             RaisePropertyChanged(nameof(CustomHorizonSamples));
             RaisePropertyChanged(nameof(HorizonDarkChip));
+            RaisePropertyChanged(nameof(HorizonMoonlessChip));
         }
 
         private void RefreshCustomHorizon() {
@@ -116,7 +121,7 @@ namespace Zakfo.Unphased.Features.planner {
             OverlayChoice reference, CustomHorizon horizon, Func<bool> cancelled) {
             const int sampleMinutes = 5;
             var site = row.Payload.Location;
-            var dark = SelectedNightDarkIntervals(row.Payload);
+            var dark = row.DarkIntervals;
             var samples = new List<(double Minutes, double Altitude)>();
             var clearance = new List<(double Minutes, double Clearance)>();
             double frameEnd = row.Chart.FrameMinutes;
@@ -140,23 +145,8 @@ namespace Zakfo.Unphased.Features.planner {
                 minutes = Math.Min(minutes + sampleMinutes, minutes < frameEnd ? frameEnd : end);
             }
             double clearDarkMinutes = dark.Sum(interval => TimeAboveHorizon(clearance, interval.Start, interval.End));
-            return new HorizonProjection(samples, (int)Math.Floor(clearDarkMinutes + 1e-9));
-        }
-
-        private static List<(double Start, double End)> SelectedNightDarkIntervals(NightPayload payload) {
-            var intervals = new List<(double, double)>();
-            double? start = null;
-            foreach (var transition in payload.Events) {
-                if (transition.Time < payload.NightStart || transition.Time > payload.NightEnd || transition.Band != "astronomical")
-                    continue;
-                double minutes = (transition.Time - payload.FrameNoon).TotalMinutes;
-                if (transition.Edge == "start") start = minutes;
-                else if (transition.Edge == "end" && start.HasValue && minutes > start.Value) {
-                    intervals.Add((start.Value, minutes));
-                    start = null;
-                }
-            }
-            return intervals;
+            double clearMoonlessMinutes = row.MoonlessDarkIntervals.Sum(interval => TimeAboveHorizon(clearance, interval.Start, interval.End));
+            return new HorizonProjection(samples, NightRowVM.WholeMinutes(clearDarkMinutes), NightRowVM.WholeMinutes(clearMoonlessMinutes));
         }
 
         internal static double TimeAboveHorizon(IReadOnlyList<(double Minutes, double Clearance)> samples, double start, double end) {

@@ -27,10 +27,12 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         /// frame starts at the noon of the evening's own day, exactly as the real
         /// calculator does, so a one-night frame really contains that night.
         /// </summary>
-        public static NightPayload Night(int year, int month, int day, int darkMinutes, double illum, MoonSample[] moon = null) {
+        public static NightPayload Night(int year, int month, int day, int darkMinutes, double illum, MoonSample[] moon = null,
+            MoonEvents moonEvents = null) {
             var evening = Local(year, month, day, 16, 20);
             var morning = evening.Date.AddDays(1) + new TimeSpan(7, 30, 0);
             var noon = evening.Date + new TimeSpan(12, 0, 0);
+            var astronomicalDusk = evening.AddMinutes(90);
             return new NightPayload {
                 Location = new Site(50.08804, 14.42076),
                 FrameNoon = noon,
@@ -38,12 +40,15 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 NightEnd = morning,
                 Sunset = evening,
                 Sunrise = morning,
-                Events = Array.Empty<TwilightEvent>(),
+                Events = darkMinutes == 0 ? Array.Empty<TwilightEvent>() : new[] {
+                    new TwilightEvent("astronomical", "start", astronomicalDusk),
+                    new TwilightEvent("astronomical", "end", astronomicalDusk.AddMinutes(darkMinutes))
+                },
                 SunSeries = FakeSunSeries(noon, evening),
-                TrueDarkness = true,
+                TrueDarkness = darkMinutes > 0,
                 DeepestSunAltitude = -18.5,
                 MoonSamples = moon ?? Array.Empty<MoonSample>(),
-                Moon = new MoonEvents(Array.Empty<DateTimeOffset>(), Array.Empty<DateTimeOffset>()),
+                Moon = moonEvents ?? new MoonEvents(Array.Empty<DateTimeOffset>(), Array.Empty<DateTimeOffset>()),
                 Waxing = true,
                 Limb = "right",
                 MidnightTime = evening.AddHours(8),

@@ -44,7 +44,7 @@ namespace Zakfo.Unphased.Features.planner {
 
         private DateTimeOffset selectedDate;
         private NightRowVM selectedNight;
-        private string statusText = "Waiting for a site - set latitude/longitude in the plugin options or configure astrometry in the profile.";
+        private string statusText = string.Empty;
         private bool busy;
         private Site? computedSite;
         private int computeToken;
@@ -280,6 +280,10 @@ namespace Zakfo.Unphased.Features.planner {
             get => statusText;
             private set { statusText = value; RaisePropertyChanged(); }
         }
+
+        public string SiteDetails => computedSite is { } site
+            ? $"Observatory {site.Lat:F4}, {site.Lon:F4} · {Nights.Count} nights loaded"
+            : string.Empty;
 
         public bool Busy {
             get => busy;
@@ -545,7 +549,8 @@ namespace Zakfo.Unphased.Features.planner {
                     }
                     computedSite = site;
                     ApplyWindow(nights, rows, keep);
-                    StatusText = $"Site {site.Lat:F4}, {site.Lon:F4} - window {Nights.Count} nights";
+                    StatusText = string.Empty;
+                    RaisePropertyChanged(nameof(SiteDetails));
                 });
             });
         }

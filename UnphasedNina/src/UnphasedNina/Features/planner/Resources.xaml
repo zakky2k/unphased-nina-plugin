@@ -14,6 +14,15 @@
 
     <BooleanToVisibilityConverter x:Key="CurveSwatchVisibility"/>
 
+    <Style x:Key="NightSummaryChipStyle" TargetType="Border">
+        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="Margin" Value="0,0,6,3"/>
+        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="Background" Value="{DynamicResource SecondaryBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
     <!-- The panel's control grammar, used once per cluster and defined here once.
          A cluster is: a small caption, a row of buttons, and a thin outlined box holding that
          cluster's dynamic readout - the shape says which number belongs to which buttons, which
@@ -133,7 +142,7 @@
                      ten nights when the calendar gets near an edge, so pressing one had nothing
                      left to do. The cluster's status box carries the night the chart is showing. -->
                 <planner:ControlGroup Style="{StaticResource ControlGroupStyle}" Header="DATE" Width="360" Margin="0,0,12,6"
-                    Status="{Binding Planner.SelectedDateLabel}">
+                    Status="{Binding Planner.SelectedDateLabel}" ToolTip="{Binding Planner.SiteDetails}">
                     <StackPanel Orientation="Horizontal">
                         <Button Content="&#8249;" Width="48" Height="32" Padding="6,4" Margin="0,0,4,0"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
@@ -495,45 +504,32 @@
             </Grid>
             </StackPanel>
 
-            <!-- The selected night's own figures, with the status readout on the same row: this
-                 row is the "what am I looking at" row. The night list used to put these on every
-                 row; with the calendar there is one night on screen, so it gets its numbers
-                 spelled out: when the night runs, how much of it is properly dark, and when the
-                 moon is at its best. They follow the highlighted night, not the zoom, so widening
-                 the chart to a week does not quietly change what the chips claim.
-                 The brushes are the same four keys the night palette overrides, so the chips stay
-                 legible in red night vision instead of turning into white boxes.
-                 The row is a Grid so the status line takes whatever the chips leave over and
-                 ellipsises rather than running off the edge of the panel.
-                 The one sign that a window is being worked out lives here too. Nights arrive from a
-                 background thread, so between asking for a wider window and getting it the panel
-                 would otherwise look stuck rather than busy. Shown by a trigger rather than a
-                 converter so the collapsed element takes no room and the row stays compact while idle. -->
-            <Grid Grid.Row="1" Margin="2,0,2,4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal">
-                    <Border Padding="6,2" Margin="0,0,6,0" CornerRadius="3"
-                        Background="{DynamicResource SecondaryBackgroundBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
-                        <TextBlock Text="{Binding Planner.SelectedNight.SunChip}" FontSize="13"
-                            Foreground="{DynamicResource PrimaryBrush}"/>
+            <!-- The summary follows the selected night. Extra chips wrap on narrow docks. -->
+            <Grid Grid.Row="1" Margin="2,0,2,1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <WrapPanel TextElement.FontSize="13" TextElement.Foreground="{DynamicResource PrimaryBrush}">
+                    <Border Style="{StaticResource NightSummaryChipStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Planner.SelectedNight.SunsetChip}" ToolTip="Sunset"
+                                       AutomationProperties.Name="{Binding Planner.SelectedNight.SunsetChip, StringFormat=Sunset {0}}"/>
+                            <TextBlock Text="{Binding Planner.SelectedNight.SunriseChip}" ToolTip="Sunrise" Margin="10,0,0,0"
+                                       AutomationProperties.Name="{Binding Planner.SelectedNight.SunriseChip, StringFormat=Sunrise {0}}"/>
+                        </StackPanel>
                     </Border>
-                    <Border Padding="6,2" Margin="0,0,6,0" CornerRadius="3"
-                        Background="{DynamicResource SecondaryBackgroundBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
-                        <TextBlock Text="{Binding Planner.SelectedNight.DarkChip}" FontSize="13"
-                            Foreground="{DynamicResource PrimaryBrush}"/>
+                    <Border Style="{StaticResource NightSummaryChipStyle}"
+                            ToolTip="Astronomical dusk to dawn, while the Sun is below −18°.">
+                        <TextBlock Text="{Binding Planner.SelectedNight.DarkChip}"/>
                     </Border>
-                    <Border x:Name="HorizonDarkChip" Padding="6,2" Margin="0,0,6,0" CornerRadius="3"
-                            Background="{DynamicResource SecondaryBackgroundBrush}"
-                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                            ToolTip="Total time the reference object is above the custom horizon during astronomical darkness (Sun below −18°) on the selected night.">
+                    <Border Style="{StaticResource NightSummaryChipStyle}" ToolTip="{Binding Planner.SelectedNight.MoonlessDetails}">
+                        <TextBlock Text="{Binding Planner.SelectedNight.MoonlessChip}"/>
+                    </Border>
+                    <Border x:Name="HorizonDarkChip"
+                            ToolTip="Time the reference object is above the custom horizon during astronomical darkness. Moonless &amp; clear also requires the Moon to be below 0°.">
                         <Border.Style>
-                            <Style TargetType="Border">
+                            <Style TargetType="Border" BasedOn="{StaticResource NightSummaryChipStyle}">
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Planner.HorizonDarkChip}" Value="">
                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -541,28 +537,32 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <TextBlock Text="{Binding Planner.HorizonDarkChip}" FontSize="13" MaxWidth="260" TextTrimming="CharacterEllipsis"
-                                   Foreground="{DynamicResource PrimaryBrush}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Planner.HorizonDarkChip}" MaxWidth="235" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding Planner.HorizonMoonlessChip}" Margin="10,0,0,0"/>
+                        </StackPanel>
                     </Border>
-                    <Border Padding="6,2" Margin="0,0,6,0" CornerRadius="3"
-                        Background="{DynamicResource SecondaryBackgroundBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
-                        <TextBlock Text="{Binding Planner.SelectedNight.MoonChip}" FontSize="13"
-                            Foreground="{DynamicResource PrimaryBrush}"/>
-                    </Border>
-                </StackPanel>
-                <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="8,0,8,0" FontSize="11"
-                    TextTrimming="CharacterEllipsis" TextAlignment="Left"
-                    Text="{Binding Planner.StatusText}"
-                    Foreground="{DynamicResource SecondaryBrush}"/>
-                <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="11" Text="computing..."
-                    Foreground="{DynamicResource SecondaryBrush}">
+                    <TextBlock FontSize="11" Text="computing..." VerticalAlignment="Center" Margin="4,0,0,3"
+                               Foreground="{DynamicResource SecondaryBrush}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Planner.Busy}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </WrapPanel>
+                <TextBlock Grid.Row="1" Margin="2,0,0,3" FontSize="11" TextWrapping="Wrap"
+                           Text="{Binding Planner.StatusText}" Foreground="{DynamicResource SecondaryBrush}">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Planner.Busy}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible"/>
+                                <DataTrigger Binding="{Binding Planner.StatusText}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>

@@ -78,12 +78,27 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             var row = new NightRowVM(PlannerFixture.Night(2026, 11, 24, 691, 0.99));
 
             Assert.Multiple(() => {
-                Assert.That(row.SunChip, Is.EqualTo("16:20 \u2192 07:30"));
+                Assert.That(row.SunsetChip, Is.EqualTo("☉ ↓ 16:20"));
+                Assert.That(row.SunriseChip, Is.EqualTo("☉ ↑ 07:30"));
                 // 691 minutes reads as a length of time, not as a number of minutes: the list
                 // used to fit "691 min dark" in one scrolling row, a header chip can afford to
                 // be read.
-                Assert.That(row.DarkChip, Is.EqualTo("11 h 31 m dark"));
+                Assert.That(row.DarkChip, Is.EqualTo("Total dark · 11 h 31 m"));
             });
+        }
+
+        [Test]
+        public void MoonlessDarkTimeIsBoundedByAstronomicalDarknessAndMoonCrossings() {
+            var rise = PlannerFixture.Local(2026, 11, 25, 2, 0);
+            var set = PlannerFixture.Local(2026, 11, 24, 22, 0);
+            var crossings = new MoonEvents(new[] { rise }, new[] { set });
+            var row = new NightRowVM(PlannerFixture.Night(2026, 11, 24, 691, .99, moonEvents: crossings));
+            Assert.That(row.MoonlessChip, Is.EqualTo("Moonless dark · 4 h 00 m"));
+            var noDark = new NightRowVM(PlannerFixture.Night(2026, 11, 24, 0, .99, moonEvents: crossings));
+            Assert.That(noDark.MoonlessChip, Is.EqualTo("Moonless dark · 0 m"));
+            var moonDown = new[] { PlannerFixture.Moon(2026, 11, 24, 22, 0, -10) };
+            var allDark = new NightRowVM(PlannerFixture.Night(2026, 11, 24, 691, .99, moon: moonDown));
+            Assert.That(allDark.MoonlessChip, Is.EqualTo("Moonless dark · 11 h 31 m"));
         }
 
         [Test]
@@ -119,9 +134,11 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         public void WideningTheChartDoesNotChangeWhatTheChipsClaim() {
             var planner = PlannerFixture.WindowOfThreeNights();
             planner.SelectedDate = PlannerFixture.Local(2026, 11, 25, 0, 0);
-            var sun = planner.SelectedNight.SunChip;
+            var sunset = planner.SelectedNight.SunsetChip;
+            var sunrise = planner.SelectedNight.SunriseChip;
             var dark = planner.SelectedNight.DarkChip;
             var moon = planner.SelectedNight.MoonChip;
+            var moonless = planner.SelectedNight.MoonlessChip;
 
             planner.SetZoom(3);
 
@@ -130,8 +147,10 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             // them comparable while the frame is a week wide.
             Assert.Multiple(() => {
                 Assert.That(planner.SelectedNight.Payload.MoonSamples, Is.Not.Empty);
-                Assert.That(planner.SelectedNight.SunChip, Is.EqualTo(sun));
+                Assert.That(planner.SelectedNight.SunsetChip, Is.EqualTo(sunset));
+                Assert.That(planner.SelectedNight.SunriseChip, Is.EqualTo(sunrise));
                 Assert.That(planner.SelectedNight.DarkChip, Is.EqualTo(dark));
+                Assert.That(planner.SelectedNight.MoonlessChip, Is.EqualTo(moonless));
                 Assert.That(planner.SelectedNight.MoonChip, Is.EqualTo(moon));
             });
         }

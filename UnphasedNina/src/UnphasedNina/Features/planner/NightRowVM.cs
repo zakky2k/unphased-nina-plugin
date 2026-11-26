@@ -10,8 +10,6 @@ namespace Zakfo.Unphased.Features.planner {
     /// above the chart, plus the chart geometry itself.
     /// </summary>
     public sealed class NightRowVM {
-        private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
-
         public NightRowVM(NightPayload payload, double frameMinutes = NightChartVM.FullFrameMinutes) {
             Payload = payload;
             Chart = new NightChartVM(payload, frameMinutes);
@@ -22,18 +20,70 @@ namespace Zakfo.Unphased.Features.planner {
                 : $"{Math.Round(payload.MidnightIllumFraction * 100)}% moon";
             Summary = string.Join("  -  ", new[] { DateLabel, DarkLabel, MoonLabel });
 
-            // The three header chips. The night list used to carry these figures one row
-            // per night; with a calendar picking the night there is one night on screen, so
-            // its own numbers sit under it, spelled out rather than abbreviated the way a
-            // scrolling list needed them to be.
-            SunChip = $"{payload.Sunset.ToLocalTime():HH:mm} \u2192 {payload.Sunrise.ToLocalTime():HH:mm}";
-            DarkChip = payload.TrueDarkness ? $"{FormatDuration(payload.DarkMinutes)} dark" : "no true darkness";
+            SunsetChip = $"☉ ↓ {payload.Sunset.ToLocalTime():HH:mm}";
+            SunriseChip = $"☉ ↑ {payload.Sunrise.ToLocalTime():HH:mm}";
+            DarkIntervals = AstronomicalDarkIntervals(payload);
+            DarkChip = $"Total dark · {FormatDuration(payload.DarkMinutes)}";
+            MoonlessDarkIntervals = MoonlessIntervals(payload, DarkIntervals);
+            int moonlessMinutes = WholeMinutes(MoonlessDarkIntervals.Sum(interval => interval.End - interval.Start));
+            MoonlessChip = $"Moonless dark · {FormatDuration(moonlessMinutes)}";
             MoonChip = BestMoonLabel(payload);
         }
 
         /// <summary>"11 h 31 m" for a night's dark minutes; short nights drop the hours.</summary>
         internal static string FormatDuration(int minutes) =>
             minutes >= 60 ? $"{minutes / 60} h {minutes % 60:00} m" : $"{minutes} m";
+
+        internal static int WholeMinutes(double minutes) => (int)Math.Floor(minutes + 1e-9);
+
+        internal IReadOnlyList<(double Start, double End)> DarkIntervals { get; }
+        internal IReadOnlyList<(double Start, double End)> MoonlessDarkIntervals { get; }
+
+        private static List<(double Start, double End)> AstronomicalDarkIntervals(NightPayload payload) {
+            var intervals = new List<(double, double)>();
+            double? start = null;
+            foreach (var transition in payload.Events) {
+                if (transition.Time < payload.NightStart || transition.Time > payload.NightEnd || transition.Band != "astronomical")
+                    continue;
+                double minutes = (transition.Time - payload.FrameNoon).TotalMinutes;
+                if (transition.Edge == "start") start = minutes;
+                else if (transition.Edge == "end" && start.HasValue && minutes > start.Value) {
+                    intervals.Add((start.Value, minutes));
+                    start = null;
+                }
+            }
+            return intervals;
+        }
+
+        private static List<(double Start, double End)> MoonlessIntervals(NightPayload payload,
+            IReadOnlyList<(double Start, double End)> dark) {
+            var intervals = new List<(double, double)>();
+            if (dark.Count == 0) return intervals;
+
+            var crossings = payload.Moon.Rise.Select(time => (Time: time, MoonUp: true))
+                .Concat(payload.Moon.Set.Select(time => (Time: time, MoonUp: false)))
+                .OrderBy(crossing => crossing.Time).ToArray();
+            foreach (var (darkStart, darkEnd) in dark) {
+                var startTime = payload.FrameNoon.AddMinutes(darkStart);
+                int first = Array.FindIndex(crossings, crossing => crossing.Time > startTime);
+                if (first < 0) first = crossings.Length;
+                // A rise or set identifies the state on both sides of the crossing.
+                // With no crossings the Moon stays on the same side of the horizon.
+                bool down = first < crossings.Length ? crossings[first].MoonUp
+                    : crossings.Length > 0 ? !crossings[^1].MoonUp
+                    : payload.MoonSamples.FirstOrDefault(sample => sample.Altitude != 0)?.Altitude < 0;
+                double from = darkStart;
+                for (int i = first; i < crossings.Length; i++) {
+                    double next = (crossings[i].Time - payload.FrameNoon).TotalMinutes;
+                    if (next >= darkEnd) break;
+                    if (down && next > from) intervals.Add((from, next));
+                    down = !crossings[i].MoonUp;
+                    from = next;
+                }
+                if (down) intervals.Add((from, darkEnd));
+            }
+            return intervals;
+        }
 
         /// <summary>
         /// When the moon is worth paying attention to: the highest it gets between sunset and
@@ -76,11 +126,13 @@ namespace Zakfo.Unphased.Features.planner {
         public string MoonLabel { get; }
         public string Summary { get; }
 
-        /// <summary>Chip: the night's clock span, e.g. "16:02 -&gt; 07:58".</summary>
-        public string SunChip { get; }
+        public string SunsetChip { get; }
+        public string SunriseChip { get; }
 
-        /// <summary>Chip: how much of it reaches true dark, e.g. "11 h 31 m dark".</summary>
+        /// <summary>Time between astronomical dusk and dawn.</summary>
         public string DarkChip { get; }
+        public string MoonlessChip { get; }
+        public string MoonlessDetails => $"Time during astronomical darkness when the Moon is below the 0° horizon.\n{MoonChip}";
 
         /// <summary>Chip: the moon's best moment in the night, e.g. "moon highest 41° at 22:30".</summary>
         public string MoonChip { get; }
