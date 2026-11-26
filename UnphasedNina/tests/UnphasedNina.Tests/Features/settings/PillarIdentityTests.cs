@@ -369,7 +369,7 @@ namespace Zakfo.Unphased.Tests.Features.settings {
         }
 
         private static IEnumerable<string> Texts(IEnumerable<DependencyObject> flat) =>
-            flat.OfType<TextBlock>()
+            flat.OfType<TextBox>().Where(t => t.IsReadOnly)
                 .Select(t => (t.Text ?? string.Empty).Trim())
                 .Where(t => t.Length > 0);
 
@@ -386,7 +386,7 @@ namespace Zakfo.Unphased.Tests.Features.settings {
 
         private static int IndexOfText(List<DependencyObject> flat, string text) {
             for (int i = 0; i < flat.Count; i++) {
-                if (flat[i] is TextBlock block && (block.Text ?? string.Empty).Trim() == text) return i;
+                if (flat[i] is TextBox { IsReadOnly: true } field && (field.Text ?? string.Empty).Trim() == text) return i;
             }
             return -1;
         }

@@ -91,6 +91,19 @@ namespace Zakfo.Unphased.Tests.Features.settings {
                 double height = Math.Ceiling(Math.Max(host.DesiredSize.Height, 400));
                 host.Arrange(new Rect(0, 0, width, height));
                 host.UpdateLayout();
+                var copyable = FindText(page, t => t.Text.StartsWith("Explore the dynamic phases"));
+                Assert.That(copyable, Is.Not.Null, "the description is displayed in a selectable text box");
+                copyable.Select(0, "Explore".Length);
+                string copied = null;
+                DataObject.AddCopyingHandler(copyable, (_, args) => {
+                    copied = args.DataObject.GetData(DataFormats.UnicodeText) as string;
+                    args.CancelCommand();
+                });
+                var copy = System.Windows.Input.ApplicationCommands.Copy;
+                Assert.That(copy.CanExecute(null, copyable), Is.True);
+                copy.Execute(null, copyable);
+                Assert.That(copied, Is.EqualTo("Explore"));
+                copyable.Select(0, 0);
                 TestContext.Progress.WriteLine($"options page laid out at {width} x {height} DIP");
 
                 yield return Save(host, width, (int)height, "options-page-at-860");
@@ -196,10 +209,10 @@ namespace Zakfo.Unphased.Tests.Features.settings {
         /// <summary>Depth-first search of the laid-out page for the first text block matching
         /// <paramref name="match"/>, so the picture can be cut relative to something on the page
         /// instead of relative to a guessed pixel offset.</summary>
-        private static TextBlock FindText(DependencyObject node, Func<TextBlock, bool> match) {
+        private static TextBox FindText(DependencyObject node, Func<TextBox, bool> match) {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++) {
                 var child = VisualTreeHelper.GetChild(node, i);
-                if (child is TextBlock block && match(block)) return block;
+                if (child is TextBox { IsReadOnly: true } box && match(box)) return box;
                 var found = FindText(child, match);
                 if (found != null) return found;
             }

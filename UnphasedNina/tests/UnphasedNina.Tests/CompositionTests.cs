@@ -82,7 +82,7 @@ namespace Zakfo.Unphased.Tests {
         /// </summary>
         private static void AssertTheOptionsPageIsStillInTheRoundEightShape(DependencyObject root) {
             var all = Descendants(root).ToList();
-            var fields = all.OfType<System.Windows.Controls.TextBox>().ToList();
+            var fields = all.OfType<System.Windows.Controls.TextBox>().Where(field => !field.IsReadOnly).ToList();
             var buttons = all
                 .OfType<System.Windows.Controls.Primitives.ButtonBase>()
                 // The chart defaults use switches with their own checked state.

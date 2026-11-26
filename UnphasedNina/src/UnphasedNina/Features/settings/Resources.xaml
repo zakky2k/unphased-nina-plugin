@@ -22,8 +22,8 @@
                  UnitTextBox is N.I.N.A.'s own field (number plus a read-only unit); its
                  template sizes itself to its content, so the width is set here - otherwise
                  the pair stretches across the whole settings tab. -->
-            <TextBlock Text="Observatory location" FontWeight="Bold" FontSize="15" />
-            <TextBlock TextWrapping="Wrap" Opacity="0.8" Margin="0,4,0,0"
+            <TextBox Style="{StaticResource SelectableTextStyle}" Text="Observatory location" FontWeight="Bold" FontSize="15" />
+            <TextBox Style="{StaticResource SelectableTextStyle}" TextWrapping="Wrap" Opacity="0.8" Margin="0,4,0,0"
                 Text="Use your active N.I.N.A. profile or specify an alternative observing location. Coordinates are decimal degrees." />
             <Grid Margin="0,8,0,0" HorizontalAlignment="Left">
                 <Grid.ColumnDefinitions>
@@ -33,11 +33,11 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="Latitude" VerticalAlignment="Center" />
+                <TextBox Style="{StaticResource SelectableTextStyle}" Text="Latitude" VerticalAlignment="Center" />
                 <ninactrl:UnitTextBox Grid.Column="1" Margin="8,0,0,0" Width="90" MaxLength="9" Unit="°"
                     VerticalAlignment="Center" ToolTip="Latitude, -90 to 90"
                     Text="{Binding Settings.SiteLatDraft, UpdateSourceTrigger=LostFocus}" />
-                <TextBlock Grid.Column="3" Text="Longitude" VerticalAlignment="Center" />
+                <TextBox Style="{StaticResource SelectableTextStyle}" Grid.Column="3" Text="Longitude" VerticalAlignment="Center" />
                 <ninactrl:UnitTextBox Grid.Column="4" Margin="8,0,0,0" Width="90" MaxLength="9" Unit="°"
                     VerticalAlignment="Center" ToolTip="Longitude, -180 to 180"
                     Text="{Binding Settings.SiteLonDraft, UpdateSourceTrigger=LostFocus}" />
@@ -50,10 +50,10 @@
                     ToolTip="Put the profile's astrometry coordinates in the boxes and stop pinning a location"
                     Command="{Binding Settings.ResetSiteCommand}" />
             </StackPanel>
-            <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.8"
-                Text="{Binding Settings.SiteReadout}" />
-            <TextBlock Margin="0,2,0,0" TextWrapping="Wrap" FontStyle="Italic"
-                Text="{Binding Settings.SiteNotice}" />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.8"
+                Text="{Binding Settings.SiteReadout, Mode=OneWay}" />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="0,2,0,0" TextWrapping="Wrap" FontStyle="Italic"
+                Text="{Binding Settings.SiteNotice, Mode=OneWay}" />
 
             <!-- Which palette the chart paints with. Three buttons because there is one
                  setting behind them and no off for a palette: the night switch this
@@ -65,7 +65,7 @@
                  file saved by an older build that had night mode on opens once on night.
                  The words on these buttons are the words in the description and the README;
                  the panel abbreviates them to fit 86 DIP and points here in its tooltip. -->
-            <TextBlock Text="Display palette" FontWeight="Bold" FontSize="15" Margin="0,16,0,0" />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Text="Display palette" FontWeight="Bold" FontSize="15" Margin="0,16,0,0" />
             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                 <Button Content="N.I.N.A. theme" Padding="8,2"
                     ToolTip="A consistent appearance with the host application: the chart follows whatever palette you picked in N.I.N.A.'s settings"
@@ -76,8 +76,8 @@
                 <Button Margin="8,0,0,0" Padding="8,2" Content="High contrast"
                     ToolTip="Enhanced distinction between chart elements: navy chart, sun amber, moon pale blue, horizon teal, so the three curves stay apart by colour and not only by brightness. Chart only - the panel keeps your N.I.N.A. colours."
                     Command="{Binding Settings.EnhancedSchemeCommand}" />
-                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Opacity="0.8"
-                    Text="{Binding Settings.SchemeName, StringFormat=palette in effect: {0}}" />
+                <TextBox Style="{StaticResource SelectableTextStyle}" Margin="8,0,0,0" VerticalAlignment="Center" Opacity="0.8"
+                    Text="{Binding Settings.SchemeName, Mode=OneWay, StringFormat=palette in effect: {0}}" />
             </StackPanel>
 
             <!-- The three roles the chart is read by. The swatch is the control: click it
@@ -85,8 +85,8 @@
                  The exact value - the pick, or what the palette resolves to - is in the
                  tooltip. Hex stays settable through the settings object for anyone editing
                  the file by hand. -->
-            <TextBlock Text="Custom chart colours" FontWeight="Bold" FontSize="15" Margin="0,16,0,0" />
-            <TextBlock TextWrapping="Wrap" Opacity="0.8" Margin="0,4,0,0"
+            <TextBox Style="{StaticResource SelectableTextStyle}" Text="Custom chart colours" FontWeight="Bold" FontSize="15" Margin="0,16,0,0" />
+            <TextBox Style="{StaticResource SelectableTextStyle}" TextWrapping="Wrap" Opacity="0.8" Margin="0,4,0,0"
                 Text="Each swatch shows what the chart paints right now. Click one to change it; the chart then follows your colour instead of the palette." />
             <Grid Margin="0,8,0,0" HorizontalAlignment="Left">
                 <Grid.ColumnDefinitions>
@@ -101,7 +101,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Text="Solar altitude" VerticalAlignment="Center" />
+                <TextBox Style="{StaticResource SelectableTextStyle}" Text="Solar altitude" VerticalAlignment="Center" />
                 <Button Grid.Column="1" Margin="8,0,0,0" Padding="4,3"
                     ToolTip="{Binding Settings.SunColorNote}"
                     Command="{Binding Settings.PickSunColorCommand}">
@@ -109,7 +109,7 @@
                         Background="{Binding Settings.SunColorBrush}" />
                 </Button>
 
-                <TextBlock Grid.Row="2" Text="Lunar altitude" VerticalAlignment="Center" />
+                <TextBox Style="{StaticResource SelectableTextStyle}" Grid.Row="2" Text="Lunar altitude" VerticalAlignment="Center" />
                 <Button Grid.Row="2" Grid.Column="1" Margin="8,0,0,0" Padding="4,3"
                     ToolTip="{Binding Settings.MoonColorNote}"
                     Command="{Binding Settings.PickMoonColorCommand}">
@@ -117,7 +117,7 @@
                         Background="{Binding Settings.MoonColorBrush}" />
                 </Button>
 
-                <TextBlock Grid.Row="4" Text="Horizon" VerticalAlignment="Center" />
+                <TextBox Style="{StaticResource SelectableTextStyle}" Grid.Row="4" Text="Horizon" VerticalAlignment="Center" />
                 <Button Grid.Row="4" Grid.Column="1" Margin="8,0,0,0" Padding="4,3"
                     ToolTip="{Binding Settings.HorizonColorNote}"
                     Command="{Binding Settings.PickHorizonColorCommand}">
@@ -130,9 +130,9 @@
                 ToolTip="Clear every picked colour: sun and moon follow the N.I.N.A. palette again, the horizon returns to green"
                 Command="{Binding Settings.ResetColorsCommand}" />
 
-            <TextBlock Text="Default chart elements" FontWeight="Bold" FontSize="15" Margin="0,16,0,0"
+            <TextBox Style="{StaticResource SelectableTextStyle}" Text="Default chart elements" FontWeight="Bold" FontSize="15" Margin="0,16,0,0"
                        Foreground="{DynamicResource PrimaryBrush}" />
-            <TextBlock Text="These choices are saved automatically. The planner uses them on startup and when you click Default."
+            <TextBox Style="{StaticResource SelectableTextStyle}" Text="These choices are saved automatically. The planner uses them on startup and when you click Default."
                        TextWrapping="Wrap" Foreground="{DynamicResource SecondaryBrush}" Margin="0,4,0,0" />
             <ContentControl Content="{Binding Settings.ChartDefaults}" ContentTemplate="{StaticResource ChartElementPresetTemplate}" />
             <CheckBox Content="Custom horizon" IsChecked="{Binding Settings.ChartDefaults.CustomHorizon.Enabled, Mode=TwoWay}"
@@ -153,7 +153,7 @@
                  they scale without going soft. The same geometry is mirrored in
                  assets/pillars/*.svg for the README, and PillarIdentityTests fails if the two
                  drift apart. -->
-            <TextBlock FontSize="19" FontWeight="Bold"
+            <TextBox Style="{StaticResource SelectableTextStyle}" FontSize="19" FontWeight="Bold"
                 Foreground="{DynamicResource PrimaryBrush}"
                 Text="Three perspectives. One view of the night." />
 
@@ -191,11 +191,11 @@
                     </Canvas>
                 </Viewbox>
                 <StackPanel Grid.Row="0" Grid.Column="1" Margin="14,0,0,0">
-                    <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"
+                    <TextBox Style="{StaticResource SelectableTextStyle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"
                         Text="Lunar phases" />
-                    <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" Opacity="0.85"
+                    <TextBox Style="{StaticResource SelectableTextStyle}" Margin="0,3,0,0" TextWrapping="Wrap" Opacity="0.85"
                         Text="Explore the dynamic phases of the Moon along with its altitude and illumination. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities." />
-                    <TextBlock Margin="0,4,0,0" FontStyle="Italic" Foreground="{DynamicResource SecondaryBrush}"
+                    <TextBox Style="{StaticResource SelectableTextStyle}" Margin="0,4,0,0" FontStyle="Italic" Foreground="{DynamicResource SecondaryBrush}"
                         Text="Understand the Moon." />
                 </StackPanel>
 
@@ -218,11 +218,11 @@
                     </Canvas>
                 </Viewbox>
                 <StackPanel Grid.Row="2" Grid.Column="1" Margin="14,0,0,0">
-                    <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"
+                    <TextBox Style="{StaticResource SelectableTextStyle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"
                         Text="Astronomical darkness" />
-                    <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" Opacity="0.85"
+                    <TextBox Style="{StaticResource SelectableTextStyle}" Margin="0,3,0,0" TextWrapping="Wrap" Opacity="0.85"
                         Text="Visualise the transition from daylight through civil, nautical and astronomical twilight into astronomical darkness. Easily identify when darkness begins, when it ends and how much dark imaging time is available throughout each night." />
-                    <TextBlock Margin="0,4,0,0" FontStyle="Italic" Foreground="{DynamicResource SecondaryBrush}"
+                    <TextBox Style="{StaticResource SelectableTextStyle}" Margin="0,4,0,0" FontStyle="Italic" Foreground="{DynamicResource SecondaryBrush}"
                         Text="Understand the darkness." />
                 </StackPanel>
 
@@ -242,11 +242,11 @@
                     </Canvas>
                 </Viewbox>
                 <StackPanel Grid.Row="4" Grid.Column="1" Margin="14,0,0,0">
-                    <TextBlock FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"
+                    <TextBox Style="{StaticResource SelectableTextStyle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"
                         Text="Multi-night visualisation" />
-                    <TextBlock Margin="0,3,0,0" TextWrapping="Wrap" Opacity="0.85"
+                    <TextBox Style="{StaticResource SelectableTextStyle}" Margin="0,3,0,0" TextWrapping="Wrap" Opacity="0.85"
                         Text="Look beyond tonight and explore how astronomical darkness and the Moon evolve across consecutive nights. Compare upcoming nights and identify favourable windows for future astrophotography sessions." />
-                    <TextBlock Margin="0,4,0,0" FontStyle="Italic" Foreground="{DynamicResource SecondaryBrush}"
+                    <TextBox Style="{StaticResource SelectableTextStyle}" Margin="0,4,0,0" FontStyle="Italic" Foreground="{DynamicResource SecondaryBrush}"
                         Text="Plan the nights ahead." />
                 </StackPanel>
             </Grid>
@@ -256,40 +256,40 @@
             <!-- The rest of the description, in the same words as the release description and
                  the README. Everything here is stated as it behaves today; the development
                  status says plainly that this is unfinished software. -->
-            <TextBlock Text="About Unphased Night Planner" FontWeight="Bold" FontSize="15" />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Text="About Unphased Night Planner" FontWeight="Bold" FontSize="15" />
 
-            <TextBlock Text="Interactive night planning" FontWeight="Bold" Margin="0,10,0,0" />
-            <TextBlock Margin="10,4,0,0" Text="-  Combined solar and lunar altitude chart." />
-            <TextBlock Margin="10,2,0,0" Text="-  Colour-coded daylight, twilight and astronomical darkness periods." />
-            <TextBlock Margin="10,2,0,0" Text="-  Nighttime duration and astronomical darkness summaries." />
-            <TextBlock Margin="10,2,0,0" Text="-  Lunar culmination and illumination indicators." />
-            <TextBlock Margin="10,2,0,0" Text="-  Adjustable single-night and multi-night views." />
-            <TextBlock Margin="10,2,0,0" Text="-  Integrated calendar with date navigation and instant return to tonight." />
-            <TextBlock Margin="10,2,0,0" Text="-  Interactive time scrubber for inspecting conditions at specific times." />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Text="Interactive night planning" FontWeight="Bold" Margin="0,10,0,0" />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,4,0,0" Text="-  Combined solar and lunar altitude chart." />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  Colour-coded daylight, twilight and astronomical darkness periods." />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  Nighttime duration and astronomical darkness summaries." />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  Lunar culmination and illumination indicators." />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  Adjustable single-night and multi-night views." />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  Integrated calendar with date navigation and instant return to tonight." />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  Interactive time scrubber for inspecting conditions at specific times." />
 
-            <TextBlock Text="Display and customisation" FontWeight="Bold" Margin="0,10,0,0" />
-            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+            <TextBox Style="{StaticResource SelectableTextStyle}" Text="Display and customisation" FontWeight="Bold" Margin="0,10,0,0" />
+            <TextBox Style="{StaticResource SelectableTextStyle}" TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
                 Text="The planner integrates with N.I.N.A.'s native colour scheme and provides three display palettes:" />
-            <TextBlock Margin="10,2,0,0" Text="-  N.I.N.A. theme - a consistent appearance with the host application." />
-            <TextBlock Margin="10,2,0,0" Text="-  Night vision - a red-toned display designed for use at the telescope." />
-            <TextBlock Margin="10,2,0,0" Text="-  High contrast - enhanced visual distinction between chart elements." />
-            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  N.I.N.A. theme - a consistent appearance with the host application." />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  Night vision - a red-toned display designed for use at the telescope." />
+            <TextBox Style="{StaticResource SelectableTextStyle}" Margin="10,2,0,0" Text="-  High contrast - enhanced visual distinction between chart elements." />
+            <TextBox Style="{StaticResource SelectableTextStyle}" TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
                 Text="Individual chart colours for solar altitude, lunar altitude and the horizon can be customised through the plugin options." />
 
-            <TextBlock Text="Observatory location" FontWeight="Bold" Margin="0,10,0,0" />
-            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+            <TextBox Style="{StaticResource SelectableTextStyle}" Text="Observatory location" FontWeight="Bold" Margin="0,10,0,0" />
+            <TextBox Style="{StaticResource SelectableTextStyle}" TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
                 Text="By default, astronomical conditions are calculated using the observatory location configured in the active N.I.N.A. profile." />
-            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+            <TextBox Style="{StaticResource SelectableTextStyle}" TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
                 Text="An optional manual location override allows you to explore nighttime conditions at alternative observing sites, making the planner useful for both local imaging and planning future astrophotography trips." />
 
-            <TextBlock Text="Astronomical calculations" FontWeight="Bold" Margin="0,10,0,0" />
-            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+            <TextBox Style="{StaticResource SelectableTextStyle}" Text="Astronomical calculations" FontWeight="Bold" Margin="0,10,0,0" />
+            <TextBox Style="{StaticResource SelectableTextStyle}" TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
                 Text="Solar and lunar ephemerides are calculated locally using the Astronomy Engine (CosineKitty/AstronomyEngine), based on the selected observing location." />
-            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+            <TextBox Style="{StaticResource SelectableTextStyle}" TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
                 Text="The planner visualises astronomical conditions independently of weather forecasts, atmospheric transparency and local light pollution." />
 
-            <TextBlock Text="Development status" FontWeight="Bold" Margin="0,10,0,0" />
-            <TextBlock TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
+            <TextBox Style="{StaticResource SelectableTextStyle}" Text="Development status" FontWeight="Bold" Margin="0,10,0,0" />
+            <TextBox Style="{StaticResource SelectableTextStyle}" TextWrapping="Wrap" Opacity="0.85" Margin="10,4,0,0"
                 Text="Unphased Night Planner is under active development, with ongoing improvements to functionality, visualisation and the user experience." />
         </StackPanel>
     </DataTemplate>
