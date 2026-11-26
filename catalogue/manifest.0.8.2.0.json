@@ -1,0 +1,47 @@
+{
+  "Name": "Unphased Night Planner",
+  "Identifier": "09572065-E196-4DBA-B954-48F84B351DD1",
+  "Version": {
+    "Major": "0",
+    "Minor": "8",
+    "Patch": "2",
+    "Build": "0"
+  },
+  "Author": "zakky2k",
+  "Homepage": "https://github.com/zakky2k/unphased-nina-plugin",
+  "Repository": "https://github.com/zakky2k/unphased-nina-plugin",
+  "License": "MPL-2.0",
+  "LicenseURL": "https://www.mozilla.org/en-US/MPL/2.0/",
+  "ChangelogURL": "https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/CHANGELOG.md",
+  "Tags": [
+    "night planning",
+    "planner",
+    "sun",
+    "moon",
+    "twilight",
+    "altitude",
+    "ephemeris",
+    "chart",
+    "dockable"
+  ],
+  "MinimumApplicationVersion": {
+    "Major": "3",
+    "Minor": "2",
+    "Patch": "0",
+    "Build": "9001"
+  },
+  "Descriptions": {
+    "ShortDescription": "Visualise darkness, twilight and moonlight across consecutive nights in a single interactive astronomical chart.",
+    "LongDescription": "Visualise darkness, twilight and moonlight across consecutive nights in a single interactive astronomical chart.\r\n\r\nUnphased Night Planner is an interactive, dockable panel for N.I.N.A., designed to help astrophotographers visualise astronomical darkness and lunar conditions for tonight and the nights ahead.\r\n\r\nBy combining solar altitude, lunar altitude, Moon phase and twilight periods in a single interactive chart, the planner provides a clear and intuitive overview of the astronomical conditions that influence nighttime imaging.\r\n\r\nThree perspectives. One view of the night.\r\n\r\nLunar and planetary phases - Understand the Moon and inner planets. Explore the dynamic phases of the Moon, Mercury and Venus alongside their altitude curves. Identify periods when the Moon is below the horizon, assess potential moonlight interference and discover moon-free imaging opportunities.\r\n\r\nAstronomical darkness - Understand the darkness. Visualise the transition from daylight through civil, nautical and astronomical twilight into astronomical darkness. Easily identify when darkness begins, when it ends and how much dark imaging time is available throughout each night.\r\n\r\nMulti-night visualisation - Plan the nights ahead. Look beyond tonight and explore how astronomical darkness and the Moon evolve across consecutive nights. Compare upcoming nights and identify favourable windows for future astrophotography sessions.\r\n\r\nInteractive night planning\r\n- Dynamic altitude chart for combined solar, lunar, planetary and deep-sky paths through the sky.\r\n- Colour-coded daylight, twilight and astronomical darkness periods.\r\n- Nighttime duration and astronomical darkness summaries.\r\n- Lunar culmination and illumination indicators.\r\n- Adjustable single-night and multi-night views.\r\n- Integrated calendar with date navigation and instant return to tonight.\r\n- Interactive time scrubber for inspecting conditions at specific times.\r\n\r\nDisplay and customisation\r\nThe planner integrates with N.I.N.A.'s native colour scheme and provides three display palettes:\r\n- N.I.N.A. theme - a consistent appearance with the host application.\r\n- Night vision - a red-toned display designed for use at the telescope.\r\n- High contrast - enhanced visual distinction between chart elements.\r\nIndividual chart colours for solar altitude, lunar altitude and the horizon can be customised through the plugin options.\r\n\r\nObservatory location\r\nBy default, astronomical conditions are calculated using the observatory location configured in the active N.I.N.A. profile. An optional manual location override allows you to explore nighttime conditions at alternative observing sites, making the planner useful for both local imaging and planning future astrophotography trips.\r\n\r\nAstronomical calculations\r\nSolar and lunar ephemerides are calculated locally using the Astronomy Engine (CosineKitty/AstronomyEngine), based on the selected observing location. The planner visualises astronomical conditions independently of weather forecasts, atmospheric transparency and local light pollution.\r\n\r\nDevelopment status\r\nUnphased Night Planner is under active development, with ongoing improvements to functionality, visualisation and the user experience. The changelog lists what is still rough.",
+    "FeaturedImageURL": "https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/assets/unphased-256.png",
+    "ScreenshotURL": "",
+    "AltScreenshotURL": ""
+  },
+  "Installer": {
+    "URL": "https://github.com/zakky2k/unphased-nina-plugin/releases/download/v0.8.2.0/UnphasedNina.0.8.2.0.zip",
+    "Type": "ARCHIVE",
+    "Checksum": "DEBDA482794FCB57B2B3E6A9ACFA7DE513CDE0B9E3817A8D439E6A8AB475D50F",
+    "ChecksumType": "SHA256"
+  },
+  "Channel": "Beta"
+}
