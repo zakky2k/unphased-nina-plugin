@@ -18,7 +18,7 @@ namespace Zakfo.Unphased.Features.planner {
     /// N.I.N.A. theme by default, red night vision under NIGHT, and the plugin's own
     /// navy Enhanced chart - which changes the chart only, not the panel around it.
     /// </summary>
-    public class NightChartControl : FrameworkElement {
+    public partial class NightChartControl : FrameworkElement {
         // The height the chart asks for. It matches the canvas in NightChartVM so the
         // vertical scale is 1:1: a 260 DIP element drawing a 320 unit canvas squeezed
         // everything by 0.81, and thirteen degrees of altitude - or seven of label -
@@ -103,7 +103,7 @@ namespace Zakfo.Unphased.Features.planner {
         private void PlannerChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e) {
             if (e.PropertyName == nameof(NightPlannerVM.Scheme)) SetScheme(hookedPlanner.Scheme);
             if (e.PropertyName == nameof(NightPlannerVM.ScrubMinutes)) SetScrub(hookedPlanner.ScrubMinutes);
-            if (e.PropertyName == nameof(NightPlannerVM.OverlayTracks)) RequestRerender();
+            if (e.PropertyName is nameof(NightPlannerVM.OverlayTracks) or nameof(NightPlannerVM.GlyphStyle)) RequestRerender();
             if (e.PropertyName is nameof(NightPlannerVM.SunColor) or nameof(NightPlannerVM.MoonColor)
                 or nameof(NightPlannerVM.HorizonColor)) {
                 // All three are re-read together: the palette resolves every role against
@@ -420,24 +420,7 @@ namespace Zakfo.Unphased.Features.planner {
             var chart = row.Chart;
             var instant = chart.TimeAtMinutes(minutes);
             DrawScrubDot(dc, x, NightChartVM.YSun(chart.SunAltitudeAt(instant)) * sy, palette.SunTrack(scheme), h);
-            foreach (var track in VisibleOverlays) {
-                var altitude = NightChartVM.AltitudeAt(track.Samples, instant);
-                DrawScrubDot(dc, x, NightChartVM.YSun(altitude) * sy, OverlayStyle.BrushFor(track.Choice.StyleIndex, scheme), h);
-            }
-            double moonY = NightChartVM.YMoon(chart.MoonAltitudeAt(instant)) * sy;
-            if (!double.IsNaN(moonY) && moonY >= 0 && moonY <= h) {
-                // The chart's moon glyph, sitting on the track at the scrubbed hour: the
-                // dot said "the moon is here", this also says what it looked like at that
-                // hour. The disc behind it is what keeps the phase readable when a
-                // moonrise label happens to sit under the marker. Limb is which side is
-                // lit as THIS observer sees it, so southern hemispheres get a mirrored
-                // glyph; absent data falls back to waxing.
-                var moon = palette.MoonTrack(scheme);
-                dc.DrawEllipse(palette.ChipFill(scheme), new Pen(moon, 0.8),
-                    new Point(x, moonY), MoonGlyphRadius + 2.0, MoonGlyphRadius + 2.0);
-                var (illum, litOnRight) = chart.ScrubMoonGlyph(minutes);
-                DrawMoonGlyph(dc, x, moonY, MoonGlyphRadius, illum, litOnRight);
-            }
+            DrawScrubGlyphs(dc, w, h, sy, x, minutes, instant);
 
             string readout = chart.ScrubReadout(minutes);
             var s = LabelSize(readout, NoteFs);

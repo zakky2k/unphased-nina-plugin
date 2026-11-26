@@ -23,11 +23,21 @@ namespace Zakfo.Unphased.Features.planner {
         private int nextTargetStyle;
         private string overlayNotice = string.Empty;
         private IRelayCommand<OverlayChoice> removeTarget;
+        private PlanetGlyphStyle glyphStyle = PlanetGlyphStyle.Phase;
 
         public IReadOnlyList<OverlayChoice> Planets { get; private set; }
         public ReadOnlyObservableCollection<OverlayChoice> Targets { get; private set; }
         public string PlanetSelection => $"{Planets.Count(p => p.Enabled)} selected";
         public string TargetSelection => $"{Targets.Count(t => t.Enabled)} selected";
+        public IReadOnlyList<PlanetGlyphStyle> GlyphStyles { get; } = Enum.GetValues<PlanetGlyphStyle>();
+        public PlanetGlyphStyle GlyphStyle {
+            get => glyphStyle;
+            set {
+                if (glyphStyle == value) return;
+                glyphStyle = value;
+                RaisePropertyChanged();
+            }
+        }
         public string OverlayNotice {
             get => overlayNotice;
             private set {
@@ -126,6 +136,7 @@ namespace Zakfo.Unphased.Features.planner {
         private void RefreshOverlays() {
             int revision = Interlocked.Increment(ref overlayRevision);
             if (overlayTracks.Count > 0) PublishTracks(Array.Empty<OverlayTrack>());
+            OverlayNotice = string.Empty;
             var row = selectedNight;
             if (row == null || row.Payload.SunSeries.Count == 0) return;
             var selected = Planets.Concat(Targets).Where(choice => choice.Enabled).ToArray();
@@ -145,6 +156,7 @@ namespace Zakfo.Unphased.Features.planner {
                         if (revision != Volatile.Read(ref overlayRevision)) return;
                         try {
                             var samples = new List<(DateTimeOffset, double)>();
+                            var phases = new Dictionary<DateTimeOffset, BodyIllumination>();
                             for (var time = first; ; time = time.AddMinutes(NightCalculator.SunGridMin)) {
                                 if (revision != Volatile.Read(ref overlayRevision)) return;
                                 var sampleTime = time < last ? time : last;
@@ -153,10 +165,15 @@ namespace Zakfo.Unphased.Features.planner {
                                     : OverlayEphemeris.TargetAltitude(choice.Target, row.Payload.Location, sampleTime);
                                 if (!double.IsFinite(altitude)) throw new InvalidOperationException("Altitude is unavailable.");
                                 samples.Add((sampleTime, altitude));
+                                // Scrubbing snaps to a whole hour. Cache the appearance at those exact instants.
+                                if (sampleTime == time && (sampleTime - first).Ticks % TimeSpan.TicksPerHour == 0
+                                    && choice.Planet is { } phaseBody
+                                    && OverlayEphemeris.Phase(phaseBody, row.Payload.Location, sampleTime) is { } phase)
+                                    phases.Add(sampleTime, phase);
                                 if (sampleTime == last) break;
                             }
                             var polyline = NightChartVM.TrimmedPolyline(row.Payload, samples, NightChartVM.YSun, row.Chart.FrameMinutes);
-                            tracks.Add(new OverlayTrack(choice, samples, polyline));
+                            tracks.Add(new OverlayTrack(choice, samples, polyline, phases));
                         } catch (Exception ex) {
                             Logger.Error($"Unphased could not plot {choice.Name}", ex);
                             failed.Add(choice.Name);

@@ -326,7 +326,16 @@
             <Border Margin="2,0,2,4" Padding="6,3" CornerRadius="3" BorderThickness="1"
                     BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource SecondaryBackgroundBrush}">
                 <StackPanel>
-                    <TextBlock Text="Overlays" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}"/>
+                    <WrapPanel>
+                        <TextBlock Text="Overlays" FontWeight="SemiBold" VerticalAlignment="Center"
+                                   Margin="0,0,14,0" Foreground="{DynamicResource PrimaryBrush}"/>
+                        <TextBlock Text="Glyph style" VerticalAlignment="Center" Margin="0,0,6,0"
+                                   Foreground="{DynamicResource SecondaryBrush}"/>
+                        <ComboBox x:Name="GlyphStylePicker" MinWidth="82" Margin="0,0,0,2"
+                                  AutomationProperties.Name="Glyph style"
+                                  ItemsSource="{Binding Planner.GlyphStyles}"
+                                  SelectedItem="{Binding Planner.GlyphStyle, Mode=TwoWay}"/>
+                    </WrapPanel>
                     <Expander x:Name="PlanetOverlays" Foreground="{DynamicResource PrimaryBrush}">
                         <Expander.Header>
                             <StackPanel Orientation="Horizontal">
@@ -335,13 +344,13 @@
                                            Foreground="{DynamicResource SecondaryBrush}"/>
                             </StackPanel>
                         </Expander.Header>
-                        <ItemsControl ItemsSource="{Binding Planner.Planets}">
+                        <ItemsControl x:Name="PlanetSwitches" ItemsSource="{Binding Planner.Planets}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <CheckBox Style="{StaticResource OverlaySwitchStyle}" Content="{Binding Name}"
+                                    <CheckBox x:Name="PlanetSwitch" Style="{StaticResource OverlaySwitchStyle}" Content="{Binding Name}"
                                               AutomationProperties.Name="{Binding Name}" IsChecked="{Binding Enabled, Mode=TwoWay}"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

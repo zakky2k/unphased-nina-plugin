@@ -94,7 +94,7 @@ namespace Zakfo.Unphased.Features.planner {
             if (sender is not FrameworkElement root) return;
             var planner = FindPlanner(root.DataContext);
             if (planner == null || planner.Nights.Count == 0) return;
-            if (IsTextEntry(e.OriginalSource) || IsTextEntry(e.Source) || IsTextEntry(Keyboard.FocusedElement)) return;
+            if (OwnsNavigationKeys(e.OriginalSource) || OwnsNavigationKeys(e.Source) || OwnsNavigationKeys(Keyboard.FocusedElement)) return;
             switch (e.Key) {
                 case Key.Left: planner.StepScrub(-1); break;
                 case Key.Right: planner.StepScrub(1); break;
@@ -112,13 +112,11 @@ namespace Zakfo.Unphased.Features.planner {
         }
 
         /// <summary>
-        /// Whether a key press aimed at this element is typing. A DatePicker's editable
-        /// part is a TextBox (DatePickerTextBox), so the caret and the picker's own keys are
-        /// covered by the same test; the ancestor walk catches a control that hosts one.
+        /// Whether a control owns its arrow keys for text editing or item selection.
         /// </summary>
-        private static bool IsTextEntry(object source) {
+        private static bool OwnsNavigationKeys(object source) {
             for (var node = source as DependencyObject; node != null;) {
-                if (node is TextBox || node is PasswordBox) return true;
+                if (node is TextBox or PasswordBox or ComboBox) return true;
                 node = node is Visual
                     ? VisualTreeHelper.GetParent(node)
                     : LogicalTreeHelper.GetParent(node);

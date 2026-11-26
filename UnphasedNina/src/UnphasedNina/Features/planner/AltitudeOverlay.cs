@@ -4,6 +4,7 @@
 using CosineKitty;
 using NINA.Astrometry;
 using NINA.Core.Utility;
+using System.Windows;
 using System.Windows.Media;
 using Zakfo.Unphased.Core;
 
@@ -53,7 +54,8 @@ namespace Zakfo.Unphased.Features.planner {
         }
     }
 
-    internal sealed record OverlayTrack(OverlayChoice Choice, IReadOnlyList<(DateTimeOffset Time, double Altitude)> Samples, string Polyline);
+    internal sealed record OverlayTrack(OverlayChoice Choice, IReadOnlyList<(DateTimeOffset Time, double Altitude)> Samples,
+        string Polyline, IReadOnlyDictionary<DateTimeOffset, BodyIllumination> Phases);
 
     public sealed record OverlayLegendEntry(string Name, Brush Ink, DoubleCollection Dashes, string Altitude);
 
@@ -66,13 +68,25 @@ namespace Zakfo.Unphased.Features.planner {
         private static readonly Brush[] Night = {
             Ink(0xE8, 0x5E, 0x58), Ink(0xF0, 0x79, 0x67), Ink(0xD9, 0x55, 0x4E)
         };
+        private static readonly Brush[] Light = {
+            Ink(0x72, 0x40, 0x95), Ink(0x97, 0x2F, 0x59), Ink(0xA4, 0x39, 0x24),
+            Ink(0x62, 0x3A, 0xB0), Ink(0x26, 0x68, 0x36), Ink(0x33, 0x58, 0x9B),
+            Ink(0x91, 0x3D, 0x86), Ink(0x97, 0x4A, 0x1C), Ink(0x20, 0x6A, 0x5C)
+        };
         private static readonly DashStyle[] Patterns = {
             Dash(2, 3), Dash(6, 3), Dash(3, 2, 1, 2), Dash(8, 3), Dash(1, 3),
             Dash(7, 2, 2, 2), Dash(4, 4), Dash(9, 3, 1, 3), Dash(5, 2, 1, 2)
         };
 
         internal static Brush BrushFor(int index, ChartScheme scheme) {
-            var colours = scheme == ChartScheme.Night ? Night : Day;
+            var background = Application.Current?.TryFindResource("TertiaryBackgroundBrush") as SolidColorBrush
+                ?? Application.Current?.TryFindResource("BackgroundBrush") as SolidColorBrush;
+            var colours = scheme switch {
+                ChartScheme.Night => Night,
+                ChartScheme.Default when background?.Color is { } color &&
+                    .2126 * color.R + .7152 * color.G + .0722 * color.B > 155 => Light,
+                _ => Day
+            };
             return colours[index % colours.Length];
         }
 
@@ -92,6 +106,35 @@ namespace Zakfo.Unphased.Features.planner {
     }
 
     internal static class OverlayEphemeris {
+        internal static BodyIllumination? Phase(NOVAS.Body planet, Site site, DateTimeOffset time) {
+            var body = planet switch {
+                NOVAS.Body.Mercury => Body.Mercury,
+                NOVAS.Body.Venus => Body.Venus,
+                _ => (Body?)null
+            };
+            if (!body.HasValue) return null;
+            var at = new AstroTime(time.UtcDateTime);
+            var observer = new Observer(site.Lat, site.Lon, site.Elev);
+            var planetPosition = Horizontal(body.Value, at, observer);
+            var sun = Horizontal(Body.Sun, at, observer);
+            const double radians = Math.PI / 180;
+            double azimuthDifference = (sun.azimuth - planetPosition.azimuth) * radians;
+            double sunAltitude = sun.altitude * radians;
+            double planetAltitude = planetPosition.altitude * radians;
+            // Project the Sun onto the planet's local sky plane. Positive X follows increasing
+            // azimuth, and the screen's Y is down. The phase geometry starts lit on the right.
+            double right = Math.Cos(sunAltitude) * Math.Sin(azimuthDifference);
+            double up = Math.Cos(planetAltitude) * Math.Sin(sunAltitude)
+                - Math.Sin(planetAltitude) * Math.Cos(sunAltitude) * Math.Cos(azimuthDifference);
+            return new BodyIllumination(Astronomy.Illumination(body.Value, at).phase_fraction,
+                Math.Atan2(-up, right) / radians);
+        }
+
+        private static Topocentric Horizontal(Body body, AstroTime time, Observer observer) {
+            var coordinates = Astronomy.Equator(body, time, observer, EquatorEpoch.OfDate, Aberration.Corrected);
+            return Astronomy.Horizon(time, observer, coordinates.ra, coordinates.dec, Refraction.None);
+        }
+
         internal static double PlanetAltitude(NOVAS.Body planet, Site site, DateTimeOffset time) {
             var utc = time.UtcDateTime;
             // Chart sampling can run for dates without an Earth-orientation database entry.

@@ -22,10 +22,16 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         [Test]
         public void PlanetSwitchesStartOffAndStayOnWhenCollapsed() {
             WpfHost.Ensure();
+            PluginSettings.Shared?.Dispose();
+            var profiles = new Mock<IProfileService>();
+            profiles.SetupGet(service => service.ActiveProfile).Returns(Profile());
+            var panel = new PlannerDockableVM(profiles.Object, Mock.Of<ITelescopeMediator>());
+            using var settings = PluginSettings.Shared;
             var resources = new PlannerResources();
             var key = typeof(PlannerDockableVM).FullName + "_Dockable";
             var view = (FrameworkElement)((DataTemplate)resources[key]).LoadContent();
-            var planner = PlannerFixture.Planner();
+            view.DataContext = panel;
+            var planner = panel.Planner;
             var list = (Expander)view.FindName("PlanetOverlays");
             var targets = (Expander)view.FindName("TargetOverlays");
             Assert.Multiple(() => {
@@ -36,9 +42,17 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 Assert.That(planner.PlanetSelection, Is.EqualTo("0 selected"));
             });
             list.IsExpanded = true;
-            planner.Planets.Single(planet => planet.Name == "Jupiter").Enabled = true;
+            view.Measure(new Size(620, 560));
+            view.Arrange(new Rect(0, 0, 620, 560));
+            view.UpdateLayout();
+            var jupiter = planner.Planets.Single(planet => planet.Name == "Jupiter");
+            var choices = (ItemsControl)view.FindName("PlanetSwitches");
+            var item = (ContentPresenter)choices.ItemContainerGenerator.ContainerFromItem(jupiter);
+            var toggle = (CheckBox)choices.ItemTemplate.FindName("PlanetSwitch", item);
+            toggle.SetCurrentValue(CheckBox.IsCheckedProperty, true);
             list.IsExpanded = false;
             Assert.That(planner.PlanetSelection, Is.EqualTo("1 selected"));
+            Assert.That(jupiter.Enabled, Is.True);
         }
 
         [Test]
@@ -89,18 +103,28 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         public void OverlayAltitudesAgreeWithIndependentEphemerisAndFollowTheLatestFrame() {
             WpfHost.Ensure();
             var astroTime = new AstroTime(new DateTime(2026, 11, 26, 23, 0, 0, DateTimeKind.Utc));
+            var orion = new FramingTarget("M42", "Orion Nebula", 5.588, -5.39);
+            var radians = Math.PI / 180;
+            var ra = orion.RightAscensionHours * 15 * radians;
+            var dec = orion.DeclinationDegrees * radians;
+            var equatorialVector = new AstroVector(Math.Cos(ra) * Math.Cos(dec), Math.Sin(ra) * Math.Cos(dec), Math.Sin(dec), astroTime);
+            var ofDate = Astronomy.EquatorFromVector(Astronomy.RotateVector(Astronomy.Rotation_EQJ_EQD(astroTime), equatorialVector));
             foreach (var site in new[] { new Site(50.088, 14.421), new Site(-33.869, 151.209) }) {
                 var observer = new Observer(site.Lat, site.Lon, site.Elev);
                 foreach (var (planet, body) in new[] { (NOVAS.Body.Mercury, Body.Mercury), (NOVAS.Body.Venus, Body.Venus),
-                    (NOVAS.Body.Jupiter, Body.Jupiter), (NOVAS.Body.Saturn, Body.Saturn) }) {
+                    (NOVAS.Body.Mars, Body.Mars), (NOVAS.Body.Jupiter, Body.Jupiter), (NOVAS.Body.Saturn, Body.Saturn),
+                    (NOVAS.Body.Uranus, Body.Uranus), (NOVAS.Body.Neptune, Body.Neptune) }) {
                     var equatorial = Astronomy.Equator(body, astroTime, observer, EquatorEpoch.OfDate, Aberration.Corrected);
                     var expected = Astronomy.Horizon(astroTime, observer, equatorial.ra, equatorial.dec, Refraction.None).altitude;
                     var actual = OverlayEphemeris.PlanetAltitude(planet, site, new DateTimeOffset(astroTime.ToUtcDateTime()));
                     Assert.That(actual, Is.EqualTo(expected).Within(.05), $"{planet} at {site}");
                 }
+                var targetExpected = Astronomy.Horizon(astroTime, observer, ofDate.ra, ofDate.dec, Refraction.None).altitude;
+                Assert.That(OverlayEphemeris.TargetAltitude(orion, site, new DateTimeOffset(astroTime.ToUtcDateTime())),
+                    Is.EqualTo(targetExpected).Within(.05), $"{orion.Name} at {site}");
             }
             var planner = PlannerFixture.WindowOfThreeNights();
-            planner.AddFramingTarget(new FramingTarget("M42", "Orion Nebula", 5.588, -5.39));
+            planner.AddFramingTarget(orion);
             planner.Planets.Single(planet => planet.Name == "Jupiter").Enabled = true;
             planner.SelectedDate = new DateTime(2026, 11, 26);
             planner.SetZoom(2);

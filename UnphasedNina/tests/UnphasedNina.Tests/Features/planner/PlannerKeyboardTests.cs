@@ -141,6 +141,23 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         }
 
         [Test]
+        public void ArrowsInTheGlyphPickerBelongToThePicker() {
+            var planner = PlannerFixture.WindowOfThreeNights();
+            planner.SetScrub(12 * 60);
+            var date = planner.SelectedDate;
+            var root = Panel(planner);
+            var glyphPicker = new ComboBox { ItemsSource = planner.GlyphStyles };
+            root.Children.Add(glyphPicker);
+
+            Assert.Multiple(() => {
+                Assert.That(PressKey(root, glyphPicker, Key.Down), Is.False);
+                Assert.That(PressKey(root, glyphPicker, Key.Right), Is.False);
+                Assert.That(planner.SelectedDate, Is.EqualTo(date));
+                Assert.That(planner.ScrubMinutes, Is.EqualTo(12 * 60));
+            });
+        }
+
+        [Test]
         public void AKeyAimedAtATextFieldKeepsItsArrowsForTheCaret() {
             var planner = PlannerFixture.WindowOfThreeNights();
             planner.SetScrub(12 * 60);

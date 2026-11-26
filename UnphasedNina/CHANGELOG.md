@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — planet and target overlays
+
+- The planner's Overlays box adds independent switches for the seven observable planets
+  and for saved targets imported from N.I.N.A.'s Framing Assistant. Targets are saved with
+  the active profile. Curve visibility is a session preference.
+- The scrub marker offers Basic symbols, Phase discs and Detailed illustrations for the
+  Moon and planets. Phase is the default. Mercury and Venus use their illumination at
+  the selected hour. Detailed artwork follows the night-vision palette.
+
 ## Unreleased — round 13: the settings lead the page, and the pillars move to the end
 
 The review asked for three things: the pillars heading above **Options**, **Lunar conditions** renamed **Lunar phases**
