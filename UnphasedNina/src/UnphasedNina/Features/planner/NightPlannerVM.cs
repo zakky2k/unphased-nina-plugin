@@ -147,6 +147,8 @@ namespace Zakfo.Unphased.Features.planner {
                     OnUi(() => RaisePropertyChanged(e.PropertyName));
                 if (e.PropertyName == nameof(PluginSettings.OverlayTargetsJson))
                     OnUi(ReloadTargets);
+                if (e.PropertyName == nameof(PluginSettings.ActiveHorizon))
+                    OnUi(HorizonProfileChanged);
             };
         }
 
@@ -236,6 +238,7 @@ namespace Zakfo.Unphased.Features.planner {
                 // The scrub readout quotes the selected night, so it follows it too.
                 RaisePropertyChanged(nameof(ScrubLabel));
                 RefreshOverlays();
+                RefreshCustomHorizon();
             }
         }
 

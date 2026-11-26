@@ -453,7 +453,7 @@
                                        Margin="0,0,12,0" Foreground="{DynamicResource PrimaryBrush}"/>
                             <Button Content="Reset" Padding="6,2" Command="{Binding Planner.ResetChartElementsCommand}"
                                     Foreground="{DynamicResource ButtonForegroundBrush}"
-                                    AutomationProperties.Name="Reset chart elements" ToolTip="Show all chart elements"/>
+                                    AutomationProperties.Name="Reset chart elements" ToolTip="Restore default chart elements"/>
                         </WrapPanel>
                         <UniformGrid Rows="1" Columns="4" Width="248" HorizontalAlignment="Left"
                                      Margin="0,4,0,0" TextElement.Foreground="{DynamicResource PrimaryBrush}">
@@ -495,7 +495,44 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <CheckBox Margin="0,3,0,0" Style="{StaticResource OverlaySwitchStyle}" Content="Measure drag"
+                        <WrapPanel Margin="0,3,0,0">
+                            <CheckBox Style="{StaticResource OverlaySwitchStyle}" Content="Custom horizon"
+                                      IsChecked="{Binding Planner.ShowCustomHorizon, Mode=TwoWay}"
+                                      ToolTip="Shade below the active N.I.N.A. profile’s custom horizon along the reference object’s path"/>
+                            <ComboBox Width="110" Margin="5,0,0,0" VerticalAlignment="Center"
+                                      AutomationProperties.Name="Custom horizon reference object"
+                                      ToolTip="Object whose azimuth is used to project the custom horizon"
+                                      ItemsSource="{Binding Planner.HorizonReferenceOptions}" DisplayMemberPath="Name"
+                                      SelectedItem="{Binding Planner.HorizonReference, Mode=TwoWay}">
+                                <ComboBox.Style>
+                                    <Style TargetType="ComboBox">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding Planner.ShowCustomHorizon}" Value="True"/>
+                                                    <Condition Binding="{Binding Planner.HasCustomHorizon}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ComboBox.Style>
+                            </ComboBox>
+                        </WrapPanel>
+                        <TextBlock Text="{Binding Planner.HorizonStatus}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource PrimaryBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Planner.HorizonStatus}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <CheckBox Style="{StaticResource OverlaySwitchStyle}" Content="Measure drag"
                                   HorizontalAlignment="Left" IsChecked="{Binding Planner.MeasureScrub, Mode=TwoWay}"
                                   ToolTip="Measure chart drawing during the next mouse drag"/>
                         <TextBox Text="{Binding Planner.ScrubMetrics, Mode=OneWay}" TextWrapping="Wrap" Margin="0,2,0,0"
@@ -530,9 +567,7 @@
                  The one sign that a window is being worked out lives here too. Nights arrive from a
                  background thread, so between asking for a wider window and getting it the panel
                  would otherwise look stuck rather than busy. Shown by a trigger rather than a
-                 converter because the plugin ships no converter and N.I.N.A.'s are not guaranteed
-                 to be in scope inside a plugin template; the collapsed element takes no room, so
-                 the row is unchanged while idle. -->
+                 converter so the collapsed element takes no room and the row stays compact while idle. -->
             <Grid Grid.Row="1" Margin="2,0,2,4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -581,7 +616,7 @@
             <!-- The chart takes the whole of the remaining panel now the night strip is
                  gone; it no longer has to share the row with a scrolling list. -->
             <planner:NightChartControl x:Name="NightChart" Grid.Row="2" Margin="2" MinHeight="160"
-                ToolTip="Drag across the chart, or Shift + wheel over it, to move the hour marker. The plain wheel scrolls the panel."/>
+                ToolTip="Drag across the chart to move the time marker. Shift + wheel steps by an hour."/>
         </Grid>
     </DataTemplate>
 </ResourceDictionary>

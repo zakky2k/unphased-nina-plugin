@@ -78,6 +78,7 @@ namespace Zakfo.Unphased.Features.planner {
         public IRelayCommand ResetChartElementsCommand => resetChartElements ??= new RelayCommand(() => {
             foreach (var option in ChartElementOptions)
                 option.Enabled = ChartElements.Default.HasFlag(option.Element);
+            ShowCustomHorizon = false;
         });
 
         private void InitializeChartElements() {

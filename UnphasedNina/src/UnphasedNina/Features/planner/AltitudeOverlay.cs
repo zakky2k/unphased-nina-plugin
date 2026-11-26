@@ -156,7 +156,26 @@ namespace Zakfo.Unphased.Features.planner {
             return Astronomy.Horizon(time, observer, coordinates.ra, coordinates.dec, Refraction.None);
         }
 
+        internal static double SolarAzimuth(NOVAS.Body body, Site site, DateTimeOffset time) {
+            var at = new AstroTime(time.UtcDateTime);
+            var observer = new Observer(site.Lat, site.Lon, site.Elev);
+            var solarBody = body == NOVAS.Body.Sun ? Body.Sun : Body.Moon;
+            var position = Astronomy.Equator(solarBody, at, observer, EquatorEpoch.OfDate, Aberration.None);
+            return Astronomy.Horizon(at, observer, position.ra, position.dec, Refraction.None).azimuth;
+        }
+
         internal static double PlanetAltitude(NOVAS.Body planet, Site site, DateTimeOffset time) {
+            var (hourAngle, declination) = PlanetPosition(planet, site, time);
+            return AstroUtil.GetAltitude(hourAngle, site.Lat, declination);
+        }
+
+        internal static double PlanetAzimuth(NOVAS.Body planet, Site site, DateTimeOffset time) {
+            var (hourAngle, declination) = PlanetPosition(planet, site, time);
+            double altitude = AstroUtil.GetAltitude(hourAngle, site.Lat, declination);
+            return AstroUtil.GetAzimuth(hourAngle, altitude, site.Lat, declination);
+        }
+
+        private static (double HourAngle, double Declination) PlanetPosition(NOVAS.Body planet, Site site, DateTimeOffset time) {
             var utc = time.UtcDateTime;
             // Chart sampling can run for dates without an Earth-orientation database entry.
             // Use UTC for UT1 and the existing astronomy library's Delta T approximation.
@@ -183,10 +202,16 @@ namespace Zakfo.Unphased.Features.planner {
             if (status != 0) throw new InvalidOperationException($"N.I.N.A. could not calculate sidereal time (NOVAS status {status}).");
             var siderealTime = greenwich + AstroUtil.DegreesToHours(site.Lon);
             var hourAngle = AstroUtil.GetHourAngle(siderealTime, position.RA);
-            return AstroUtil.GetAltitude(AstroUtil.HoursToDegrees(hourAngle), site.Lat, position.Dec);
+            return (AstroUtil.HoursToDegrees(hourAngle), position.Dec);
         }
 
-        internal static double TargetAltitude(FramingTarget target, Site site, DateTimeOffset time) {
+        internal static double TargetAltitude(FramingTarget target, Site site, DateTimeOffset time) =>
+            TargetPosition(target, site, time).Altitude;
+
+        internal static double TargetAzimuth(FramingTarget target, Site site, DateTimeOffset time) =>
+            TargetPosition(target, site, time).Azimuth;
+
+        private static (double Altitude, double Azimuth) TargetPosition(FramingTarget target, Site site, DateTimeOffset time) {
             const double degreesToRadians = Math.PI / 180;
             double azimuth = 0, zenithDistance = 0, hourAngle = 0, dec = 0, ra = 0, origins = 0;
             short status = SOFA.CelestialToTopocentric(target.RightAscensionHours * 15 * degreesToRadians,
@@ -195,7 +220,7 @@ namespace Zakfo.Unphased.Features.planner {
                 site.Lon * degreesToRadians, site.Lat * degreesToRadians, site.Elev,
                 0, 0, 0, 0, 0, 0, ref azimuth, ref zenithDistance, ref hourAngle, ref dec, ref ra, ref origins);
             if (status < 0) throw new InvalidOperationException($"N.I.N.A. could not calculate {target.Name} (SOFA status {status}).");
-            return 90 - zenithDistance / degreesToRadians;
+            return (90 - zenithDistance / degreesToRadians, azimuth / degreesToRadians);
         }
     }
 }

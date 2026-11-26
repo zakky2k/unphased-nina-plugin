@@ -179,13 +179,18 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                     (NOVAS.Body.Mars, Body.Mars), (NOVAS.Body.Jupiter, Body.Jupiter), (NOVAS.Body.Saturn, Body.Saturn),
                     (NOVAS.Body.Uranus, Body.Uranus), (NOVAS.Body.Neptune, Body.Neptune) }) {
                     var equatorial = Astronomy.Equator(body, astroTime, observer, EquatorEpoch.OfDate, Aberration.Corrected);
-                    var expected = Astronomy.Horizon(astroTime, observer, equatorial.ra, equatorial.dec, Refraction.None).altitude;
+                    var expected = Astronomy.Horizon(astroTime, observer, equatorial.ra, equatorial.dec, Refraction.None);
                     var actual = OverlayEphemeris.PlanetAltitude(planet, site, new DateTimeOffset(astroTime.ToUtcDateTime()));
-                    Assert.That(actual, Is.EqualTo(expected).Within(.05), $"{planet} at {site}");
+                    var azimuth = OverlayEphemeris.PlanetAzimuth(planet, site, new DateTimeOffset(astroTime.ToUtcDateTime()));
+                    Assert.That(actual, Is.EqualTo(expected.altitude).Within(.05), $"{planet} at {site}");
+                    Assert.That(Math.IEEERemainder(azimuth - expected.azimuth, 360), Is.EqualTo(0).Within(.05), $"{planet} azimuth at {site}");
                 }
-                var targetExpected = Astronomy.Horizon(astroTime, observer, ofDate.ra, ofDate.dec, Refraction.None).altitude;
+                var targetExpected = Astronomy.Horizon(astroTime, observer, ofDate.ra, ofDate.dec, Refraction.None);
                 Assert.That(OverlayEphemeris.TargetAltitude(orion, site, new DateTimeOffset(astroTime.ToUtcDateTime())),
-                    Is.EqualTo(targetExpected).Within(.05), $"{orion.Name} at {site}");
+                    Is.EqualTo(targetExpected.altitude).Within(.05), $"{orion.Name} at {site}");
+                Assert.That(Math.IEEERemainder(
+                    OverlayEphemeris.TargetAzimuth(orion, site, new DateTimeOffset(astroTime.ToUtcDateTime())) - targetExpected.azimuth, 360),
+                    Is.EqualTo(0).Within(.05), $"{orion.Name} azimuth at {site}");
             }
             var planner = PlannerFixture.WindowOfThreeNights();
             planner.AddFramingTarget(orion);

@@ -117,6 +117,7 @@ namespace Zakfo.Unphased.Features.planner {
             if (e.PropertyName == nameof(NightPlannerVM.MeasureScrub) && !hookedPlanner.MeasureScrub) dragMetrics = null;
             if (e.PropertyName == nameof(NightPlannerVM.VisibleChartElements)) SetChartElements(hookedPlanner.VisibleChartElements);
             if (e.PropertyName is nameof(NightPlannerVM.OverlayTracks) or nameof(NightPlannerVM.GlyphStyle)) RequestRerender();
+            if (e.PropertyName == nameof(NightPlannerVM.CustomHorizonSamples)) RequestRerender();
             if (e.PropertyName is nameof(NightPlannerVM.SunColor) or nameof(NightPlannerVM.MoonColor)
                 or nameof(NightPlannerVM.HorizonColor)) {
                 // All three are re-read together: the palette resolves every role against
@@ -213,6 +214,7 @@ namespace Zakfo.Unphased.Features.planner {
             DrawChartBackground(dc, w, h);
             eventChips.Clear();
             DrawTwilightShading(dc, h, sx);
+            DrawCustomHorizon(dc, w, h, spanMinutes);
             DrawGrid(dc, w, h, sx, sy, spanMinutes);
             if (Shows(ChartElements.SunAltitude))
                 DrawCurve(dc, row.Chart.SunPolyline, palette.SunTrack(scheme), 1.6, sx, sy);
@@ -230,6 +232,30 @@ namespace Zakfo.Unphased.Features.planner {
         private IReadOnlyList<OverlayTrack> VisibleOverlays =>
             hookedPlanner != null && ReferenceEquals(row, hookedPlanner.SelectedNight)
                 ? hookedPlanner.OverlayTracks : Array.Empty<OverlayTrack>();
+
+        private static readonly Brush CustomHorizonShade = (Brush)new SolidColorBrush(Color.FromArgb(44, 0, 0, 0)).GetAsFrozen();
+
+        private void DrawCustomHorizon(DrawingContext dc, double width, double height, double spanMinutes) {
+            if (hookedPlanner == null || !ReferenceEquals(row, hookedPlanner.SelectedNight)) return;
+            var samples = hookedPlanner.CustomHorizonSamples;
+            if (samples.Count < 2) return;
+            var region = new StreamGeometry();
+            using (var path = region.Open()) {
+                path.BeginFigure(new Point(0, height), isFilled: true, isClosed: false);
+                for (int i = 0; i < samples.Count; i++) {
+                    var (minutes, altitude) = samples[i];
+                    double y = NightChartVM.YSun(Math.Clamp(altitude, NightChartVM.BottomAltitude, NightChartVM.TopAltitude));
+                    path.LineTo(new Point(width * minutes / spanMinutes, y * height / NightChartVM.Height),
+                        isStroked: i != 0, isSmoothJoin: false);
+                }
+                path.LineTo(new Point(width, height), isStroked: false, isSmoothJoin: false);
+            }
+            region.Freeze();
+            dc.DrawGeometry(CustomHorizonShade, null, region);
+            dc.PushOpacity(.5);
+            dc.DrawGeometry(null, new Pen(palette.Horizon(scheme), 0.9), region);
+            dc.Pop();
+        }
 
         /// <summary>
         /// Boxes the axis labels (hour clock, degrees) already occupy. They are drawn

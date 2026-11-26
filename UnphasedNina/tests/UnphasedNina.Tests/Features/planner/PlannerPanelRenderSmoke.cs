@@ -52,6 +52,8 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 // A site on the profile, so the planner can work a window out for itself. The
                 // busy render below needs the real compute path, and with no site it never starts.
                 var astro = new Mock<IAstrometrySettings>();
+                NINA.Core.Model.CustomHorizon horizon = null;
+                astro.SetupGet(a => a.Horizon).Returns(() => horizon);
                 astro.SetupGet(a => a.Latitude).Returns(50.08804);
                 astro.SetupGet(a => a.Longitude).Returns(14.42076);
                 profile.SetupGet(p => p.AstrometrySettings).Returns(astro.Object);
@@ -84,13 +86,38 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                     "the target tracks arrived");
                 Assert.That(panel.Planner.OverlayTracks.Count, Is.EqualTo(3), panel.Planner.OverlayNotice);
                 paths.Add(Render(panel, 900, "planner-scrub-names", 820));
+                var planner = panel.Planner;
+                planner.ShowCustomHorizon = true;
+                Assert.That(planner.HorizonReference.Name, Is.EqualTo("M 31"));
+                Assert.That(planner.HorizonStatus, Does.Contain("No custom horizon"));
+                using var horizonData = new System.IO.StringReader("0 16\n40 45\n120 12\n180 8\n245 36\n290 13\n360 16");
+                horizon = NINA.Core.Model.CustomHorizon.FromReader_Standard(horizonData);
+                profiles.Raise(service => service.HorizonChanged += null, EventArgs.Empty);
+                PumpUntil(() => planner.CustomHorizonSamples.Count > 0, "the target horizon arrived");
+                var targetHorizon = planner.CustomHorizonSamples;
+                Assert.That(targetHorizon[0].Minutes, Is.Zero);
+                Assert.That(targetHorizon[^1].Minutes, Is.EqualTo(planner.SelectedNight.Chart.FrameMinutes));
+                Assert.That(targetHorizon.Select(sample => sample.Altitude).Distinct().Count(), Is.GreaterThan(1));
+                paths.Add(Render(panel, 900, "planner-custom-horizon", 850));
+
+                planner.HorizonReference = planner.HorizonReferenceOptions.First(choice => choice.Name == "Moon");
+                PumpUntil(() => planner.CustomHorizonSamples.Count > 0, "the Moon horizon arrived");
+                Assert.That(planner.CustomHorizonSamples, Is.Not.EqualTo(targetHorizon));
+                planner.SetZoom(2);
+                PumpUntil(() => planner.CustomHorizonSamples.Count > 0, "the zoomed horizon arrived");
+                Assert.That(planner.CustomHorizonSamples[^1].Minutes, Is.EqualTo(NightChartVM.FrameMinutesAtZoom(2)));
+                horizon = null;
+                profiles.Raise(service => service.HorizonChanged += null, EventArgs.Empty);
+                Assert.That(planner.CustomHorizonSamples, Is.Empty);
+                planner.ResetChartElementsCommand.Execute(null);
+                Assert.That(planner.ShowCustomHorizon, Is.False);
                 paths.Add(RenderWhilePagingGrowsTheWindow(profiles.Object));
             });
             worker.SetApartmentState(ApartmentState.STA);
             worker.Start();
             worker.Join();
 
-            Assert.That(paths, Has.Count.EqualTo(5));
+            Assert.That(paths, Has.Count.EqualTo(6));
             foreach (var path in paths) Assert.That(new System.IO.FileInfo(path).Length, Is.GreaterThan(2000));
             TestContext.Progress.WriteLine(string.Join(Environment.NewLine, paths));
         }

@@ -2,6 +2,7 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 using CommunityToolkit.Mvvm.Input;
+using NINA.Core.Model;
 using NINA.Core.Utility;
 using NINA.Profile;
 using NINA.Profile.Interfaces;
@@ -106,6 +107,7 @@ namespace Zakfo.Unphased.Features.settings {
                 }
             }
             profiles.ProfileChanged += OnProfileChanged;
+            profiles.HorizonChanged += OnHorizonChanged;
             SeedSiteDrafts();
             initialized = true;
             if (carriedNightFlag) SaveGlobal();
@@ -328,6 +330,10 @@ namespace Zakfo.Unphased.Features.settings {
             }
         }
 
+        internal CustomHorizon ActiveHorizon => profiles.ActiveProfile?.AstrometrySettings?.Horizon;
+
+        private void OnHorizonChanged(object sender, EventArgs args) => RaisePropertyChanged(nameof(ActiveHorizon));
+
         // ---- The two boxes on the options page --------------------------------------------
         // They edit drafts, never the stored pair. Until now the boxes wrote straight into
         // SiteLatOverride/SiteLonOverride, so a half-typed or mistyped pair sat in the
@@ -529,6 +535,7 @@ namespace Zakfo.Unphased.Features.settings {
 
         private void OnProfileChanged(object sender, EventArgs args) {
             RaisePropertyChanged(nameof(OverlayTargetsJson));
+            RaisePropertyChanged(nameof(ActiveHorizon));
             RaisePropertyChanged(nameof(SiteLatOverride));
             RaisePropertyChanged(nameof(SiteLonOverride));
             // A different profile means a different site to follow, so the boxes move with
@@ -546,6 +553,7 @@ namespace Zakfo.Unphased.Features.settings {
         public void Dispose() {
             if (!initialized) return;
             profiles.ProfileChanged -= OnProfileChanged;
+            profiles.HorizonChanged -= OnHorizonChanged;
             initialized = false;
             // Stop handing out a stopped object: if the plugin is reloaded within one run of
             // N.I.N.A., For() builds a fresh one that reads the file again.

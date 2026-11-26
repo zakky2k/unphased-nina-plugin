@@ -99,6 +99,7 @@ namespace Zakfo.Unphased.Features.planner {
             RaisePropertyChanged(nameof(TargetSelection));
             RefreshOverlays();
             ResolveMissingTargetTypes(targets.ToArray());
+            HorizonTargetsChanged();
         }
 
         internal void AddFramingTarget(FramingTarget target) {
@@ -118,6 +119,7 @@ namespace Zakfo.Unphased.Features.planner {
                 return;
             }
             var added = AddTargetChoice(target);
+            HorizonTargetsChanged();
             SaveTargets();
             added.Enabled = true;
             ResolveMissingTargetTypes(new[] { added });
@@ -160,6 +162,7 @@ namespace Zakfo.Unphased.Features.planner {
             SaveTargets();
             RaisePropertyChanged(nameof(TargetSelection));
             RefreshOverlays();
+            HorizonTargetsChanged();
         }
 
         private void SaveTargets() => settings.OverlayTargetsJson = JsonSerializer.Serialize(targets.Select(choice => choice.Target));
