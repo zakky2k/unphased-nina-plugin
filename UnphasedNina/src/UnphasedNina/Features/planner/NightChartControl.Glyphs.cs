@@ -13,11 +13,11 @@ namespace Zakfo.Unphased.Features.planner {
 
     public partial class NightChartControl {
         private readonly record struct ScrubMarker(NOVAS.Body? Body, double Y, Brush Ink, BodyIllumination? Phase,
-            string ObjectType = null);
+            OverlayChoice Choice = null);
         private static readonly Typeface SymbolTypeface = new("Segoe UI Symbol");
 
         private void DrawScrubGlyphs(DrawingContext dc, double width, double height, double sy,
-            double x, double minutes, DateTimeOffset instant) {
+            double x, double minutes, DateTimeOffset instant, Rect legend, Rect readout) {
             var markers = new List<ScrubMarker>();
             double moonY = NightChartVM.YMoon(row.Chart.MoonAltitudeAt(instant)) * sy;
             if (Shows(ChartElements.MoonGlyph) && InChart(moonY, height)) {
@@ -33,12 +33,7 @@ namespace Zakfo.Unphased.Features.planner {
                 double y = NightChartVM.YSun(NightChartVM.AltitudeAt(overlay.Samples, instant)) * sy;
                 if (!InChart(y, height)) continue;
                 var ink = OverlayStyle.BrushFor(overlay.Choice.StyleIndex, scheme);
-                if (overlay.Choice.Planet is { } planet) {
-                    var phase = overlay.Phases.TryGetValue(instant, out var illumination) ? illumination : (BodyIllumination?)null;
-                    markers.Add(new ScrubMarker(planet, y, ink, phase));
-                } else {
-                    markers.Add(new ScrubMarker(null, y, ink, null, overlay.Choice.Target.ObjectType));
-                }
+                markers.Add(new ScrubMarker(overlay.Choice.Planet, y, ink, overlay.PhaseAt(instant), overlay.Choice));
             }
             if (markers.Count == 0) return;
             var style = hookedPlanner?.GlyphStyle ?? PlanetGlyphStyle.Phase;
@@ -54,9 +49,68 @@ namespace Zakfo.Unphased.Features.planner {
                 var centre = new Point(x, marker.Y);
                 if (radius <= 3) DrawScrubDot(dc, x, marker.Y, marker.Ink, height);
                 else if (marker.Body is { } solarBody) DrawBodyGlyph(dc, solarBody, centre, radius, marker.Ink, style, marker.Phase);
-                else DeepSkyGlyph.Draw(dc, marker.ObjectType, centre, radius, marker.Ink, palette.ChipFill(scheme));
+                else DeepSkyGlyph.Draw(dc, marker.Choice.Target.ObjectType, centre, radius, marker.Ink, palette.ChipFill(scheme));
             }
             dc.Pop();
+            DrawScrubNames(dc, markers, x, width, height, legend, readout);
+        }
+
+        private void DrawScrubNames(DrawingContext dc, List<ScrubMarker> markers, double x, double width,
+            double height, Rect legend, Rect readout) {
+            const double gap = 17;
+            double maxText = Math.Min(150, Math.Max(x, width - x) - gap - 2 * ChipPadX - 2);
+            if (maxText < 16) return;
+            var taken = new List<Rect>(axisChips.Count + eventChips.Count + markers.Count + 2);
+            taken.AddRange(axisChips);
+            taken.AddRange(eventChips);
+            if (!legend.IsEmpty) taken.Add(legend);
+            taken.Add(readout);
+            foreach (var marker in markers) {
+                if (marker.Choice is not { } choice) continue;
+                var text = DrawText(choice.Name, MarkerFs, palette.Ink(scheme));
+                text.MaxTextWidth = maxText;
+                text.MaxLineCount = 1;
+                text.Trimming = TextTrimming.CharacterEllipsis;
+                double chipWidth = text.Width + 2 * ChipPadX;
+                double chipHeight = text.Height + 2 * ChipPadY;
+                var box = PlaceScrubName(taken, x, marker.Y, width, height, chipWidth, chipHeight, gap);
+                if (box.IsEmpty) continue;
+
+                var pen = new Pen(marker.Ink, 1.4) { DashStyle = OverlayStyle.DashFor(choice.StyleIndex) };
+                var fill = palette.ChipFill(scheme);
+                // Separate the background from the pen so gaps in the border stay visible.
+                dc.DrawRoundedRectangle(fill, null, box, 3, 3);
+                dc.DrawRoundedRectangle(null, pen, box, 3, 3);
+                dc.DrawText(text, new Point(box.X + ChipPadX, box.Y + ChipPadY));
+                box.Inflate(1, 1);
+                taken.Add(box);
+            }
+        }
+
+        internal static Rect PlaceScrubName(IReadOnlyList<Rect> taken, double x, double y, double width,
+            double height, double chipWidth, double chipHeight, double gap) {
+            if (chipHeight + 2 > height) return Rect.Empty;
+            double centred = Math.Clamp(y - chipHeight / 2, 1, height - chipHeight - 1);
+            double right = x + gap;
+            double left = x - gap - chipWidth;
+            if (right + chipWidth > width - 1 && left < 1) return Rect.Empty;
+            double step = chipHeight + 2;
+            for (double offset = 0; offset < height; offset += step) {
+                var below = TryAt(centred + offset);
+                if (!below.IsEmpty) return below;
+                if (offset == 0) continue;
+                var above = TryAt(centred - offset);
+                if (!above.IsEmpty) return above;
+            }
+            return Rect.Empty;
+
+            Rect TryAt(double top) {
+                if (top < 1 || top + chipHeight > height - 1) return Rect.Empty;
+                var box = new Rect(right, top, chipWidth, chipHeight);
+                if (box.Right <= width - 1 && !taken.Any(box.IntersectsWith)) return box;
+                box.X = left;
+                return box.Left >= 1 && !taken.Any(box.IntersectsWith) ? box : Rect.Empty;
+            }
         }
 
         private static bool InChart(double y, double height) => double.IsFinite(y) && y >= 0 && y <= height;

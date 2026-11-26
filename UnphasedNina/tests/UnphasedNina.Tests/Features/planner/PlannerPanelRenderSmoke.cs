@@ -76,13 +76,21 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 // earns its keep, because the clusters ask for about 1140 DIP between them and a
                 // narrow dock has to drop whole clusters to a second line rather than clip a button.
                 foreach (var width in new[] { 1200, 900, 620 }) paths.Add(Render(panel, width, "planner-panel"));
+                panel.Planner.AddFramingTarget(new FramingTarget("M31", "M 31", .7123, 41.269, "GALXY"));
+                panel.Planner.AddFramingTarget(new FramingTarget("M33", "M 33", 1.5641, 30.660, "GALXY"));
+                panel.Planner.AddFramingTarget(new FramingTarget("M13", "M 13", 16.6949, 36.461, "GLOCL"));
+                panel.Planner.SetMouseScrub(364.4);
+                PumpUntil(() => panel.Planner.OverlayTracks.Count == 3 || panel.Planner.OverlayNotice.Length > 0,
+                    "the target tracks arrived");
+                Assert.That(panel.Planner.OverlayTracks.Count, Is.EqualTo(3), panel.Planner.OverlayNotice);
+                paths.Add(Render(panel, 900, "planner-scrub-names", 820));
                 paths.Add(RenderWhilePagingGrowsTheWindow(profiles.Object));
             });
             worker.SetApartmentState(ApartmentState.STA);
             worker.Start();
             worker.Join();
 
-            Assert.That(paths, Has.Count.EqualTo(4));
+            Assert.That(paths, Has.Count.EqualTo(5));
             foreach (var path in paths) Assert.That(new System.IO.FileInfo(path).Length, Is.GreaterThan(2000));
             TestContext.Progress.WriteLine(string.Join(Environment.NewLine, paths));
         }
@@ -135,8 +143,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             Assert.That(ready(), Is.True, $"timed out: {what} did not happen");
         }
 
-        private static string Render(PlannerDockableVM panel, int width, string name) {
-            const int height = 520;
+        private static string Render(PlannerDockableVM panel, int width, string name, int height = 520) {
             var path = System.IO.Path.Combine(
                 System.IO.Path.GetTempPath(),
                 name == "planner-panel" ? $"planner-panel-at-{width}.png" : $"{name}-at-{width}.png");

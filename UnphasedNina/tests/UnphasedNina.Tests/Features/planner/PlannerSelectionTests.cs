@@ -78,6 +78,22 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         // ---- Scrub marker -----------------------------------------------------------------
 
         [Test]
+        public void MouseScrubModesUseThePointerAndButtonsStillStepByAnHour() {
+            const double width = 1000, span = 1440;
+            double mouseX = 100.4;
+            double smooth = NightChartControl.MouseMinutes(mouseX, width, span, MouseScrubMode.Smooth);
+            double minute = NightChartControl.MouseMinutes(mouseX, width, span, MouseScrubMode.Minute);
+            Assert.That(smooth, Is.EqualTo(144.576).Within(.001));
+            Assert.That(minute, Is.EqualTo(145));
+            Assert.That(NightChartControl.MouseMinutes(-1, width, span, MouseScrubMode.Smooth), Is.Zero);
+            Assert.That(NightChartControl.MouseMinutes(2000, width, span, MouseScrubMode.Minute), Is.EqualTo(span));
+            var planner = PlannerFixture.WindowOfThreeNights();
+            planner.SetMouseScrub(smooth);
+            planner.StepScrub(1);
+            Assert.That(planner.ScrubMinutes, Is.EqualTo(smooth + 60).Within(.001));
+        }
+
+        [Test]
         public void ScrubbingSnapsToWholeHoursAndStepsOneHourAtATime() {
             var planner = PlannerFixture.WindowOfThreeNights();
             planner.SelectedDate = PlannerFixture.Local(2026, 11, 26, 0, 0);

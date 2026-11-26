@@ -57,9 +57,7 @@ namespace Zakfo.Unphased.Features.planner {
             if (row == null || track == null || track.Phases.Count == 0) return null;
 
             var instant = scrubMinutes is { } minutes ? row.Chart.TimeAtMinutes(minutes) : row.Payload.MidnightTime;
-            if (track.Phases.TryGetValue(instant, out var phase)) return phase;
-            // The night midpoint is usually between two of the cached hourly samples.
-            return track.Phases.MinBy(sample => Math.Abs((sample.Key - instant).Ticks)).Value;
+            return track.PhaseAt(instant);
         }
 
         public IEnumerable<OverlayLegendEntry> OverlayLegend {
@@ -209,7 +207,7 @@ namespace Zakfo.Unphased.Features.planner {
                                     : OverlayEphemeris.TargetAltitude(choice.Target, row.Payload.Location, sampleTime);
                                 if (!double.IsFinite(altitude)) throw new InvalidOperationException("Altitude is unavailable.");
                                 samples.Add((sampleTime, altitude));
-                                // Scrubbing snaps to a whole hour. Cache the appearance at those exact instants.
+                                // Cache each hour and interpolate the glyph appearance between samples.
                                 if (sampleTime == time && (sampleTime - first).Ticks % TimeSpan.TicksPerHour == 0
                                     && choice.Planet is { } phaseBody
                                     && OverlayEphemeris.Phase(phaseBody, row.Payload.Location, sampleTime) is { } phase)

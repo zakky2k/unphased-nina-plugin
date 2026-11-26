@@ -26,6 +26,27 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         };
 
         [Test]
+        public void ScrubInterpolatesPhaseAcrossTheAngleWrapAndPlacesLabelsAroundOccupiedSpace() {
+            var time = new DateTimeOffset(2026, 11, 25, 12, 0, 0, TimeSpan.Zero);
+            var phases = new Dictionary<DateTimeOffset, BodyIllumination> {
+                [time] = new(.3, 170),
+                [time.AddHours(1)] = new(.6, -170)
+            };
+            var track = new OverlayTrack(null, new[] { (time, 0.0) }, string.Empty, phases);
+            var midway = track.PhaseAt(time.AddMinutes(30)).Value;
+            Assert.That(midway.Fraction, Is.EqualTo(.45).Within(.001));
+            Assert.That(midway.BrightSideDegrees, Is.EqualTo(180));
+            Assert.That(track.PhaseAt(time.AddMinutes(62)), Is.EqualTo(phases[time.AddHours(1)]));
+
+            var first = NightChartControl.PlaceScrubName(Array.Empty<Rect>(), 100, 50, 200, 100, 35, 16, 17);
+            var second = NightChartControl.PlaceScrubName(new[] { first }, 100, 50, 200, 100, 35, 16, 17);
+            var atRight = NightChartControl.PlaceScrubName(Array.Empty<Rect>(), 190, 50, 200, 100, 35, 16, 17);
+            Assert.That(first.X, Is.GreaterThan(100));
+            Assert.That(second.Right, Is.LessThan(100));
+            Assert.That(atRight.Right, Is.LessThan(190));
+        }
+
+        [Test]
         public void CatalogGlyphsHaveDistinctSilhouettesAtScrubSize() {
             static string Render(string code) {
                 const int size = 24;

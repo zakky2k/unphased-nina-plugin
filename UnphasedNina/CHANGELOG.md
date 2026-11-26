@@ -14,6 +14,9 @@
 - Enabled Framing Assistant targets show a glyph beside their switch and on the chart's
   scrub line. If Framing Assistant omits the object type, Unphased looks it up in N.I.N.A.'s
   catalog for both new and saved targets. Unmatched coordinates use the crosshair.
+- The scrub line labels visible planet and target overlays with their curve's color
+  and dash pattern. Mouse scrub offers Smooth and Minute modes. Measure drag keeps
+  the latest drawing timings for each mode. The buttons still step by an hour.
 
 ## Unreleased — round 13: the settings lead the page, and the pillars move to the end
 

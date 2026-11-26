@@ -405,10 +405,10 @@ namespace Zakfo.Unphased.Features.planner {
         /// night is actually interesting.
         /// </summary>
         public void StepScrub(int hours) {
-            double from = scrubMinutes ?? (selectedNight == null
+            double from = scrubMinutes ?? NightChartVM.SnapToHour(selectedNight == null
                 ? 0
                 : (selectedNight.Payload.Sunset - selectedNight.Payload.FrameNoon).TotalMinutes);
-            MoveScrub(NightChartVM.SnapToHour(from) + hours * 60);
+            MoveScrub(from + hours * 60);
         }
 
         /// <summary>Take the marker off the chart.</summary>
@@ -420,7 +420,7 @@ namespace Zakfo.Unphased.Features.planner {
             RaisePropertyChanged(nameof(OverlayLegend));
         }
 
-        /// <summary>The one place the scrub value changes: snapped to the hour, clamped to the visible span.</summary>
+        /// <summary>Apply a scrub position within the visible span.</summary>
         private void MoveScrub(double minutes) {
             double clamped = System.Math.Clamp(minutes, 0, VisibleSpanMinutes);
             if (scrubMinutes.HasValue && System.Math.Abs(scrubMinutes.Value - clamped) < 0.01) return;

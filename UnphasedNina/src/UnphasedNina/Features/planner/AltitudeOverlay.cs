@@ -61,7 +61,22 @@ namespace Zakfo.Unphased.Features.planner {
     }
 
     internal sealed record OverlayTrack(OverlayChoice Choice, IReadOnlyList<(DateTimeOffset Time, double Altitude)> Samples,
-        string Polyline, IReadOnlyDictionary<DateTimeOffset, BodyIllumination> Phases);
+        string Polyline, IReadOnlyDictionary<DateTimeOffset, BodyIllumination> Phases) {
+        internal BodyIllumination? PhaseAt(DateTimeOffset time) {
+            if (Phases.Count == 0) return null;
+            var start = Samples[0].Time;
+            double hours = (time - start).TotalHours;
+            var lower = start.AddHours(Math.Floor(hours));
+            bool hasBefore = Phases.TryGetValue(lower, out var before);
+            bool hasAfter = Phases.TryGetValue(lower.AddHours(1), out var after);
+            if (!hasBefore) return hasAfter ? after : null;
+            if (!hasAfter) return before;
+            double fraction = (time - lower).TotalHours;
+            double angle = Math.IEEERemainder(after.BrightSideDegrees - before.BrightSideDegrees, 360);
+            return new BodyIllumination(before.Fraction + fraction * (after.Fraction - before.Fraction),
+                before.BrightSideDegrees + fraction * angle);
+        }
+    }
 
     public sealed record OverlayLegendEntry(string Name, Brush Ink, DoubleCollection Dashes, string Altitude);
 

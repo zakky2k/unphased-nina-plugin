@@ -211,7 +211,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 Assert.That(track.Samples[^1].Time, Is.EqualTo(row.Chart.TimeAtMinutes(row.Chart.FrameMinutes)));
             }
             var venusTrack = planner.OverlayTracks.Single(track => track.Choice == venus);
-            var midpoint = venusTrack.Phases.MinBy(sample => Math.Abs((sample.Key - row.Payload.MidnightTime).Ticks)).Value;
+            var midpoint = venusTrack.PhaseAt(row.Payload.MidnightTime);
             Assert.That(planner.PlanetPreviewPhase(venus), Is.EqualTo(midpoint));
             planner.SetScrub(9 * 60);
             Assert.That(planner.PlanetPreviewPhase(venus), Is.EqualTo(venusTrack.Phases[row.Chart.TimeAtMinutes(9 * 60)]));

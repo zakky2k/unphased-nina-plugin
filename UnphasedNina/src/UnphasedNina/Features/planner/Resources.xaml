@@ -238,7 +238,7 @@
                             FontSize="13" FontWeight="SemiBold"
                             Foreground="{DynamicResource ButtonForegroundBrush}"
                             Command="{Binding ScrubBackCommand}"
-                            ToolTip="Scrub one hour earlier (also: left arrow, Shift + wheel over the chart, dragging on the chart)"/>
+                            ToolTip="Scrub one hour earlier (also left arrow or Shift + wheel over the chart)"/>
                         <Button Content="off" Width="126" Height="32" Padding="6,4" Margin="0,0,4,0"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                             FontSize="13" FontWeight="SemiBold"
@@ -250,7 +250,7 @@
                             FontSize="13" FontWeight="SemiBold"
                             Foreground="{DynamicResource ButtonForegroundBrush}"
                             Command="{Binding ScrubForwardCommand}"
-                            ToolTip="Scrub one hour later (also: right arrow, Shift + wheel over the chart, dragging on the chart)"/>
+                            ToolTip="Scrub one hour later (also right arrow or Shift + wheel over the chart)"/>
                     </StackPanel>
                 </planner:ControlGroup>
 
@@ -465,6 +465,31 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <WrapPanel Margin="0,3,0,0">
+                            <TextBlock Text="Mouse scrub" VerticalAlignment="Center" Margin="0,0,6,0"
+                                       Foreground="{DynamicResource PrimaryBrush}"/>
+                            <ComboBox MinWidth="80" Margin="0,0,4,0" AutomationProperties.Name="Mouse scrub mode"
+                                      ItemsSource="{Binding Planner.MouseScrubModes}"
+                                      SelectedItem="{Binding Planner.MouseScrub, Mode=TwoWay}"
+                                      ToolTip="Smooth follows the pointer at display refresh. Minute snaps to the nearest minute."/>
+                            <CheckBox Style="{StaticResource OverlaySwitchStyle}" Content="Measure drag"
+                                      IsChecked="{Binding Planner.MeasureScrub, Mode=TwoWay}"
+                                      ToolTip="Record the last drag in each mode for comparison"/>
+                        </WrapPanel>
+                        <TextBox Text="{Binding Planner.ScrubMetrics, Mode=OneWay}" TextWrapping="Wrap" Margin="0,2,0,0"
+                                 IsReadOnly="True" Background="Transparent" BorderThickness="0" Padding="0"
+                                 AutomationProperties.Name="Mouse scrub metrics" Foreground="{DynamicResource PrimaryBrush}">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Planner.MeasureScrub}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
                     </StackPanel>
                 </Border>
             </Grid>

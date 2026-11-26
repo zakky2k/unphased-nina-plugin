@@ -78,6 +78,8 @@ namespace Zakfo.Unphased.Features.planner {
         private NightPlannerVM hookedPlanner;
 
         private void HookPlanner() {
+            CancelMouseScrub();
+            dragMetrics = null;
             if (hookedPlanner != null) hookedPlanner.PropertyChanged -= PlannerChanged;
             hookedPlanner = FindPlanner(DataContext);
             SetChartElements(hookedPlanner?.VisibleChartElements ?? ChartElements.Default);
@@ -112,6 +114,7 @@ namespace Zakfo.Unphased.Features.planner {
         private void PlannerChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e) {
             if (e.PropertyName == nameof(NightPlannerVM.Scheme)) SetScheme(hookedPlanner.Scheme);
             if (e.PropertyName == nameof(NightPlannerVM.ScrubMinutes)) SetScrub(hookedPlanner.ScrubMinutes);
+            if (e.PropertyName == nameof(NightPlannerVM.MeasureScrub) && !hookedPlanner.MeasureScrub) dragMetrics = null;
             if (e.PropertyName == nameof(NightPlannerVM.VisibleChartElements)) SetChartElements(hookedPlanner.VisibleChartElements);
             if (e.PropertyName is nameof(NightPlannerVM.OverlayTracks) or nameof(NightPlannerVM.GlyphStyle)) RequestRerender();
             if (e.PropertyName is nameof(NightPlannerVM.SunColor) or nameof(NightPlannerVM.MoonColor)
@@ -156,17 +159,24 @@ namespace Zakfo.Unphased.Features.planner {
         public void SetScrub(double? minutes) {
             if (Nullable.Equals(scrubMinutes, minutes)) return;
             scrubMinutes = minutes;
-            RequestRerender();
+            InvalidateVisual();
         }
 
         protected override Size MeasureOverride(Size availableSize) =>
             new(double.IsInfinity(availableSize.Width) ? 600 : availableSize.Width, ChartHeight);
 
         protected override void OnRender(DrawingContext dc) {
+            var measurement = dragMetrics;
+            long start = measurement != null ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+            RenderChart(dc);
+            if (measurement != null) measurement.RecordRender(System.Diagnostics.Stopwatch.GetElapsedTime(start));
+        }
+
+        private void RenderChart(DrawingContext dc) {
             double w = ActualWidth, h = ActualHeight;
             if (w <= 10 || h <= 10) return;
-            dc.DrawRectangle(palette.ChartBackground(scheme), null, new Rect(0, 0, w, h));
             if (row == null) {
+                DrawChartBackground(dc, w, h);
                 var s = LabelSize("no night selected", TipFs);
                 DrawChip(dc, "no night selected", TipFs, (w - s.Width) / 2, h / 2 - s.Height / 2,
                     palette.Ink(scheme), w, h);
@@ -180,6 +190,28 @@ namespace Zakfo.Unphased.Features.planner {
             double sx = w / NightChartVM.Width;
             double sy = h / NightChartVM.Height;
 
+            if (MouseMode == MouseScrubMode.Smooth && IsMouseCaptured) {
+                var size = (w, h, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+                if (scrubBackground == null || scrubBackgroundSize != size) {
+                    scrubBackground = new DrawingGroup();
+                    scrubBackgroundSize = size;
+                    using var background = scrubBackground.Open();
+                    DrawChartLayers(background, w, h, sx, sy, spanMinutes);
+                }
+                dc.DrawDrawing(scrubBackground);
+            } else {
+                DrawChartLayers(dc, w, h, sx, sy, spanMinutes);
+            }
+            DrawScrub(dc, w, h, sx, sy, spanMinutes);
+            DrawLegend(dc);
+        }
+
+        private void DrawChartBackground(DrawingContext dc, double w, double h) =>
+            dc.DrawRectangle(palette.ChartBackground(scheme), null, new Rect(0, 0, w, h));
+
+        private void DrawChartLayers(DrawingContext dc, double w, double h, double sx, double sy, double spanMinutes) {
+            DrawChartBackground(dc, w, h);
+            eventChips.Clear();
             DrawTwilightShading(dc, h, sx);
             DrawGrid(dc, w, h, sx, sy, spanMinutes);
             if (Shows(ChartElements.SunAltitude))
@@ -192,8 +224,6 @@ namespace Zakfo.Unphased.Features.planner {
             }
             if (Shows(ChartElements.Sunrise) || Shows(ChartElements.Sunset)) DrawSunMarkers(dc, w, h, sx, sy);
             if (Shows(ChartElements.Moonrise) || Shows(ChartElements.Moonset)) DrawMoonMarkers(dc, w, h, sx, sy);
-            DrawScrub(dc, w, h, sx, sy, spanMinutes);
-            DrawLegend(dc);
         }
 
         private IReadOnlyList<OverlayTrack> VisibleOverlays =>
@@ -206,6 +236,7 @@ namespace Zakfo.Unphased.Features.planner {
         /// overprinting a number the chart is read by.
         /// </summary>
         private readonly List<Rect> axisChips = new();
+        private readonly List<Rect> eventChips = new();
 
         private void DrawGrid(DrawingContext dc, double w, double h, double sx, double sy, double spanMinutes) {
             var faint = new Pen(palette.Gridline(scheme), 0.6);
@@ -350,6 +381,7 @@ namespace Zakfo.Unphased.Features.planner {
                 var s = LabelSize(name, MarkerFs);
                 double top = NightChartVM.ChipBelow(horizonY, s.Height, h);
                 if (!Fits(taken, name, MarkerFs, BoxLeft(x, name, MarkerFs, w), top, w, h)) continue;
+                eventChips.Add(taken[^1]);
                 DrawChip(dc, name, MarkerFs, BoxLeft(x, name, MarkerFs, w), top, accent, w, h);
             }
         }
@@ -407,14 +439,14 @@ namespace Zakfo.Unphased.Features.planner {
                 // line has now replaced.
                 double top = NightChartVM.ChipAbove(horizonY, s.Height, h);
                 if (!Fits(taken, ev.name, MarkerFs, BoxLeft(x, ev.name, MarkerFs, w), top, w, h)) continue;
+                eventChips.Add(taken[^1]);
                 DrawChip(dc, ev.name, MarkerFs, BoxLeft(x, ev.name, MarkerFs, w), top, moon, w, h);
             }
         }
 
         /// <summary>
-        /// The scrub marker: one vertical the user moves hour by hour - by dragging
-        /// across the chart, with Shift + the wheel, with the arrow keys or with the buttons in
-        /// the panel header. It snaps to whole hours, carries a handle on the horizon so
+        /// The scrub marker follows the mouse and steps by hours from the other controls.
+        /// It carries a handle on the horizon so
         /// it looks like the control it is, puts a dot on each curve at that instant and
         /// prints where the sun and the moon actually are. That is the question the old
         /// fixed marker lines never answered.
@@ -435,7 +467,6 @@ namespace Zakfo.Unphased.Features.planner {
             var instant = chart.TimeAtMinutes(minutes);
             if (Shows(ChartElements.SunAltitude) && !Shows(ChartElements.SunGlyph))
                 DrawScrubDot(dc, x, NightChartVM.YSun(chart.SunAltitudeAt(instant)) * sy, palette.SunTrack(scheme), h);
-            DrawScrubGlyphs(dc, w, h, sy, x, minutes, instant);
 
             string readout = chart.ScrubReadout(minutes);
             var s = LabelSize(readout, NoteFs);
@@ -454,6 +485,9 @@ namespace Zakfo.Unphased.Features.planner {
                 var box = new Rect(left, top, s.Width, s.Height);
                 if (taken.IntersectsWith(box)) top = Math.Max(top, taken.Bottom + 2);
             }
+            var readoutBox = new Rect(Math.Clamp(left, 0, Math.Max(0, w - s.Width)),
+                Math.Clamp(top, 0, Math.Max(0, h - s.Height)), s.Width, s.Height);
+            DrawScrubGlyphs(dc, w, h, sy, x, minutes, instant, legend, readoutBox);
             DrawChip(dc, readout, NoteFs, left, top, ink, w, h);
         }
 
@@ -472,19 +506,31 @@ namespace Zakfo.Unphased.Features.planner {
             base.OnMouseLeftButtonDown(e);
             if (row == null) return;
             Focus();
+            dragMetrics = hookedPlanner?.MeasureScrub == true ? new DragMetrics(MouseMode) : null;
             CaptureMouse();
-            ScrubToPixel(e.GetPosition(this).X);
+            MoveMouseScrub(e.GetPosition(this).X, immediately: true);
+            if (!IsMouseCaptured) FinishMouseScrub();
             e.Handled = true;
         }
 
         protected override void OnMouseMove(MouseEventArgs e) {
             base.OnMouseMove(e);
-            if (IsMouseCaptured) ScrubToPixel(e.GetPosition(this).X);
+            if (IsMouseCaptured) MoveMouseScrub(e.GetPosition(this).X);
         }
 
         protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e) {
             base.OnMouseLeftButtonUp(e);
-            if (IsMouseCaptured) ReleaseMouseCapture();
+            if (IsMouseCaptured) {
+                CancelMouseScrub();
+                MoveMouseScrub(e.GetPosition(this).X, immediately: true);
+                ReleaseMouseCapture();
+                e.Handled = true;
+            }
+        }
+
+        protected override void OnLostMouseCapture(MouseEventArgs e) {
+            base.OnLostMouseCapture(e);
+            FinishMouseScrub();
         }
 
         /// <summary>
@@ -528,16 +574,6 @@ namespace Zakfo.Unphased.Features.planner {
                 case Key.Escape:
                 case Key.Delete: ClearScrub(); e.Handled = true; break;
             }
-        }
-
-        /// <summary>
-        /// Scrub to the whole hour under the pointer. The pointer is deliberately not
-        /// snapped to a sample of the curve: the hour is what a night plan is written in.
-        /// </summary>
-        private void ScrubToPixel(double pixelX) {
-            double canvasX = pixelX / (ActualWidth / NightChartVM.Width);
-            double minutes = NightChartVM.SnapToHour(NightChartVM.MinutesAtX(canvasX, SpanMinutes));
-            SetScrubDirect(minutes);
         }
 
         private void SetScrubDirect(double minutes) {
@@ -655,6 +691,9 @@ namespace Zakfo.Unphased.Features.planner {
                 brush,
                 VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
-        public void RequestRerender() => InvalidateVisual();
+        public void RequestRerender() {
+            scrubBackground = null;
+            InvalidateVisual();
+        }
     }
 }
