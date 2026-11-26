@@ -114,8 +114,11 @@ the code here is reviewed rather than shipped unexamined.
 
 Redistributed third-party code and its licences are listed in
 [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships in the release archive next to
-LICENSE.txt. The plugin's own source does not yet carry a per-file licence header — one thing to
-clean up before the source is announced publicly, since MPL-2.0 expects the notice in each file.
+LICENSE.txt. Every source file here opens with the MPL-2.0 notice in the licence's own wording —
+N.I.N.A.'s wording, since the plugin is built to sit inside that codebase — and
+`LicenceHeaderTests` walks the tree and fails on any file that arrives without it. Files under
+`build/vendor/` are the exception on purpose: they are unmodified third-party code carrying their own
+licence (see `build/vendor/PROVENANCE.md`).
 
 ## License
 

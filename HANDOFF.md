@@ -851,14 +851,34 @@ the options page in the live app and accepted the build as 0.7.0.0.**
    then `Verify-ReleaseArtifacts.ps1`, the GitHub release on **this** repository (the archive must stay
    byte-identical afterwards — catalogue CI re-hashes `Installer.URL`), then the manifest PR at
    `manifests/U/Unphased Night Planner/3.2.0.9001/0.7.0.0/manifest.json`. Screenshots stay unhosted, so the
-   listing shows the icon only. **Blocked on credentials:** `git push -u origin main` on this repository
+   listing shows the icon only. **Was blocked on credentials:** `git push -u origin main` on this repository
    returns `Permission to zakky2k/unphased-nina-plugin.git denied to zakky2k` (403). The stored GCM
    credential is a fine-grained PAT scoped to selected repositories, and this repository is not one of them;
    the same credential pushes AstroScripts. Fix by adding the repository to the PAT (Contents: Read and
-   write) or by `gh auth login`, then push `67169b0`.
-5. Still undecided, carried forward: per-file MPL-2.0 headers (33 `.cs` + 2 `.xaml` outside `obj`/`bin`); the
+   write) or by `gh auth login`, then push. **Cleared at 09:48:** the user widened the PAT scope, the push took
+   `main` to `c1e4384`, and `git ls-remote origin main` agrees.
+5. **Per-file MPL-2.0 headers — done.** Every `.cs` and `.xaml` outside `obj`/`bin`/`artifacts`/`TestResults`/`.vs`/
+   `vendor` — 39 files — opens with the licence's own two-line Exhibit A notice, the wording N.I.N.A. puts on every one
+   of its sources: nothing invented, and the plugin reads like the codebase it sits inside. XAML takes an XML comment
+   above the root element; BOMs and CRLF are preserved byte for byte. `LicenceHeaderTests` walks from the test binary up
+   to the checkout and fails any new file that skips the notice, and guards its own failure modes: it asserts the walk
+   found at least 38 files, because a walk that quietly finds nothing would otherwise pass, and that `build/vendor/`
+   stays out of the walk — unmodified third-party files carrying their own licence (`build/vendor/PROVENANCE.md`).
+6. Still undecided, carried forward: the
    moon glyph overlapping its chip in night mode; whether to move to apparent-horizon sunrise/sunset (the
    user chose to keep geometric 0°, and changing it would invalidate every fixture the web planner shares).
+
+**Round 9 was deployed for a visual round on 26 Nov at 09:48.** No N.I.N.A. process was running, so `-t:DeployPlugin`
+staged and copied in one pass: `UnphasedNina.dll` **91,648 B**, `FileVersion 0.7.0.0`, `ProductVersion 0.7.0.0+c1e4384…`,
+all six files in the plugin folder SHA256-identical to `artifacts\stage\Debug` (`astronomy.dll`, `LICENSE.txt`,
+`THIRD-PARTY-NOTICES.txt`, `UnphasedCore.dll`, `UnphasedNina.dll`, `UnphasedNina.pdb`). N.I.N.A. was started detached:
+PID 20192, `Responding=True` seconds later, and its log is the healthy **1,153-byte** banner with the usual single
+`NINALogWatcher` warning — no ERROR, no `DispatcherUnhandledException`. It was gone about half a minute later and the
+Application event log holds no `.NET Runtime`, Application Error or WER entry in that window, so there is no evidence of
+a crash — but also no module-list proof of the new DLL, so the load of *this* build is still open. Relaunched after
+that. Suite **98** (97 + `LicenceHeaderTests`). Against the standing caution that the suite writes the live settings
+file: that file still holds the user's picked colours (`sunColor #FEF80E`, `moonColor #00FFFF`, `horizonColor ""`) and
+was last written at **00:56:14**, by N.I.N.A. itself, not by any suite run since.
 
 ## Open items and decisions
 - **0.6.2.0 is the deployed build** (deployed 21:46 on 25 Nov, after `8cdcce1`): `UnphasedNina.dll` **74,240 B**,

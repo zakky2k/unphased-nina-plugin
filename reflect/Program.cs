@@ -1,3 +1,6 @@
+// This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+// If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 using Mono.Cecil;
 var dll = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"NINA\Plugins\3.0.0\Unphased Night Planner\UnphasedNina.dll");
 var asm = AssemblyDefinition.ReadAssembly(dll);

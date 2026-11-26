@@ -25,6 +25,14 @@ looked at again (crops at 620 DIP, plus a busy-state render).
   answer is that paging sideways past the edge (31 nights → 41) holds `Busy` for **46 ms** on this
   machine, and the cold first window for **186 ms**. Paging is a blink; the readout is for the first
   open and for slow machines, not for the arrow keys.
+- **Every source file now opens with the licence notice it already claims.** The plugin has said MPL-2.0 since
+  0.6.1.0 — in the manifest, in `Plugin.props`, in LICENSE.txt — but MPL states that notice per file, and no source
+  file carried it. 39 `.cs`/`.xaml` files (everything outside `obj`/`bin`/`artifacts`/`TestResults`/`.vs`/`vendor`)
+  now open with the licence's own two-line Exhibit A wording, the same two lines N.I.N.A. puts on every one of its
+  sources, so nothing is invented and the plugin reads like the codebase it sits inside; XAML takes it as a comment
+  above the root element. `LicenceHeaderTests` walks the tree and fails on any file that arrives without it, insists
+  the walk found at least 38 files (a walk that quietly finds nothing would otherwise pass), and keeps
+  `build/vendor/` out of the walk — unmodified third-party code carrying its own licence.
 
 ## 0.7.0.0 — a calendar, a taller chart, three palettes, and no Refresh button
 
