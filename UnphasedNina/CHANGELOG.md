@@ -10,7 +10,10 @@
   the selected hour. Detailed artwork follows the night-vision palette.
 - Enabled planet switches show a preview of the selected glyph style beside their names.
 - Chart elements has separate switches for each Sun and Moon altitude curve, rise and
-  set label, and scrub glyph. Reset restores the Moon glyph as the sole enabled element.
+  set label, and scrub glyph. All eight start enabled, and Reset turns them all back on.
+- Enabled Framing Assistant targets show a glyph beside their switch and on the chart's
+  scrub line. The glyph follows the catalog object type. Older targets acquire their type
+  when added again from Framing Assistant.
 
 ## Unreleased — round 13: the settings lead the page, and the pillars move to the end
 

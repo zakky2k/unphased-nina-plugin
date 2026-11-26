@@ -12,21 +12,22 @@ namespace Zakfo.Unphased.Features.planner {
     internal readonly record struct BodyIllumination(double Fraction, double BrightSideDegrees);
 
     public partial class NightChartControl {
-        private readonly record struct BodyMarker(NOVAS.Body Body, double Y, Brush Ink, BodyIllumination? Phase);
+        private readonly record struct ScrubMarker(NOVAS.Body? Body, double Y, Brush Ink, BodyIllumination? Phase,
+            string ObjectType = null);
         private static readonly Typeface SymbolTypeface = new("Segoe UI Symbol");
 
         private void DrawScrubGlyphs(DrawingContext dc, double width, double height, double sy,
             double x, double minutes, DateTimeOffset instant) {
-            var bodies = new List<BodyMarker>();
+            var markers = new List<ScrubMarker>();
             double moonY = NightChartVM.YMoon(row.Chart.MoonAltitudeAt(instant)) * sy;
             if (Shows(ChartElements.MoonGlyph) && InChart(moonY, height)) {
                 var (fraction, litOnRight) = row.Chart.ScrubMoonGlyph(minutes);
-                bodies.Add(new BodyMarker(NOVAS.Body.Moon, moonY, palette.MoonTrack(scheme),
+                markers.Add(new ScrubMarker(NOVAS.Body.Moon, moonY, palette.MoonTrack(scheme),
                     new BodyIllumination(fraction, litOnRight ? 0 : 180)));
             }
             if (Shows(ChartElements.SunGlyph)) {
                 double sunY = NightChartVM.YSun(row.Chart.SunAltitudeAt(instant)) * sy;
-                if (InChart(sunY, height)) bodies.Add(new BodyMarker(NOVAS.Body.Sun, sunY, palette.SunTrack(scheme), null));
+                if (InChart(sunY, height)) markers.Add(new ScrubMarker(NOVAS.Body.Sun, sunY, palette.SunTrack(scheme), null));
             }
             foreach (var overlay in VisibleOverlays) {
                 double y = NightChartVM.YSun(NightChartVM.AltitudeAt(overlay.Samples, instant)) * sy;
@@ -34,24 +35,26 @@ namespace Zakfo.Unphased.Features.planner {
                 var ink = OverlayStyle.BrushFor(overlay.Choice.StyleIndex, scheme);
                 if (overlay.Choice.Planet is { } planet) {
                     var phase = overlay.Phases.TryGetValue(instant, out var illumination) ? illumination : (BodyIllumination?)null;
-                    bodies.Add(new BodyMarker(planet, y, ink, phase));
+                    markers.Add(new ScrubMarker(planet, y, ink, phase));
                 } else {
-                    DrawScrubDot(dc, x, y, ink, height);
+                    markers.Add(new ScrubMarker(null, y, ink, null, overlay.Choice.Target.ObjectType));
                 }
             }
-            if (bodies.Count == 0) return;
+            if (markers.Count == 0) return;
             var style = hookedPlanner?.GlyphStyle ?? PlanetGlyphStyle.Phase;
             dc.PushClip(new RectangleGeometry(new Rect(0, 0, width, height)));
-            for (int i = bodies.Count - 1; i >= 0; i--) {
-                var body = bodies[i];
-                double nominal = GlyphRadius(style, body.Body);
+            for (int i = markers.Count - 1; i >= 0; i--) {
+                var marker = markers[i];
+                double nominal = marker.Body is { } body ? GlyphRadius(style, body) : DeepSkyGlyph.Radius;
                 double separation = double.PositiveInfinity;
-                for (int j = 0; j < bodies.Count; j++)
-                    if (j != i) separation = Math.Min(separation, Math.Abs(body.Y - bodies[j].Y));
+                for (int j = 0; j < markers.Count; j++)
+                    if (j != i) separation = Math.Min(separation, Math.Abs(marker.Y - markers[j].Y));
                 // The Moon draws last when two centres nearly coincide. All values remain in the scrub legend.
                 double radius = Math.Clamp(separation / 2 - 1, 2.4, nominal);
-                if (radius <= 3) DrawScrubDot(dc, x, body.Y, body.Ink, height);
-                else DrawBodyGlyph(dc, body.Body, new Point(x, body.Y), radius, body.Ink, style, body.Phase);
+                var centre = new Point(x, marker.Y);
+                if (radius <= 3) DrawScrubDot(dc, x, marker.Y, marker.Ink, height);
+                else if (marker.Body is { } solarBody) DrawBodyGlyph(dc, solarBody, centre, radius, marker.Ink, style, marker.Phase);
+                else DeepSkyGlyph.Draw(dc, marker.ObjectType, centre, radius, marker.Ink, palette.ChipFill(scheme));
             }
             dc.Pop();
         }

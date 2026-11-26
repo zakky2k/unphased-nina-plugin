@@ -63,6 +63,20 @@
          without changing the palette for everyone. The chart repaints itself
          through NightChartControl in any of the three schemes, and Enhanced
           leaves the panel's chrome exactly as N.I.N.A. left it. -->
+    <Style x:Key="OverlayGlyphPreviewStyle" TargetType="planner:OverlayGlyphPreview">
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="25"/>
+        <Setter Property="Margin" Value="4,0,0,0"/>
+        <Setter Property="IsHitTestVisible" Value="False"/>
+        <Setter Property="Planner" Value="{Binding DataContext.Planner, RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
+        <Setter Property="Visibility" Value="Collapsed"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Enabled}" Value="True">
+                <Setter Property="Visibility" Value="Visible"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <Style x:Key="OverlaySwitchStyle" TargetType="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
         <Setter Property="Padding" Value="5,3"/>
@@ -359,20 +373,7 @@
                                               AutomationProperties.Name="{Binding Name}" IsChecked="{Binding Enabled, Mode=TwoWay}">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                                            <planner:PlanetGlyphPreview x:Name="PlanetPreview" Width="32" Height="25" Margin="4,0,0,0"
-                                                IsHitTestVisible="False"
-                                                Planner="{Binding DataContext.Planner, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
-                                                <planner:PlanetGlyphPreview.Style>
-                                                    <Style TargetType="planner:PlanetGlyphPreview">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Enabled}" Value="True">
-                                                                <Setter Property="Visibility" Value="Visible"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </planner:PlanetGlyphPreview.Style>
-                                            </planner:PlanetGlyphPreview>
+                                            <planner:OverlayGlyphPreview x:Name="PlanetPreview" Style="{StaticResource OverlayGlyphPreviewStyle}"/>
                                         </StackPanel>
                                     </CheckBox>
                                 </DataTemplate>
@@ -390,15 +391,20 @@
                         <StackPanel>
                             <Button Content="Add from Framing Assistant" HorizontalAlignment="Left" Margin="4,2"
                                     Command="{Binding AddFramingTargetCommand}"/>
-                            <ItemsControl ItemsSource="{Binding Planner.Targets}">
+                            <ItemsControl x:Name="TargetSwitches" ItemsSource="{Binding Planner.Targets}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,6,0">
-                                            <CheckBox Style="{StaticResource OverlaySwitchStyle}" Content="{Binding Name}"
-                                                      AutomationProperties.Name="{Binding Name}" IsChecked="{Binding Enabled, Mode=TwoWay}"/>
+                                            <CheckBox Style="{StaticResource OverlaySwitchStyle}"
+                                                      AutomationProperties.Name="{Binding Name}" IsChecked="{Binding Enabled, Mode=TwoWay}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                                    <planner:OverlayGlyphPreview x:Name="TargetPreview" Style="{StaticResource OverlayGlyphPreviewStyle}"/>
+                                                </StackPanel>
+                                            </CheckBox>
                                             <Button Content="Remove" Padding="4,2" CommandParameter="{Binding}"
                                                     AutomationProperties.Name="{Binding Name, StringFormat=Remove {0}}"
                                                     Command="{Binding DataContext.Planner.RemoveTargetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
@@ -444,7 +450,7 @@
                                        Margin="0,0,12,0" Foreground="{DynamicResource PrimaryBrush}"/>
                             <Button Content="Reset" Padding="6,2" Command="{Binding Planner.ResetChartElementsCommand}"
                                     Foreground="{DynamicResource ButtonForegroundBrush}"
-                                    AutomationProperties.Name="Reset chart elements" ToolTip="Show only the Moon glyph"/>
+                                    AutomationProperties.Name="Reset chart elements" ToolTip="Show all chart elements"/>
                         </WrapPanel>
                         <ItemsControl x:Name="ChartElementSwitches" ItemsSource="{Binding Planner.ChartElementOptions}"
                                       HorizontalAlignment="Left" MaxWidth="472">

@@ -52,7 +52,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             var choices = (ItemsControl)view.FindName("PlanetSwitches");
             var item = (ContentPresenter)choices.ItemContainerGenerator.ContainerFromItem(jupiter);
             var toggle = (CheckBox)choices.ItemTemplate.FindName("PlanetSwitch", item);
-            var preview = (PlanetGlyphPreview)choices.ItemTemplate.FindName("PlanetPreview", item);
+            var preview = (OverlayGlyphPreview)choices.ItemTemplate.FindName("PlanetPreview", item);
             Assert.That(preview.Planner, Is.SameAs(planner));
             Assert.That(preview.Visibility, Is.EqualTo(Visibility.Collapsed));
             toggle.SetCurrentValue(CheckBox.IsCheckedProperty, true);
@@ -102,9 +102,16 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             Assert.That(planner.OverlayNotice, Does.Contain("Select a target"));
 
             var coordinates = new Coordinates(5.588, -5.39, Epoch.J2000, Coordinates.RAType.Hours);
-            framing.SetupGet(vm => vm.DSO).Returns(new DeepSkyObject("M42", coordinates, null));
-            panel.AddFramingTargetCommand.Execute(null);
+            // Existing profiles stored these four fields without the object's type.
+            settings.OverlayTargetsJson = """[{"Id":"M42","Name":"M42","RightAscensionHours":5.588,"DeclinationDegrees":-5.39}]""";
+            profiles.Raise(service => service.ProfileChanged += null, EventArgs.Empty);
             var firstChoice = planner.Targets.Single();
+            Assert.That(firstChoice.Target.ObjectType, Is.Null);
+
+            framing.SetupGet(vm => vm.DSO).Returns(new DeepSkyObject("M42", coordinates, null) { DSOType = "BRTNB" });
+            panel.AddFramingTargetCommand.Execute(null);
+            Assert.That(planner.Targets.Single(), Is.SameAs(firstChoice));
+            Assert.That(firstChoice.Target.ObjectType, Is.EqualTo("BRTNB"));
             Assert.That(firstChoice.Enabled, Is.True);
             firstChoice.Enabled = false;
             panel.AddFramingTargetCommand.Execute(null);
@@ -112,10 +119,26 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             Assert.That(firstChoice.Enabled, Is.True);
 
             var other = new Coordinates(0.71, 41.27, Epoch.J2000, Coordinates.RAType.Hours);
-            framing.SetupGet(vm => vm.DSO).Returns(new DeepSkyObject("M31", other, null));
+            framing.SetupGet(vm => vm.DSO).Returns(new DeepSkyObject("M31", other, null) { DSOType = "GALXY" });
             panel.AddFramingTargetCommand.Execute(null);
             Assert.That(firstChoice.Target.RightAscensionHours, Is.EqualTo(5.588).Within(1e-8));
             Assert.That(planner.Targets.Count, Is.EqualTo(2));
+
+            var resources = new PlannerResources();
+            var key = typeof(PlannerDockableVM).FullName + "_Dockable";
+            var view = (FrameworkElement)((DataTemplate)resources[key]).LoadContent();
+            view.DataContext = panel;
+            ((Expander)view.FindName("TargetOverlays")).IsExpanded = true;
+            view.Measure(new Size(900, 560));
+            view.Arrange(new Rect(0, 0, 900, 560));
+            view.UpdateLayout();
+            var choices = (ItemsControl)view.FindName("TargetSwitches");
+            var item = (ContentPresenter)choices.ItemContainerGenerator.ContainerFromItem(firstChoice);
+            var preview = (OverlayGlyphPreview)choices.ItemTemplate.FindName("TargetPreview", item);
+            Assert.That(preview.Visibility, Is.EqualTo(Visibility.Visible));
+            Assert.That(VisualTreeHelper.GetDrawing(preview)?.Bounds.IsEmpty, Is.False);
+            firstChoice.Enabled = false;
+            Assert.That(preview.Visibility, Is.EqualTo(Visibility.Collapsed));
 
             active = Profile();
             profiles.Raise(service => service.ProfileChanged += null, EventArgs.Empty);
@@ -123,6 +146,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             active = first;
             profiles.Raise(service => service.ProfileChanged += null, EventArgs.Empty);
             Assert.That(planner.Targets.Select(choice => choice.Target.Id), Is.EqualTo(new[] { "M42", "M31" }));
+            Assert.That(planner.Targets.Select(choice => choice.Target.ObjectType), Is.EqualTo(new[] { "BRTNB", "GALXY" }));
             Assert.That(planner.TargetSelection, Is.EqualTo("0 selected"));
             planner.RemoveTargetCommand.Execute(planner.Targets[0]);
             profiles.Raise(service => service.ProfileChanged += null, EventArgs.Empty);

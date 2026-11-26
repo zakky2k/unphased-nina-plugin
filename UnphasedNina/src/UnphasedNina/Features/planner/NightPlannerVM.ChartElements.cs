@@ -16,8 +16,7 @@ namespace Zakfo.Unphased.Features.planner {
         Moonset = 1 << 5,
         SunGlyph = 1 << 6,
         MoonGlyph = 1 << 7,
-        Default = MoonGlyph,
-        All = SunAltitude | MoonAltitude | Sunrise | Sunset | Moonrise | Moonset | SunGlyph | MoonGlyph
+        Default = SunAltitude | MoonAltitude | Sunrise | Sunset | Moonrise | Moonset | SunGlyph | MoonGlyph
     }
 
     public sealed class ChartElementToggle : BaseINPC {

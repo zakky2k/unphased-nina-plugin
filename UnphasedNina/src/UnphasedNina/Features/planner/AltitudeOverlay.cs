@@ -9,7 +9,8 @@ using System.Windows.Media;
 using Zakfo.Unphased.Core;
 
 namespace Zakfo.Unphased.Features.planner {
-    internal sealed record FramingTarget(string Id, string Name, double RightAscensionHours, double DeclinationDegrees) {
+    internal sealed record FramingTarget(string Id, string Name, double RightAscensionHours, double DeclinationDegrees,
+        string ObjectType = null) {
         public bool IsValid => !string.IsNullOrWhiteSpace(Name)
             && double.IsFinite(RightAscensionHours) && RightAscensionHours >= 0 && RightAscensionHours < 24
             && double.IsFinite(DeclinationDegrees) && Math.Abs(DeclinationDegrees) <= 90;
@@ -19,7 +20,7 @@ namespace Zakfo.Unphased.Features.planner {
                 return null;
             var coordinates = selected.Coordinates.Transform(Epoch.J2000);
             var target = new FramingTarget(selected.Id, string.IsNullOrWhiteSpace(selected.Name) ? selected.Id : selected.Name,
-                coordinates.RA, coordinates.Dec);
+                coordinates.RA, coordinates.Dec, selected.DSOType);
             return target.IsValid ? target : null;
         }
 
@@ -41,7 +42,12 @@ namespace Zakfo.Unphased.Features.planner {
         public string Name { get; }
         internal int StyleIndex { get; }
         internal NOVAS.Body? Planet { get; }
-        internal FramingTarget Target { get; }
+        internal FramingTarget Target { get; private set; }
+
+        internal void SetTargetType(string objectType) {
+            Target = Target with { ObjectType = objectType };
+            RaisePropertyChanged(nameof(Target));
+        }
 
         private bool enabled;
         public bool Enabled {

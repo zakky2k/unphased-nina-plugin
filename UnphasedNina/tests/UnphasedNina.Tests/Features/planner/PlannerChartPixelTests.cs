@@ -29,7 +29,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
 
         [Test]
         [Apartment(ApartmentState.STA)]
-        public void ChartSwitchesShowIndependentLayersAndResetToMoonGlyphOnly() {
+        public void ChartSwitchesShowIndependentLayersAndResetToAllEnabled() {
             var planner = new NightPlannerVM(new PluginSettings(TestProfile().Object));
             planner.GlyphStyle = PlanetGlyphStyle.Detailed;
             var chart = new Probe { DataContext = planner };
@@ -42,9 +42,9 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             chart.Measure(new Size(1200, 600));
             chart.Arrange(new Rect(0, 0, 1200, 600));
 
-            Assert.That(planner.VisibleChartElements, Is.EqualTo(ChartElements.MoonGlyph));
+            Assert.That(planner.VisibleChartElements, Is.EqualTo(ChartElements.Default));
             var defaults = Drawings(chart.Paint());
-            planner.ChartElementOptions.Single(option => option.Element == ChartElements.MoonGlyph).Enabled = false;
+            foreach (var option in planner.ChartElementOptions) option.Enabled = false;
             var baseline = Drawings(chart.Paint());
             var layers = new List<int[]>();
             foreach (var option in planner.ChartElementOptions) {
@@ -56,9 +56,8 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 layers.Add(layer);
                 option.Enabled = false;
             }
-            foreach (var option in planner.ChartElementOptions) option.Enabled = true;
             planner.ResetChartElementsCommand.Execute(null);
-            Assert.That(planner.VisibleChartElements, Is.EqualTo(ChartElements.MoonGlyph));
+            Assert.That(planner.VisibleChartElements, Is.EqualTo(ChartElements.Default));
             Assert.That(planner.GlyphStyle, Is.EqualTo(PlanetGlyphStyle.Detailed));
             Assert.That(Drawings(chart.Paint()), Is.EqualTo(defaults));
         }

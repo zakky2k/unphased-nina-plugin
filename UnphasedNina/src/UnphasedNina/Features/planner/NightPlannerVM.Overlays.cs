@@ -107,6 +107,11 @@ namespace Zakfo.Unphased.Features.planner {
             OverlayNotice = string.Empty;
             var existing = targets.FirstOrDefault(choice => choice.Target.Matches(target));
             if (existing != null) {
+                if (!string.IsNullOrWhiteSpace(target.ObjectType) && target.ObjectType != existing.Target.ObjectType) {
+                    existing.SetTargetType(target.ObjectType);
+                    SaveTargets();
+                    RaisePropertyChanged(nameof(OverlayTracks));
+                }
                 existing.Enabled = true;
                 return;
             }

@@ -18,6 +18,31 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             NOVAS.Body.Mercury, NOVAS.Body.Venus, NOVAS.Body.Mars, NOVAS.Body.Jupiter,
             NOVAS.Body.Saturn, NOVAS.Body.Uranus, NOVAS.Body.Neptune, NOVAS.Body.Moon
         };
+        private static readonly (string Code, string Label)[] TargetGlyphs = {
+            ("GALXY", "Galaxy"), ("GALCL", "Galaxy group"), ("BRTNB", "Bright nebula"), ("DRKNB", "Dark nebula"),
+            ("PLNNB", "Planetary nebula"), ("SNREM", "Supernova remnant"), ("OPNCL", "Open cluster"),
+            ("GLOCL", "Globular cluster"), ("CL+NB", "Cluster + nebula"), ("1STAR", "Star"),
+            ("2STAR", "Double star"), (null, "Manual target")
+        };
+
+        [Test]
+        public void CatalogGlyphsHaveDistinctSilhouettesAtScrubSize() {
+            static string Render(string code) {
+                const int size = 24;
+                var visual = new DrawingVisual();
+                using (var dc = visual.RenderOpen())
+                    DeepSkyGlyph.Draw(dc, code, new Point(12, 12), DeepSkyGlyph.Radius, Brushes.White, Brushes.Black);
+                var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
+                bitmap.Render(visual);
+                var pixels = new byte[size * size * 4];
+                bitmap.CopyPixels(pixels, size * 4, 0);
+                Assert.That(pixels.Where((_, index) => index % 4 == 0).Max(), Is.GreaterThan(180), code);
+                return Convert.ToBase64String(pixels);
+            }
+            Assert.That(TargetGlyphs.Select(target => Render(target.Code)).Distinct().Count(), Is.EqualTo(TargetGlyphs.Length));
+            Assert.That(Render(" smcdn "), Is.EqualTo(Render("BRTNB")));
+            Assert.That(Render("NONEX"), Is.EqualTo(Render(null)));
+        }
 
         [Test]
         public void TheThreeGlyphModesHaveDistinctSizesAndTheCurrentMoonIsTheDefault() {
@@ -74,7 +99,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
 
         [Test, Explicit("Writes the glyph styles to a PNG for visual review.")]
         public void RenderTheGlyphStyles() {
-            const int width = 600, height = 184;
+            const int width = 600, height = 310;
             var visual = new DrawingVisual();
             var chart = new NightChartControl();
             using (var dc = visual.RenderOpen()) {
@@ -94,6 +119,15 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                         chart.DrawBodyGlyph(dc, body, new Point(118 + 60 * i, 52 + 35 * row),
                             NightChartControl.GlyphRadius(style, body), ink, style, phase);
                     }
+                }
+                for (int i = 0; i < TargetGlyphs.Length; i++) {
+                    var (code, label) = TargetGlyphs[i];
+                    var x = 50 + 100 * (i % 6);
+                    var y = 210 + 55 * (i / 6);
+                    DeepSkyGlyph.Draw(dc, code, new Point(x, y), DeepSkyGlyph.Radius, Brushes.White, Brushes.Transparent);
+                    var caption = new FormattedText(label, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                        new Typeface("Segoe UI"), 11, Brushes.White, 1) { TextAlignment = TextAlignment.Center };
+                    dc.DrawText(caption, new Point(x, y + 15));
                 }
             }
             var preview = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);

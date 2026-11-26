@@ -50,7 +50,7 @@ namespace Zakfo.Unphased.Features.planner {
         private ChartScheme scheme = ChartScheme.Default;
         private ChartElements chartElements = ChartElements.Default;
 
-        internal void SetChartElements(ChartElements elements) {
+        private void SetChartElements(ChartElements elements) {
             chartElements = elements;
             RequestRerender();
         }
