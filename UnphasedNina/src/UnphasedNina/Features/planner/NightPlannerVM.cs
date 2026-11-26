@@ -357,7 +357,7 @@ namespace Zakfo.Unphased.Features.planner {
         // ---- The scrub marker -------------------------------------------------------------
         // The hour the chart is being read at, as a whole-hour offset from the frame
         // start (local noon). It lives here rather than on the chart control so the
-        // header buttons, the keyboard, the mouse wheel and dragging across the chart
+        // header buttons, the keyboard, Shift + the mouse wheel and dragging across the chart
         // all move one value, and so it outlives a change of night: "+N hours from
         // noon" is the same clock hour in every frame, which is what makes comparing
         // two nights at one glance possible.

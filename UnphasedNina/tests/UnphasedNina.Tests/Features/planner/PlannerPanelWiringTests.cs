@@ -194,6 +194,56 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         }
 
         /// <summary>
+        /// Round 9's button design, on the panel N.I.N.A. actually builds: every control you
+        /// press is the same height whatever glyph sits in it. Round 8 agreed min height 30 DIP,
+        /// roughly 34-44 DIP wide, 14 DIP semibold text and a tooltip on everything, and the
+        /// review came back with "symbols &lt; &gt; + - used as the size of the button instead of
+        /// design we agreed" - the symbol buttons only carried Padding, so the glyph decided how
+        /// big the button was. Asserted on ActualHeight/ActualWidth after a real layout pass, not
+        /// only on the MinHeight attributes, because an attribute that the chrome then ignores is
+        /// exactly the failure the user saw.
+        /// </summary>
+        [Test]
+        public void EveryPanelButtonIsTheAgreedSizeAndSaysWhatItDoes() {
+            var panel = new PlannerDockableVM(ProfilesWithNoSite(), new Mock<NINA.Equipment.Interfaces.Mediator.ITelescopeMediator>().Object);
+            panel.Planner.ShowWindow(new[] { PlannerFixture.Night(2026, 11, 24, 691, 0.99) });
+            panel.Planner.SelectedDate = PlannerFixture.Local(2026, 11, 26, 0, 0);
+
+            var root = Panel(panel);
+            // The stock DatePicker brings its own popup button in its template, and that one is
+            // N.I.N.A.'s business, not this panel's - so it is excluded before anything is
+            // counted or measured.
+            var buttons = Visual<Button>(root)
+                .Except(Visual<Button>(Only<DatePicker>(root)))
+                .ToList();
+
+            // Two night arrows, Tonight, three scrub buttons, two zoom buttons, three palettes.
+            Assert.That(buttons, Has.Count.EqualTo(11), "every pressable thing in the panel is counted here");
+            Assert.Multiple(() => {
+                Assert.That(buttons.Select(b => b.ActualHeight), Is.All.GreaterThanOrEqualTo(30.0),
+                    "no button is shorter than the 30 DIP the design asks for, whatever is written in it");
+                Assert.That(buttons.Select(b => b.MinWidth), Is.All.GreaterThanOrEqualTo(40.0),
+                    "and no button is narrower than the agreed minimum");
+                Assert.That(buttons.Select(b => b.FontSize), Is.All.EqualTo(14.0),
+                    "one text size across the panel, the size the design settled on");
+                Assert.That(buttons.Select(b => b.FontWeight),
+                    Is.All.EqualTo(System.Windows.FontWeights.SemiBold));
+                Assert.That(buttons.All(b => !string.IsNullOrWhiteSpace(b.ToolTip as string)), Is.True,
+                    "tooltip on every control, including the symbols");
+                Assert.That(buttons.Select(b => b.Style), Is.All.Null,
+                    "the size is carried by attributes: a Style on a Button replaces N.I.N.A.'s "
+                    + "implicit template and the button loses its chrome");
+            });
+
+            // The two non-button controls the panel asks you to use are labelled too.
+            Assert.Multiple(() => {
+                Assert.That(Only<DatePicker>(root).ToolTip, Is.Not.Null.And.Not.Empty);
+                Assert.That(Only<NightChartControl>(root).ToolTip, Is.Not.Null.And.Not.Empty,
+                    "the chart is a control you press too, and it is where Shift + wheel applies");
+            });
+        }
+
+        /// <summary>
         /// Pull the palette button the markup wired to a command, and run that command.
         /// Running the binding rather than synthesising a mouse click is deliberate: what the
         /// panel template can get wrong is which lever the button pulls, and a synthetic

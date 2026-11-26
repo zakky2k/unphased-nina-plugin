@@ -384,7 +384,7 @@ namespace Zakfo.Unphased.Features.planner {
 
         /// <summary>
         /// The scrub marker: one vertical the user moves hour by hour - by dragging
-        /// across the chart, with the wheel, with the arrow keys or with the buttons in
+        /// across the chart, with Shift + the wheel, with the arrow keys or with the buttons in
         /// the panel header. It snaps to whole hours, carries a handle on the horizon so
         /// it looks like the control it is, puts a dot on each curve at that instant and
         /// prints where the sun and the moon actually are. That is the question the old
@@ -471,12 +471,34 @@ namespace Zakfo.Unphased.Features.planner {
             if (IsMouseCaptured) ReleaseMouseCapture();
         }
 
-        /// <summary>Wheel over the chart: one hour at a time, the fastest way to walk a night.</summary>
+        /// <summary>
+        /// Shift + wheel over the chart: one hour at a time, the fastest way to walk a night.
+        /// The bare wheel is left alone on purpose. The chart is the tallest thing in the panel,
+        /// so a handler that took every wheel message meant the panel could not be scrolled
+        /// from anywhere a user would naturally put the pointer - and scrubbing while trying to
+        /// scroll is exactly the surprise round 8 flagged. Leaving the event unhandled hands it
+        /// to N.I.N.A.'s scroll viewer, which is what moves the panel.
+        /// </summary>
         protected override void OnMouseWheel(MouseWheelEventArgs e) {
             base.OnMouseWheel(e);
-            if (row == null) return;
-            StepScrub(e.Delta > 0 ? 1 : -1);
+            if (!TakeWheelScrub(e.Delta, Keyboard.Modifiers)) return;
             e.Handled = true;
+        }
+
+        /// <summary>
+        /// Whether this wheel message belongs to the scrub, and the scrub if it does. Split out
+        /// because <see cref="Keyboard.Modifiers"/> reads the live keyboard and a test cannot
+        /// hold Shift down for it, so the modifier rule is decided here from a value the caller
+        /// supplies. Public for the same reason MoonPhaseGeometry is: the tests see no internals.
+        /// </summary>
+        /// <param name="delta">The wheel's delta; positive scrolls up the page.</param>
+        /// <param name="modifiers">The modifier keys held with it.</param>
+        /// <returns>true when the scrub moved, so the caller has to mark the event handled.</returns>
+        public bool TakeWheelScrub(int delta, ModifierKeys modifiers) {
+            if (row == null) return false;
+            if ((modifiers & ModifierKeys.Shift) != ModifierKeys.Shift) return false;
+            StepScrub(delta > 0 ? 1 : -1);
+            return true;
         }
 
         protected override void OnKeyDown(KeyEventArgs e) {

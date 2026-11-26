@@ -51,7 +51,7 @@ namespace Zakfo.Unphased.Features.planner {
         // that does nothing visible rather than a way to get unstuck.
 
         /// <summary>
-        /// Hour-by-hour scrubbing of the chart. Dragging, the wheel and the arrow keys
+        /// Hour-by-hour scrubbing of the chart. Dragging, Shift + the wheel and the arrow keys
         /// work on the chart itself; these buttons are the same control for people who
         /// would rather click, and the only way in when the panel is too small to
         /// pointer at.

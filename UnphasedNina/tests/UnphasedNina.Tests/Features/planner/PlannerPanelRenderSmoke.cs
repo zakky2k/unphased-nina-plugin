@@ -41,7 +41,12 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 var profiles = new Mock<IProfileService>();
                 var profile = new Mock<IProfile>();
                 profile.SetupGet(p => p.PluginSettings).Returns(new NINA.Profile.PluginSettings());
-                profile.SetupGet(p => p.AstrometrySettings).Returns((IAstrometrySettings)null);
+                // A site on the profile, so the planner can work a window out for itself. The
+                // busy render below needs the real compute path, and with no site it never starts.
+                var astro = new Mock<IAstrometrySettings>();
+                astro.SetupGet(a => a.Latitude).Returns(50.08804);
+                astro.SetupGet(a => a.Longitude).Returns(14.42076);
+                profile.SetupGet(p => p.AstrometrySettings).Returns(astro.Object);
                 profiles.SetupGet(p => p.ActiveProfile).Returns(profile.Object);
                 var panel = new PlannerDockableVM(
                     profiles.Object,
@@ -59,20 +64,71 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 panel.Planner.ShowWindow(nights);
                 panel.Planner.SelectedDate = new DateTime(2026, 11, 25);
 
-                foreach (var width in new[] { 1200, 620 }) paths.Add(Render(panel, width));
+                foreach (var width in new[] { 1200, 620 }) paths.Add(Render(panel, width, "planner-panel"));
+                paths.Add(RenderWhilePagingGrowsTheWindow(profiles.Object));
             });
             worker.SetApartmentState(ApartmentState.STA);
             worker.Start();
             worker.Join();
 
-            Assert.That(paths, Has.Count.EqualTo(2));
+            Assert.That(paths, Has.Count.EqualTo(3));
             foreach (var path in paths) Assert.That(new System.IO.FileInfo(path).Length, Is.GreaterThan(2000));
             TestContext.Progress.WriteLine(string.Join(Environment.NewLine, paths));
         }
 
-        private static string Render(PlannerDockableVM panel, int width) {
+        /// <summary>
+        /// The one round-8 question the live panel never answered: when the calendar walks off
+        /// the end of the computed window, does the "computing..." readout ever actually appear,
+        /// and for how long? Nothing is faked here - a second panel asks for its own first window,
+        /// then pages nineteen nights along it, which is the walk that triggers the extension.
+        /// Busy goes up on this thread before the compute task leaves, so the render catches it;
+        /// the pump is what a real interface thread does while the answer is on its way, and the
+        /// elapsed figure is the honest answer to "did I see it".
+        /// </summary>
+        private static string RenderWhilePagingGrowsTheWindow(IProfileService profiles) {
+            var paging = new PlannerDockableVM(
+                profiles, new Mock<NINA.Equipment.Interfaces.Mediator.ITelescopeMediator>().Object);
+            paging.Planner.SelectedDate = new DateTime(2026, 11, 25);
+            var cold = System.Diagnostics.Stopwatch.StartNew();
+            paging.Planner.EnsureComputed();
+            PumpUntil(() => !paging.Planner.Busy && paging.Planner.Nights.Count > 0, "the first window arrived");
+            cold.Stop();
+            TestContext.Progress.WriteLine(
+                $"first window, {paging.Planner.Nights.Count} nights from nothing: Busy was up for {cold.ElapsedMilliseconds} ms");
+
+            int before = paging.Planner.Nights.Count;
+            paging.Planner.SelectedDate = new DateTime(2026, 11, 25).AddDays(NightPlannerVM.FutureNights - 1);
+            var snapshot = Render(paging, 620, "planner-panel-computing");
+            Assert.That(paging.Planner.Busy, Is.True, "the walk off the edge left the panel working");
+
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            PumpUntil(() => !paging.Planner.Busy, "the wider window arrived");
+            clock.Stop();
+            TestContext.Progress.WriteLine(
+                $"paging past the edge: {before} nights -> {paging.Planner.Nights.Count} nights, "
+                + $"Busy was up for {clock.ElapsedMilliseconds} ms");
+            return snapshot;
+        }
+
+        /// <summary>Pump this thread's dispatcher queue the way N.I.N.A.'s interface thread does.</summary>
+        private static void PumpUntil(Func<bool> ready, string what, int budgetMs = 30000) {
+            var ui = System.Windows.Threading.Dispatcher.CurrentDispatcher;
+            var deadline = System.Environment.TickCount64 + budgetMs;
+            while (System.Environment.TickCount64 < deadline && !ready()) {
+                var frame = new System.Windows.Threading.DispatcherFrame();
+                ui.BeginInvoke(
+                    System.Windows.Threading.DispatcherPriority.Background,
+                    new Action(() => frame.Continue = false));
+                System.Windows.Threading.Dispatcher.PushFrame(frame);
+            }
+            Assert.That(ready(), Is.True, $"timed out: {what} did not happen");
+        }
+
+        private static string Render(PlannerDockableVM panel, int width, string name) {
             const int height = 520;
-            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"planner-panel-at-{width}.png");
+            var path = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                name == "planner-panel" ? $"planner-panel-at-{width}.png" : $"{name}-at-{width}.png");
 
             var dictionary = new Zakfo.Unphased.Features.planner.Resources();
             var key = typeof(PlannerDockableVM).FullName + "_Dockable";

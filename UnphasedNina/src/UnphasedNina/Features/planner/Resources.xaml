@@ -44,39 +44,61 @@
                   style, which would either flatten the hover feedback or leak into the app
                   palette.  There is no Refresh button: the panel works a
                    window out when it loads and widens it by ten nights when the calendar gets
-                   near an edge, so pressing one had nothing left to do. -->
+                   near an edge, so pressing one had nothing left to do.
+                   Every button in this panel is a fixed size - min height 30 DIP, min width 40
+                   (44 where the label is a word or a pair of characters), 14 DIP semibold text,
+                   tooltip on all of them - and the size is written as attributes, never as a
+                   Style: an explicit Style on a Button replaces N.I.N.A.'s implicit button
+                   template and the chrome disappears. The symbols are sized by the button
+                   rather than deciding the button's size themselves, which is what round 8's
+                   design asked for and the round 8 review found missing. -->
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="2,2,2,4">
-                <Button Content="&lt;" Padding="8,2" Margin="0,0,4,0"
+                <Button Content="&#8249;" MinWidth="40" MinHeight="30" Padding="6,4" Margin="0,0,4,0"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    FontSize="14" FontWeight="SemiBold"
                     Foreground="{DynamicResource ButtonForegroundBrush}"
-                    Command="{Binding PrevNightCommand}"/>
+                    Command="{Binding PrevNightCommand}"
+                    ToolTip="One night earlier"/>
                 <DatePicker Width="112" Margin="0,0,4,0" VerticalAlignment="Center"
                     SelectedDate="{Binding Planner.SelectedDateForPicker, Mode=TwoWay}"
                     planner:PlannerViewGlue.Chart="{Binding ElementName=NightChart}"
                     ToolTip="Pick the night by calendar day (the day the night ends on). The arrows step one night either way."/>
-                <Button Content="&gt;" Padding="8,2" Margin="0,0,8,0"
+                <Button Content="&#8250;" MinWidth="40" MinHeight="30" Padding="6,4" Margin="0,0,8,0"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    FontSize="14" FontWeight="SemiBold"
                     Foreground="{DynamicResource ButtonForegroundBrush}"
-                    Command="{Binding NextNightCommand}"/>
-                <Button Content="Tonight" Padding="8,2" Margin="0,0,4,0"
+                    Command="{Binding NextNightCommand}"
+                    ToolTip="One night later"/>
+                <Button Content="Tonight" MinWidth="44" MinHeight="30" Padding="6,4" Margin="0,0,4,0"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    FontSize="14" FontWeight="SemiBold"
                     Foreground="{DynamicResource ButtonForegroundBrush}"
-                    Command="{Binding TonightCommand}"/>
+                    Command="{Binding TonightCommand}"
+                    ToolTip="Jump back to tonight"/>
                 <TextBlock VerticalAlignment="Center" FontSize="14"
                     Text="{Binding Planner.SelectedDateLabel}"
                     Foreground="{DynamicResource PrimaryBrush}"/>
             </StackPanel>
 
-            <!-- Hour-by-hour scrub. Dragging on the chart, the mouse wheel over it and
+            <!-- Hour-by-hour scrub. Dragging on the chart, Shift + wheel over it and
                  the left/right arrow keys move the same marker; these buttons are the
                  clickable form of it, and the label is the readout. -->
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="2,0,2,4">
-                <Button Content="&lt; hr" Padding="8,2" Margin="0,0,4,0"
+                <Button Content="&lt; hr" MinWidth="44" MinHeight="30" Padding="6,4" Margin="0,0,4,0"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    FontSize="14" FontWeight="SemiBold"
                     Foreground="{DynamicResource ButtonForegroundBrush}"
                     Command="{Binding ScrubBackCommand}"
-                    ToolTip="Scrub one hour earlier (also: left arrow, mouse wheel, dragging on the chart)"/>
-                <Button Content="hr &gt;" Padding="8,2" Margin="0,0,4,0"
+                    ToolTip="Scrub one hour earlier (also: left arrow, Shift + wheel over the chart, dragging on the chart)"/>
+                <Button Content="hr &gt;" MinWidth="44" MinHeight="30" Padding="6,4" Margin="0,0,4,0"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    FontSize="14" FontWeight="SemiBold"
                     Foreground="{DynamicResource ButtonForegroundBrush}"
                     Command="{Binding ScrubForwardCommand}"
-                    ToolTip="Scrub one hour later (also: right arrow, mouse wheel, dragging on the chart)"/>
-                <Button Content="off" Padding="8,2" Margin="0,0,8,0"
+                    ToolTip="Scrub one hour later (also: right arrow, Shift + wheel over the chart, dragging on the chart)"/>
+                <Button Content="off" MinWidth="44" MinHeight="30" Padding="6,4" Margin="0,0,8,0"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    FontSize="14" FontWeight="SemiBold"
                     Foreground="{DynamicResource ButtonForegroundBrush}"
                     Command="{Binding ScrubClearCommand}"
                     ToolTip="Remove the scrub marker (also: Escape over the chart)"/>
@@ -92,12 +114,16 @@
                  the commands: in a dockable pane a click on + did not re-query the -
                  button, which left it greyed out and the frame could only ever grow. -->
             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="2,0,2,4">
-                <Button Content="-" Padding="8,2" Margin="0,0,4,0"
+                <Button Content="-" MinWidth="40" MinHeight="30" Padding="6,4" Margin="0,0,4,0"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    FontSize="14" FontWeight="SemiBold"
                     Foreground="{DynamicResource ButtonForegroundBrush}"
                     IsEnabled="{Binding Planner.CanZoomIn}"
                     Command="{Binding ZoomInCommand}"
                     ToolTip="Fewer nights on the chart (down to one night, noon to noon)"/>
-                <Button Content="+" Padding="8,2" Margin="0,0,8,0"
+                <Button Content="+" MinWidth="40" MinHeight="30" Padding="6,4" Margin="0,0,8,0"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    FontSize="14" FontWeight="SemiBold"
                     Foreground="{DynamicResource ButtonForegroundBrush}"
                     IsEnabled="{Binding Planner.CanZoomOut}"
                     Command="{Binding ZoomOutCommand}"
@@ -114,15 +140,21 @@
                      looking like N.I.N.A. They belong here rather than beside the calendar:
                      the date row is already full, and at a 620 DIP panel five buttons plus the
                      label pushed the night's title out of sight. -->
-                <Button Content="default" Padding="8,2" Margin="12,0,4,0"
+                <Button Content="default" MinWidth="44" MinHeight="30" Padding="6,4" Margin="12,0,4,0"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    FontSize="14" FontWeight="SemiBold"
                     Foreground="{DynamicResource ButtonForegroundBrush}"
                     Command="{Binding DefaultSchemeCommand}"
                     ToolTip="Paint the chart with the theme you picked in N.I.N.A."/>
-                <Button Content="night" Padding="8,2" Margin="0,0,4,0"
+                <Button Content="night" MinWidth="44" MinHeight="30" Padding="6,4" Margin="0,0,4,0"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    FontSize="14" FontWeight="SemiBold"
                     Foreground="{DynamicResource ButtonForegroundBrush}"
                     Command="{Binding NightSchemeCommand}"
                     ToolTip="Red night-vision chart, in the same red palette N.I.N.A.'s own night button uses - for this panel only. The app-wide version is the eye button in N.I.N.A.'s title bar."/>
-                <Button Content="enhanced" Padding="8,2" Margin="0,0,4,0"
+                <Button Content="enhanced" MinWidth="44" MinHeight="30" Padding="6,4" Margin="0,0,4,0"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    FontSize="14" FontWeight="SemiBold"
                     Foreground="{DynamicResource ButtonForegroundBrush}"
                     Command="{Binding EnhancedSchemeCommand}"
                     ToolTip="Navy chart: sun amber, moon pale blue, horizon teal. The three curves stay apart by hue rather than brightness, which is what a red-green viewer needs. Chart only - the panel keeps your N.I.N.A. colours."/>
@@ -186,7 +218,8 @@
 
             <!-- The chart takes the whole of the remaining panel now the night strip is
                  gone; it no longer has to share the row with a scrolling list. -->
-            <planner:NightChartControl x:Name="NightChart" Grid.Row="5" Margin="2" MinHeight="160"/>
+            <planner:NightChartControl x:Name="NightChart" Grid.Row="5" Margin="2" MinHeight="160"
+                ToolTip="Drag across the chart, or Shift + wheel over it, to move the hour marker. The plain wheel scrolls the panel."/>
         </Grid>
     </DataTemplate>
 </ResourceDictionary>

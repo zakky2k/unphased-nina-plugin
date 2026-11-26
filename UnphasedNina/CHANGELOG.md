@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.7.0.0 — round 9: buttons with a size of their own, and a wheel that scrolls
+
+The two round-8 loose ends, plus the move. Suite 92 → 97, and the panel was rendered in-process and
+looked at again (crops at 620 DIP, plus a busy-state render).
+
+- **The panel buttons are fixed size, with the symbol inside** (`unphased-nina-plugin`, this round).
+  Round 8 agreed "min height 30, semibold 14, tooltip on everything" and the review came back with
+  "symbols < > + - used as the size of the button instead of design we agreed": the symbol buttons
+  only carried `Padding`, so the glyph decided how big the button was. They now carry `MinHeight`
+  30 and `MinWidth` 40 (44 where the word is longer) and a centred 14-DIP semibold glyph. **No
+  `Style` on any of them**: a `Style` on a `Button` replaces N.I.N.A.'s implicit template and the
+  button loses its chrome — the size has to come from attributes. The new panel test walks every
+  button in the real template and fails on `ActualHeight`, not on the attribute, because an
+  attribute the chrome then ignores is exactly the failure that was seen.
+- **The wheel scrolls the panel; Shift + wheel scrubs the chart** (same commit). The chart used to
+  take every wheel message, and it is the tallest thing in the panel, so the page could not be
+  scrolled with the pointer over it and a wheel aimed at scrolling silently moved the hour marker.
+  Bare wheel messages are now left unhandled so they keep bubbling to N.I.N.A.'s scroll viewer. The
+  modifier rule lives in `NightChartControl.TakeWheelScrub`, which takes the modifier keys as a
+  value — `Keyboard.Modifiers` reads the live keyboard and a test cannot hold Shift down for it.
+- **Whether "computing..." is ever actually visible, measured.** Rendered on purpose while
+  `Planner.Busy` was up, so the readout is confirmed to draw next to the status line; the honest
+  answer is that paging sideways past the edge (31 nights → 41) holds `Busy` for **46 ms** on this
+  machine, and the cold first window for **186 ms**. Paging is a blink; the readout is for the first
+  open and for slow machines, not for the arrow keys.
+
 ## 0.7.0.0 — a calendar, a taller chart, three palettes, and no Refresh button
 
 Round 8, straight from the 0.6.2.0 visual review. Seven commits, one per item, suite green after
