@@ -94,7 +94,7 @@ namespace Zakfo.Unphased.Tests {
                 // so it must point at the changelog this repository actually serves, not a copy of it.
                 Assert.That(
                     plugin.ChangelogURL,
-                    Is.EqualTo("https://raw.githubusercontent.com/zakky2k/AstroScripts/main/nina-plugin/UnphasedNina/CHANGELOG.md"));
+                    Is.EqualTo("https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/UnphasedNina/CHANGELOG.md"));
             });
         }
 
@@ -154,7 +154,7 @@ namespace Zakfo.Unphased.Tests {
                         ["AltScreenshotURL"] = description.AltScreenshotURL,
                     },
                     ["Installer"] = new JObject {
-                        ["URL"] = "https://github.com/zakky2k/AstroScripts/releases/download/v0.0.0.0/UnphasedNina.0.0.0.0.zip",
+                        ["URL"] = "https://github.com/zakky2k/unphased-nina-plugin/releases/download/v0.0.0.0/UnphasedNina.0.0.0.0.zip",
                         ["Checksum"] = new string('A', 64),
                         ["ChecksumType"] = "SHA256",
                         ["Type"] = "ARCHIVE",

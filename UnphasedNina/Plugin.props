@@ -24,18 +24,18 @@ The panel follows N.I.N.A.'s colour scheme, and the chart can be drawn in three 
 Ephemerides come from the Astronomy Engine (CosineKitty.AstronomyEngine), evaluated for the observatory location in your N.I.N.A. profile.
 
 This is early software - version 0.x, feature complete for its own purpose but with rough edges listed in the changelog.</PluginLongDescription>
-    <RepositoryUrl>https://github.com/zakky2k/AstroScripts</RepositoryUrl>
-    <PluginHomepage>https://github.com/zakky2k/AstroScripts/tree/main/nina-plugin</PluginHomepage>
+    <RepositoryUrl>https://github.com/zakky2k/unphased-nina-plugin</RepositoryUrl>
+    <PluginHomepage>https://github.com/zakky2k/unphased-nina-plugin</PluginHomepage>
     <PluginTags>night planning,planner,sun,moon,twilight,altitude,ephemeris,chart,dockable</PluginTags>
     <MinimumNinaVersion>3.2.0.9001</MinimumNinaVersion>
     <PluginLicense>MPL-2.0</PluginLicense>
     <PluginLicenseUrl>https://www.mozilla.org/en-US/MPL/2.0/</PluginLicenseUrl>
-    <PluginChangelogUrl>https://raw.githubusercontent.com/zakky2k/AstroScripts/main/nina-plugin/UnphasedNina/CHANGELOG.md</PluginChangelogUrl>
+    <PluginChangelogUrl>https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/UnphasedNina/CHANGELOG.md</PluginChangelogUrl>
     <!-- The plugin icon. N.I.N.A. reads this from the DLL (FeaturedImageURL assembly metadata) and shows it
          at 25 px in the plugin list and 150 px on the plugin's settings page. It is the 256 px frame of
          assets/unphased.ico, re-encoded as a 256x256 PNG with transparency; the URL must stay live, because
          a non-empty but unreachable URL renders a blank rather than falling back to the default image. -->
-    <PluginFeaturedImageUrl>https://raw.githubusercontent.com/zakky2k/AstroScripts/main/nina-plugin/UnphasedNina/assets/unphased-256.png</PluginFeaturedImageUrl>
+    <PluginFeaturedImageUrl>https://raw.githubusercontent.com/zakky2k/unphased-nina-plugin/main/UnphasedNina/assets/unphased-256.png</PluginFeaturedImageUrl>
     <!-- Left empty on purpose: there is no hosted screenshot yet. Fill these with real
           panel screenshots (a GitHub release asset works) once one exists - the store
           page shows them, and a made-up URL would only 404 there. -->

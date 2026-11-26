@@ -13,7 +13,7 @@ Status: **0.x beta**. It runs and is used, and the [changelog](CHANGELOG.md) say
 
 Built against `NINA.Plugin` **3.2.0.9001** for **net8.0-windows**, and it declares that as the
 minimum application version. N.I.N.A. 3.1 and older will refuse to load it; a 3.2.x installation
-loads it. (The `nina-plugin` tree also carries a 3.3/net10 experiment in `UnphasedCore` notes —
+loads it. (This tree also carries a 3.3/net10 experiment in `UnphasedCore` notes —
 this plugin stays on the shipped 3.2 line until the app it targets is released.)
 
 ## Install
@@ -39,7 +39,9 @@ be set on the options page and the chart repaints as you pick them. Settings are
 
 ## Develop
 
-Windows, .NET 8 SDK and PowerShell 7. Open `UnphasedNina.slnx` or use the CLI.
+Windows, .NET 8 SDK and PowerShell 7. Open `UnphasedNina.slnx` or use the CLI. The repository root
+holds this plugin (`UnphasedNina/`), the night computation it shares with the web planner
+(`UnphasedCore/`) and that core's accuracy tests (`UnphasedCore.Tests/`).
 
 ```powershell
 dotnet build UnphasedNina.slnx
@@ -58,8 +60,12 @@ shown above, so re-pick your colours afterwards, and the process may hold exactl
 ## Release and the plugin catalogue
 
 ```powershell
-./build/Build-Release.ps1 -Tag v0.6.1.0 -Repository zakky2k/AstroScripts -Channel Beta
+./build/Build-Release.ps1 -Tag v0.7.0.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta
 ```
+
+`-Repository` is what the archive's `Installer.URL` and the manifest's `Repository` are built from,
+so it must name **this** repository and the tag you are about to publish — without it the installer
+URL falls back to a placeholder the catalogue CI rejects.
 
 That restores, builds Release, runs the tests, zips the staged files, and writes
 `artifacts\release\UnphasedNina.<version>.zip` plus `UnphasedNina.<version>.manifest.json`,
@@ -76,7 +82,7 @@ Then, by hand:
 2. Submit the manifest to the [N.I.N.A. plugin manifests repository](https://github.com/isbeorn/nina.plugin.manifests)
    — that repository *is* the catalogue; it holds JSON only, the binaries stay here. Fork it, add
    the manifest as
-   `manifests/U/Unphased Night Planner/3.2.0.9001/0.6.2.0/manifest.json`, and open a pull request.
+   `manifests/U/Unphased Night Planner/3.2.0.9001/0.7.0.0/manifest.json`, and open a pull request.
    Its CI validates against the schema and re-hashes the download; on merge, `gather.js` publishes
    the file to `https://nighttime-imaging.eu/wp-json/nina/v1/...`, which is what N.I.N.A. fetches
    (`PluginFetcher.cs:38`). A manifest that fails validation is simply never listed, so

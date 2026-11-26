@@ -1,5 +1,14 @@
 # HANDOFF — Unphased Night Planner (N.I.N.A. plugin), state at 2026-11-26 (round 8 delivered, version 0.7.0.0)
 
+> **Moved on 26 Nov, round 9:** this tree is its own repository now — `github.com/zakky2k/unphased-nina-plugin`,
+> working path `C:\Users\zakfo\Documents\unphased-nina-plugin`. It was copied out of `AstroScripts/nina-plugin` at
+> commit `1141440` with an identical file list (78 files), and `AstroScripts` keeps a pointer where the folder was.
+> The layout (`UnphasedCore`, `UnphasedCore.Tests`, `UnphasedNina`) is unchanged, so every project reference and
+> build script resolves as before — only the path prefix does: below, `AstroScripts\nina-plugin\X` is now this
+> repository root `\X`. The tests pass from here (92). `Plugin.props` now names this repository in `RepositoryUrl`,
+> `Homepage`, `ChangelogURL` and `FeaturedImageURL`, so the icon and changelog URLs only go live once this repository
+> is pushed. `AstroScripts/HANDOFF.md` still covers the web planner, which keeps its own copy of `UnphasedCore`.
+
 For the next session. Parent repo `AstroScripts` (remote `github.com/zakky2k/AstroScripts.git`, main).
 The tip of `main` is round 8: all seven planned items implemented in the planned order, **one commit each, suite
 green after every one (92 passing), pushed each time**, with the 0.7.0.0 release commit on top of `ccc93a6`. The
