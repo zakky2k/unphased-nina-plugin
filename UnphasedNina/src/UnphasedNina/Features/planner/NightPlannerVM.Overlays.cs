@@ -63,12 +63,14 @@ namespace Zakfo.Unphased.Features.planner {
         public IEnumerable<OverlayLegendEntry> OverlayLegend {
             get {
                 var instant = scrubMinutes.HasValue ? selectedNight?.Chart.TimeAtMinutes(scrubMinutes.Value) : null;
+                var elements = VisibleChartElements;
                 foreach (var track in overlayTracks) {
                     int style = track.Choice.StyleIndex;
                     double altitude = instant.HasValue ? NightChartVM.AltitudeAt(track.Samples, instant.Value) : double.NaN;
                     yield return new OverlayLegendEntry(track.Choice.Name, OverlayStyle.BrushFor(style, Scheme),
                         OverlayStyle.DashFor(style).Dashes, double.IsFinite(altitude)
-                            ? $"{altitude.ToString("0.#", CultureInfo.CurrentCulture)}°" : string.Empty);
+                            ? $"{altitude.ToString("0.#", CultureInfo.CurrentCulture)}°" : string.Empty,
+                        elements.HasFlag(track.Choice.Planet.HasValue ? ChartElements.PlanetAltitude : ChartElements.TargetAltitude));
                 }
             }
         }

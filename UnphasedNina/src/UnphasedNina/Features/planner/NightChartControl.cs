@@ -190,7 +190,7 @@ namespace Zakfo.Unphased.Features.planner {
             double sx = w / NightChartVM.Width;
             double sy = h / NightChartVM.Height;
 
-            if (MouseMode == MouseScrubMode.Smooth && IsMouseCaptured) {
+            if (IsMouseCaptured) {
                 var size = (w, h, VisualTreeHelper.GetDpi(this).PixelsPerDip);
                 if (scrubBackground == null || scrubBackgroundSize != size) {
                     scrubBackground = new DrawingGroup();
@@ -219,6 +219,7 @@ namespace Zakfo.Unphased.Features.planner {
             if (Shows(ChartElements.MoonAltitude))
                 DrawCurve(dc, row.Chart.MoonPolyline, palette.MoonTrack(scheme), 1.2, sx, sy);
             foreach (var track in VisibleOverlays) {
+                if (!Shows(track.Choice.Planet.HasValue ? ChartElements.PlanetAltitude : ChartElements.TargetAltitude)) continue;
                 int style = track.Choice.StyleIndex;
                 DrawCurve(dc, track.Polyline, OverlayStyle.BrushFor(style, scheme), 1.4, sx, sy, OverlayStyle.DashFor(style));
             }
@@ -465,8 +466,6 @@ namespace Zakfo.Unphased.Features.planner {
 
             var chart = row.Chart;
             var instant = chart.TimeAtMinutes(minutes);
-            if (Shows(ChartElements.SunAltitude) && !Shows(ChartElements.SunGlyph))
-                DrawScrubDot(dc, x, NightChartVM.YSun(chart.SunAltitudeAt(instant)) * sy, palette.SunTrack(scheme), h);
 
             string readout = chart.ScrubReadout(minutes);
             var s = LabelSize(readout, NoteFs);
@@ -506,7 +505,7 @@ namespace Zakfo.Unphased.Features.planner {
             base.OnMouseLeftButtonDown(e);
             if (row == null) return;
             Focus();
-            dragMetrics = hookedPlanner?.MeasureScrub == true ? new DragMetrics(MouseMode) : null;
+            dragMetrics = hookedPlanner?.MeasureScrub == true ? new DragMetrics() : null;
             CaptureMouse();
             MoveMouseScrub(e.GetPosition(this).X, immediately: true);
             if (!IsMouseCaptured) FinishMouseScrub();

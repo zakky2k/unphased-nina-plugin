@@ -9,14 +9,15 @@
   Moon and planets. Phase is the default. Mercury and Venus use their illumination at
   the selected hour. Detailed artwork follows the night-vision palette.
 - Enabled planet switches show a preview of the selected glyph style beside their names.
-- Chart elements has separate switches for each Sun and Moon altitude curve, rise and
-  set label, and scrub glyph. All eight start enabled, and Reset turns them all back on.
+- Chart elements independently controls altitude curves, scrub glyphs and scrub names
+  for the Sun, Moon, selected planets and selected deep-sky targets. Each rise and set
+  label has its own switch. All elements start enabled, and Reset turns them back on.
 - Enabled Framing Assistant targets show a glyph beside their switch and on the chart's
   scrub line. If Framing Assistant omits the object type, Unphased looks it up in N.I.N.A.'s
   catalog for both new and saved targets. Unmatched coordinates use the crosshair.
-- The scrub line labels visible planet and target overlays with their curve's color
-  and dash pattern. Mouse scrub offers Smooth and Minute modes. Measure drag keeps
-  the latest drawing timings for each mode. The buttons still step by an hour.
+- Scrub name labels use their curve's color and dash pattern. Mouse scrubbing follows
+  the pointer smoothly. Measure drag shows the latest drawing timings. The buttons
+  still step by an hour.
 
 ## Unreleased — round 13: the settings lead the page, and the pillars move to the end
 

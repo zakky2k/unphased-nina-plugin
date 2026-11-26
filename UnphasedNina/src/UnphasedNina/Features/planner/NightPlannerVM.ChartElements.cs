@@ -16,22 +16,29 @@ namespace Zakfo.Unphased.Features.planner {
         Moonset = 1 << 5,
         SunGlyph = 1 << 6,
         MoonGlyph = 1 << 7,
+        PlanetAltitude = 1 << 8,
+        TargetAltitude = 1 << 9,
+        PlanetGlyph = 1 << 10,
+        TargetGlyph = 1 << 11,
+        SunLabel = 1 << 12,
+        MoonLabel = 1 << 13,
+        PlanetLabel = 1 << 14,
+        TargetLabel = 1 << 15,
         Default = SunAltitude | MoonAltitude | Sunrise | Sunset | Moonrise | Moonset | SunGlyph | MoonGlyph
+            | PlanetAltitude | TargetAltitude | PlanetGlyph | TargetGlyph | SunLabel | MoonLabel | PlanetLabel | TargetLabel
     }
 
     public sealed class ChartElementToggle : BaseINPC {
         private bool enabled;
 
-        internal ChartElementToggle(ChartElements element, string name, string toolTip = null) {
+        internal ChartElementToggle(ChartElements element, string name) {
             Element = element;
             Name = name;
-            ToolTip = toolTip;
             enabled = ChartElements.Default.HasFlag(element);
         }
 
         internal ChartElements Element { get; }
         public string Name { get; }
-        public string ToolTip { get; }
         public bool Enabled {
             get => enabled;
             set {
@@ -42,23 +49,31 @@ namespace Zakfo.Unphased.Features.planner {
         }
     }
 
+    public sealed record ChartElementGroup(string Name, ChartElementToggle Curve, ChartElementToggle Glyph, ChartElementToggle Label);
+
     public sealed partial class NightPlannerVM {
         private IRelayCommand resetChartElements;
 
-        public IReadOnlyList<ChartElementToggle> ChartElementOptions { get; } = new ChartElementToggle[] {
-            new(ChartElements.SunAltitude, "Sun altitude"),
-            new(ChartElements.MoonAltitude, "Moon altitude"),
+        public IReadOnlyList<ChartElementGroup> ChartElementGroups { get; } = new[] {
+            Group("Sun", ChartElements.SunAltitude, ChartElements.SunGlyph, ChartElements.SunLabel),
+            Group("Moon", ChartElements.MoonAltitude, ChartElements.MoonGlyph, ChartElements.MoonLabel),
+            Group("Planets", ChartElements.PlanetAltitude, ChartElements.PlanetGlyph, ChartElements.PlanetLabel),
+            Group("Deep sky", ChartElements.TargetAltitude, ChartElements.TargetGlyph, ChartElements.TargetLabel)
+        };
+
+        public IReadOnlyList<ChartElementToggle> RiseSetOptions { get; } = new ChartElementToggle[] {
             new(ChartElements.Sunrise, "Sunrise"),
             new(ChartElements.Sunset, "Sunset"),
             new(ChartElements.Moonrise, "Moonrise"),
-            new(ChartElements.Moonset, "Moonset"),
-            new(ChartElements.SunGlyph, "Sun glyph", "Show the Sun at the selected time on the scrub line"),
-            new(ChartElements.MoonGlyph, "Moon glyph", "Show the Moon at the selected time on the scrub line")
+            new(ChartElements.Moonset, "Moonset")
         };
 
-        internal ChartElements VisibleChartElements => ChartElementOptions
-            .Where(option => option.Enabled)
-            .Aggregate(ChartElements.None, (elements, option) => elements | option.Element);
+        private static ChartElementGroup Group(string name, ChartElements curve, ChartElements glyph, ChartElements label) => new(
+            name, new(curve, $"{name} altitude curves"), new(glyph, $"{name} scrub glyphs"), new(label, $"{name} scrub name labels"));
+
+        internal IReadOnlyList<ChartElementToggle> ChartElementOptions { get; private set; }
+
+        internal ChartElements VisibleChartElements { get; private set; } = ChartElements.Default;
 
         public IRelayCommand ResetChartElementsCommand => resetChartElements ??= new RelayCommand(() => {
             foreach (var option in ChartElementOptions)
@@ -66,8 +81,17 @@ namespace Zakfo.Unphased.Features.planner {
         });
 
         private void InitializeChartElements() {
+            ChartElementOptions = ChartElementGroups.SelectMany(group => new[] { group.Curve, group.Glyph, group.Label })
+                .Concat(RiseSetOptions).ToArray();
             foreach (var option in ChartElementOptions)
-                option.PropertyChanged += (_, _) => RaisePropertyChanged(nameof(VisibleChartElements));
+                option.PropertyChanged += (_, _) => {
+                    VisibleChartElements = option.Enabled
+                        ? VisibleChartElements | option.Element
+                        : VisibleChartElements & ~option.Element;
+                    RaisePropertyChanged(nameof(VisibleChartElements));
+                    if (option.Element is ChartElements.PlanetAltitude or ChartElements.TargetAltitude)
+                        RaisePropertyChanged(nameof(OverlayLegend));
+                };
         }
     }
 }

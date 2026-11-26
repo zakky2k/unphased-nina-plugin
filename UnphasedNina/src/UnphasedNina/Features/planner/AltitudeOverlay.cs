@@ -78,7 +78,7 @@ namespace Zakfo.Unphased.Features.planner {
         }
     }
 
-    public sealed record OverlayLegendEntry(string Name, Brush Ink, DoubleCollection Dashes, string Altitude);
+    public sealed record OverlayLegendEntry(string Name, Brush Ink, DoubleCollection Dashes, string Altitude, bool ShowCurve);
 
     internal static class OverlayStyle {
         private static readonly Brush[] Day = {

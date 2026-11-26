@@ -12,16 +12,12 @@ namespace Zakfo.Unphased.Features.planner {
         private DrawingGroup scrubBackground;
         private (double Width, double Height, double Dpi) scrubBackgroundSize;
 
-        private MouseScrubMode MouseMode => hookedPlanner?.MouseScrub ?? MouseScrubMode.Smooth;
-
-        internal static double MouseMinutes(double pixelX, double width, double spanMinutes, MouseScrubMode mode) {
-            double minutes = Math.Clamp(pixelX / width, 0, 1) * spanMinutes;
-            return mode == MouseScrubMode.Minute ? Math.Round(minutes, MidpointRounding.AwayFromZero) : minutes;
-        }
+        internal static double MouseMinutes(double pixelX, double width, double spanMinutes) =>
+            Math.Clamp(pixelX / width, 0, 1) * spanMinutes;
 
         private void MoveMouseScrub(double pixelX, bool immediately = false) {
             if (dragMetrics != null) dragMetrics.Inputs++;
-            if (immediately || MouseMode == MouseScrubMode.Minute) {
+            if (immediately) {
                 ApplyMouseScrub(pixelX);
                 return;
             }
@@ -32,7 +28,7 @@ namespace Zakfo.Unphased.Features.planner {
         private void ApplyMouseScrub(double pixelX) {
             if (row == null || ActualWidth <= 0) return;
             var before = scrubMinutes;
-            double minutes = MouseMinutes(pixelX, ActualWidth, SpanMinutes, MouseMode);
+            double minutes = MouseMinutes(pixelX, ActualWidth, SpanMinutes);
             if (hookedPlanner != null) hookedPlanner.SetMouseScrub(minutes);
             else SetScrub(minutes);
             if (dragMetrics != null && before != scrubMinutes) dragMetrics.Updates++;
@@ -59,12 +55,11 @@ namespace Zakfo.Unphased.Features.planner {
             Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => {
                 if (!ReferenceEquals(dragMetrics, measurement)) return;
                 dragMetrics = null;
-                if (planner?.MeasureScrub == true) planner.ReportScrubMetrics(measurement.Mode, measurement.Format(elapsed));
+                if (planner?.MeasureScrub == true) planner.ReportScrubMetrics(measurement.Format(elapsed));
             }));
         }
 
-        private sealed class DragMetrics(MouseScrubMode mode) {
-            internal MouseScrubMode Mode { get; } = mode;
+        private sealed class DragMetrics {
             internal long Started { get; } = Stopwatch.GetTimestamp();
             internal int Inputs { get; set; }
             internal int Updates { get; set; }
@@ -79,9 +74,9 @@ namespace Zakfo.Unphased.Features.planner {
             }
 
             internal string Format(TimeSpan elapsed) {
-                if (renders == 0) return $"{Mode} · {elapsed.TotalSeconds:0.00} s · {Inputs} inputs → {Updates} updates → 0 paints";
-                return $"{Mode} · {elapsed.TotalSeconds:0.00} s · {Inputs} inputs → {Updates} updates → {renders} paints"
-                    + $" · {totalMs:0.00} ms drawing ({totalMs / renders:0.00} avg / {peakMs:0.00} peak per paint)";
+                string summary = $"{elapsed.TotalSeconds:0.00} s · {Inputs} inputs → {Updates} updates → {renders} draws";
+                if (renders == 0) return summary;
+                return summary + $" · {totalMs:0.00} ms drawing ({totalMs / renders:0.00} avg / {peakMs:0.00} peak per draw)";
             }
         }
     }

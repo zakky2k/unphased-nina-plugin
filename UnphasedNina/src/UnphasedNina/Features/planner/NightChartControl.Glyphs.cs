@@ -12,44 +12,60 @@ namespace Zakfo.Unphased.Features.planner {
     internal readonly record struct BodyIllumination(double Fraction, double BrightSideDegrees);
 
     public partial class NightChartControl {
-        private readonly record struct ScrubMarker(NOVAS.Body? Body, double Y, Brush Ink, BodyIllumination? Phase,
-            OverlayChoice Choice = null);
+        private readonly record struct ScrubMarker(NOVAS.Body? Body, double Y, Brush Ink, bool ShowGlyph,
+            string Label, BodyIllumination? Phase = null, DashStyle Dash = null, string ObjectType = null);
         private static readonly Typeface SymbolTypeface = new("Segoe UI Symbol");
 
         private void DrawScrubGlyphs(DrawingContext dc, double width, double height, double sy,
             double x, double minutes, DateTimeOffset instant, Rect legend, Rect readout) {
             var markers = new List<ScrubMarker>();
-            double moonY = NightChartVM.YMoon(row.Chart.MoonAltitudeAt(instant)) * sy;
-            if (Shows(ChartElements.MoonGlyph) && InChart(moonY, height)) {
-                var (fraction, litOnRight) = row.Chart.ScrubMoonGlyph(minutes);
-                markers.Add(new ScrubMarker(NOVAS.Body.Moon, moonY, palette.MoonTrack(scheme),
-                    new BodyIllumination(fraction, litOnRight ? 0 : 180)));
+            bool moonGlyph = Shows(ChartElements.MoonGlyph), moonLabel = Shows(ChartElements.MoonLabel);
+            if (moonGlyph || moonLabel) {
+                double moonY = NightChartVM.YMoon(row.Chart.MoonAltitudeAt(instant)) * sy;
+                if (InChart(moonY, height)) {
+                    BodyIllumination? phase = null;
+                    if (moonGlyph) {
+                        var (fraction, litOnRight) = row.Chart.ScrubMoonGlyph(minutes);
+                        phase = new BodyIllumination(fraction, litOnRight ? 0 : 180);
+                    }
+                    markers.Add(new ScrubMarker(NOVAS.Body.Moon, moonY, palette.MoonTrack(scheme),
+                        moonGlyph, moonLabel ? "Moon" : null, phase));
+                }
             }
-            if (Shows(ChartElements.SunGlyph)) {
+            bool sunGlyph = Shows(ChartElements.SunGlyph), sunLabel = Shows(ChartElements.SunLabel);
+            if (sunGlyph || sunLabel) {
                 double sunY = NightChartVM.YSun(row.Chart.SunAltitudeAt(instant)) * sy;
-                if (InChart(sunY, height)) markers.Add(new ScrubMarker(NOVAS.Body.Sun, sunY, palette.SunTrack(scheme), null));
+                if (InChart(sunY, height))
+                    markers.Add(new ScrubMarker(NOVAS.Body.Sun, sunY, palette.SunTrack(scheme), sunGlyph, sunLabel ? "Sun" : null));
             }
             foreach (var overlay in VisibleOverlays) {
+                var choice = overlay.Choice;
+                bool planet = choice.Planet.HasValue;
+                bool glyph = Shows(planet ? ChartElements.PlanetGlyph : ChartElements.TargetGlyph);
+                bool label = Shows(planet ? ChartElements.PlanetLabel : ChartElements.TargetLabel);
+                if (!glyph && !label) continue;
                 double y = NightChartVM.YSun(NightChartVM.AltitudeAt(overlay.Samples, instant)) * sy;
                 if (!InChart(y, height)) continue;
-                var ink = OverlayStyle.BrushFor(overlay.Choice.StyleIndex, scheme);
-                markers.Add(new ScrubMarker(overlay.Choice.Planet, y, ink, overlay.PhaseAt(instant), overlay.Choice));
+                var ink = OverlayStyle.BrushFor(choice.StyleIndex, scheme);
+                markers.Add(new ScrubMarker(choice.Planet, y, ink, glyph, label ? choice.Name : null,
+                    glyph ? overlay.PhaseAt(instant) : null, OverlayStyle.DashFor(choice.StyleIndex), choice.Target?.ObjectType));
             }
             if (markers.Count == 0) return;
             var style = hookedPlanner?.GlyphStyle ?? PlanetGlyphStyle.Phase;
             dc.PushClip(new RectangleGeometry(new Rect(0, 0, width, height)));
             for (int i = markers.Count - 1; i >= 0; i--) {
                 var marker = markers[i];
+                if (!marker.ShowGlyph) continue;
                 double nominal = marker.Body is { } body ? GlyphRadius(style, body) : DeepSkyGlyph.Radius;
                 double separation = double.PositiveInfinity;
                 for (int j = 0; j < markers.Count; j++)
-                    if (j != i) separation = Math.Min(separation, Math.Abs(marker.Y - markers[j].Y));
+                    if (j != i && markers[j].ShowGlyph) separation = Math.Min(separation, Math.Abs(marker.Y - markers[j].Y));
                 // The Moon draws last when two centres nearly coincide. All values remain in the scrub legend.
                 double radius = Math.Clamp(separation / 2 - 1, 2.4, nominal);
                 var centre = new Point(x, marker.Y);
                 if (radius <= 3) DrawScrubDot(dc, x, marker.Y, marker.Ink, height);
                 else if (marker.Body is { } solarBody) DrawBodyGlyph(dc, solarBody, centre, radius, marker.Ink, style, marker.Phase);
-                else DeepSkyGlyph.Draw(dc, marker.Choice.Target.ObjectType, centre, radius, marker.Ink, palette.ChipFill(scheme));
+                else DeepSkyGlyph.Draw(dc, marker.ObjectType, centre, radius, marker.Ink, palette.ChipFill(scheme));
             }
             dc.Pop();
             DrawScrubNames(dc, markers, x, width, height, legend, readout);
@@ -57,6 +73,7 @@ namespace Zakfo.Unphased.Features.planner {
 
         private void DrawScrubNames(DrawingContext dc, List<ScrubMarker> markers, double x, double width,
             double height, Rect legend, Rect readout) {
+            if (!markers.Any(marker => marker.Label != null)) return;
             const double gap = 17;
             double maxText = Math.Min(150, Math.Max(x, width - x) - gap - 2 * ChipPadX - 2);
             if (maxText < 16) return;
@@ -66,8 +83,8 @@ namespace Zakfo.Unphased.Features.planner {
             if (!legend.IsEmpty) taken.Add(legend);
             taken.Add(readout);
             foreach (var marker in markers) {
-                if (marker.Choice is not { } choice) continue;
-                var text = DrawText(choice.Name, MarkerFs, palette.Ink(scheme));
+                if (marker.Label == null) continue;
+                var text = DrawText(marker.Label, MarkerFs, palette.Ink(scheme));
                 text.MaxTextWidth = maxText;
                 text.MaxLineCount = 1;
                 text.Trimming = TextTrimming.CharacterEllipsis;
@@ -76,7 +93,7 @@ namespace Zakfo.Unphased.Features.planner {
                 var box = PlaceScrubName(taken, x, marker.Y, width, height, chipWidth, chipHeight, gap);
                 if (box.IsEmpty) continue;
 
-                var pen = new Pen(marker.Ink, 1.4) { DashStyle = OverlayStyle.DashFor(choice.StyleIndex) };
+                var pen = new Pen(marker.Ink, 1.4) { DashStyle = marker.Dash ?? DashStyles.Solid };
                 var fill = palette.ChipFill(scheme);
                 // Separate the background from the pen so gaps in the border stay visible.
                 dc.DrawRoundedRectangle(fill, null, box, 3, 3);

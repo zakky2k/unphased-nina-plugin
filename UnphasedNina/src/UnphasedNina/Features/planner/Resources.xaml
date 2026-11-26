@@ -8,6 +8,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:planner="clr-namespace:Zakfo.Unphased.Features.planner">
 
+    <BooleanToVisibilityConverter x:Key="CurveSwatchVisibility"/>
+
     <!-- The panel's control grammar, used once per cluster and defined here once.
          A cluster is: a small caption, a row of buttons, and a thin outlined box holding that
          cluster's dynamic readout - the shape says which number belongs to which buttons, which
@@ -433,6 +435,7 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" Margin="4,2,8,1">
                                     <Line X2="20" Stroke="{Binding Ink}" StrokeThickness="1.5"
+                                          Visibility="{Binding ShowCurve, Converter={StaticResource CurveSwatchVisibility}}"
                                           StrokeDashArray="{Binding Dashes}" VerticalAlignment="Center"/>
                                     <TextBlock Margin="4,0,0,0" Text="{Binding Name}" Foreground="{DynamicResource PrimaryBrush}"/>
                                     <TextBlock Margin="4,0,0,0" Text="{Binding Altitude}" Foreground="{DynamicResource SecondaryBrush}"/>
@@ -452,30 +455,49 @@
                                     Foreground="{DynamicResource ButtonForegroundBrush}"
                                     AutomationProperties.Name="Reset chart elements" ToolTip="Show all chart elements"/>
                         </WrapPanel>
-                        <ItemsControl x:Name="ChartElementSwitches" ItemsSource="{Binding Planner.ChartElementOptions}"
-                                      HorizontalAlignment="Left" MaxWidth="472">
+                        <UniformGrid Rows="1" Columns="4" Width="248" HorizontalAlignment="Left"
+                                     Margin="0,4,0,0" TextElement.Foreground="{DynamicResource PrimaryBrush}">
+                            <TextBlock/>
+                            <TextBlock Text="Curve" TextAlignment="Center" ToolTip="Altitude curve across the chart"/>
+                            <TextBlock Text="Glyph" TextAlignment="Center" ToolTip="Object symbol on the scrub line"/>
+                            <TextBlock Text="Name" TextAlignment="Center" ToolTip="Object name on the scrub line"/>
+                        </UniformGrid>
+                        <ItemsControl x:Name="ChartElementSwitches" ItemsSource="{Binding Planner.ChartElementGroups}"
+                                      Width="248" HorizontalAlignment="Left">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <UniformGrid Rows="1" Columns="4">
+                                        <TextBlock Text="{Binding Name}" Margin="5,0,0,0" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource PrimaryBrush}"/>
+                                        <CheckBox Style="{StaticResource OverlaySwitchStyle}" HorizontalAlignment="Center"
+                                                  AutomationProperties.Name="{Binding Curve.Name}" ToolTip="{Binding Curve.Name}"
+                                                  IsChecked="{Binding Curve.Enabled, Mode=TwoWay}"/>
+                                        <CheckBox Style="{StaticResource OverlaySwitchStyle}" HorizontalAlignment="Center"
+                                                  AutomationProperties.Name="{Binding Glyph.Name}" ToolTip="{Binding Glyph.Name}"
+                                                  IsChecked="{Binding Glyph.Enabled, Mode=TwoWay}"/>
+                                        <CheckBox Style="{StaticResource OverlaySwitchStyle}" HorizontalAlignment="Center"
+                                                  AutomationProperties.Name="{Binding Label.Name}" ToolTip="{Binding Label.Name}"
+                                                  IsChecked="{Binding Label.Enabled, Mode=TwoWay}"/>
+                                    </UniformGrid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Rise and set" FontWeight="SemiBold" Margin="0,5,0,0"
+                                   Foreground="{DynamicResource PrimaryBrush}"/>
+                        <ItemsControl ItemsSource="{Binding Planner.RiseSetOptions}" HorizontalAlignment="Left">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <CheckBox Width="118" Style="{StaticResource OverlaySwitchStyle}" Content="{Binding Name}"
-                                              ToolTip="{Binding ToolTip}"
+                                    <CheckBox Style="{StaticResource OverlaySwitchStyle}" Content="{Binding Name}"
                                               AutomationProperties.Name="{Binding Name}" IsChecked="{Binding Enabled, Mode=TwoWay}"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <WrapPanel Margin="0,3,0,0">
-                            <TextBlock Text="Mouse scrub" VerticalAlignment="Center" Margin="0,0,6,0"
-                                       Foreground="{DynamicResource PrimaryBrush}"/>
-                            <ComboBox MinWidth="80" Margin="0,0,4,0" AutomationProperties.Name="Mouse scrub mode"
-                                      ItemsSource="{Binding Planner.MouseScrubModes}"
-                                      SelectedItem="{Binding Planner.MouseScrub, Mode=TwoWay}"
-                                      ToolTip="Smooth follows the pointer at display refresh. Minute snaps to the nearest minute."/>
-                            <CheckBox Style="{StaticResource OverlaySwitchStyle}" Content="Measure drag"
-                                      IsChecked="{Binding Planner.MeasureScrub, Mode=TwoWay}"
-                                      ToolTip="Record the last drag in each mode for comparison"/>
-                        </WrapPanel>
+                        <CheckBox Margin="0,3,0,0" Style="{StaticResource OverlaySwitchStyle}" Content="Measure drag"
+                                  HorizontalAlignment="Left" IsChecked="{Binding Planner.MeasureScrub, Mode=TwoWay}"
+                                  ToolTip="Measure chart drawing during the next mouse drag"/>
                         <TextBox Text="{Binding Planner.ScrubMetrics, Mode=OneWay}" TextWrapping="Wrap" Margin="0,2,0,0"
                                  IsReadOnly="True" Background="Transparent" BorderThickness="0" Padding="0"
                                  AutomationProperties.Name="Mouse scrub metrics" Foreground="{DynamicResource PrimaryBrush}">

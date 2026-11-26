@@ -2,24 +2,8 @@
 // If a copy of the MPL was not distributed with this file, you can obtain one at https://mozilla.org/MPL/2.0/.
 
 namespace Zakfo.Unphased.Features.planner {
-    public enum MouseScrubMode { Smooth, Minute }
-
     public sealed partial class NightPlannerVM {
-        private MouseScrubMode mouseScrub;
         private bool measureScrub;
-        private string smoothMetrics = string.Empty;
-        private string minuteMetrics = string.Empty;
-
-        public IReadOnlyList<MouseScrubMode> MouseScrubModes { get; } = Enum.GetValues<MouseScrubMode>();
-
-        public MouseScrubMode MouseScrub {
-            get => mouseScrub;
-            set {
-                if (mouseScrub == value) return;
-                mouseScrub = value;
-                RaisePropertyChanged();
-            }
-        }
 
         public bool MeasureScrub {
             get => measureScrub;
@@ -30,12 +14,10 @@ namespace Zakfo.Unphased.Features.planner {
             }
         }
 
-        public string ScrubMetrics => string.Join("\n", new[] { smoothMetrics, minuteMetrics }.Where(line => line.Length > 0)
-            .DefaultIfEmpty("Drag on the chart to measure each mode."));
+        public string ScrubMetrics { get; private set; } = "Drag on the chart to measure drawing time.";
 
-        internal void ReportScrubMetrics(MouseScrubMode mode, string report) {
-            if (mode == MouseScrubMode.Smooth) smoothMetrics = report;
-            else minuteMetrics = report;
+        internal void ReportScrubMetrics(string report) {
+            ScrubMetrics = report;
             RaisePropertyChanged(nameof(ScrubMetrics));
         }
 
