@@ -183,6 +183,12 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             root.Arrange(new Rect(0, 0, width, height));
             root.UpdateLayout();
 
+            var horizonPicker = (ComboBox)root.FindName("HorizonReferencePicker");
+            Assert.That(horizonPicker.ReadLocalValue(FrameworkElement.StyleProperty), Is.EqualTo(DependencyProperty.UnsetValue),
+                "the horizon picker must inherit the same N.I.N.A. style as the glyph picker");
+            Assert.That(((FrameworkElement)horizonPicker.Parent).Visibility,
+                Is.EqualTo(panel.Planner.ShowCustomHorizon && panel.Planner.HasCustomHorizon ? Visibility.Visible : Visibility.Collapsed));
+
             var rtb = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
             rtb.Render(root);
             var enc = new PngBitmapEncoder();

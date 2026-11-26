@@ -499,13 +499,9 @@
                             <CheckBox Style="{StaticResource OverlaySwitchStyle}" Content="Custom horizon"
                                       IsChecked="{Binding Planner.ShowCustomHorizon, Mode=TwoWay}"
                                       ToolTip="Shade below the active N.I.N.A. profile’s custom horizon along the reference object’s path"/>
-                            <ComboBox Width="110" Margin="5,0,0,0" VerticalAlignment="Center"
-                                      AutomationProperties.Name="Custom horizon reference object"
-                                      ToolTip="Object whose azimuth is used to project the custom horizon"
-                                      ItemsSource="{Binding Planner.HorizonReferenceOptions}" DisplayMemberPath="Name"
-                                      SelectedItem="{Binding Planner.HorizonReference, Mode=TwoWay}">
-                                <ComboBox.Style>
-                                    <Style TargetType="ComboBox">
+                            <Border Margin="5,0,0,0" VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                         <Style.Triggers>
                                             <MultiDataTrigger>
@@ -517,8 +513,13 @@
                                             </MultiDataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </ComboBox.Style>
-                            </ComboBox>
+                                </Border.Style>
+                                <ComboBox x:Name="HorizonReferencePicker" Width="110"
+                                          AutomationProperties.Name="Custom horizon reference object"
+                                          ToolTip="Choose the object whose path you want to compare with the custom horizon"
+                                          ItemsSource="{Binding Planner.HorizonReferenceOptions}" DisplayMemberPath="Name"
+                                          SelectedItem="{Binding Planner.HorizonReference, Mode=TwoWay}"/>
+                            </Border>
                         </WrapPanel>
                         <TextBlock Text="{Binding Planner.HorizonStatus}" TextWrapping="Wrap"
                                    Foreground="{DynamicResource PrimaryBrush}">
