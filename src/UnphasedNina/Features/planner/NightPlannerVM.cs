@@ -4,7 +4,6 @@
 using NINA.Core.Utility;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Windows;
 using System.Windows.Threading;
 using Zakfo.Unphased.Core;
 using Zakfo.Unphased.Features.settings;
@@ -40,7 +39,9 @@ namespace Zakfo.Unphased.Features.planner {
         /// <summary>How many nights are added to the side being approached, per approach.</summary>
         public const int ExtensionNights = 10;
 
+        private const string UnavailableNightStatus = "No night is available for the selected date.";
         private readonly PluginSettings settings;
+        private readonly Dispatcher ui;
 
         private DateTimeOffset selectedDate;
         private NightRowVM selectedNight;
@@ -59,9 +60,9 @@ namespace Zakfo.Unphased.Features.planner {
         /// held is not the number of days asked for, and because extending the window is done
         /// in days.
         /// </summary>
-        private DateTimeOffset windowFirstDay, windowLastDay;
+        private DateTime windowFirstDay, windowLastDay;
 
-        /// <summary>Whether the window has ever been laid out, so the first compute sets its extent.</summary>
+        /// <summary>Whether the current or pending window has known calendar bounds.</summary>
         private bool windowKnown;
 
         /// <summary>
@@ -77,47 +78,23 @@ namespace Zakfo.Unphased.Features.planner {
         private readonly object cacheGate = new();
         private Site? cacheSite;
 
-        /// <summary>The UI thread dispatcher (a plain dispatcher outside WPF, so the view model stays unit-testable).</summary>
-        private static Dispatcher Ui => Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
+        private static bool IsShuttingDown(Dispatcher dispatcher) =>
+            dispatcher.HasShutdownStarted || dispatcher.HasShutdownFinished;
 
-        /// <summary>
-        /// Run work on the interface thread, where the chart and the options page live.
-        /// <para>
-        /// The call has to bind to <c>Invoke(Action)</c> and to nothing else. WPF has no
-        /// <c>Invoke(Action, priority)</c> overload, so mentioning a priority - or a timeout,
-        /// or a return value - re-binds it to <c>Invoke(Delegate, priority, params object[])</c>,
-        /// a reflection path with an argument list, and a delegate that takes no arguments
-        /// comes back as <c>TargetParameterCountException</c>: raised on the interface thread
-        /// inside WPF's ExceptionWrapper, with no plugin frame anywhere in the stack. Both the
-        /// timeout form (shipped in 0.6.0.0, which crashed N.I.N.A. eight seconds after
-        /// start-up) and the priority form (which crashed the test host) have now been
-        /// reproduced; PlannerThreadMarshallingTests covers the shape by changing a setting
-        /// from a worker thread while a dispatcher runs its real message loop.
-        /// </para>
-        /// <para>
-        /// The one real hazard left is a dispatcher that has stopped processing - a settings
-        /// change can arrive while N.I.N.A. is closing, and waiting on a thread that will
-        /// never run again hangs the application. That case runs the work on the calling
-        /// thread instead: untidy, but these are property announcements nobody is looking
-        /// at any more.
-        /// </para>
-        /// </summary>
-        private static void OnUi(Action action) {
-            var ui = Ui;
+        private void OnUi(Action action) {
+            if (IsShuttingDown(ui)) return;
+            bool started = false;
             try {
-                if (ui.HasShutdownStarted || ui.HasShutdownFinished) {
+                // Invoke(Action) avoids the delegate/params overload's argument-count errors.
+                ui.Invoke(() => {
+                    if (IsShuttingDown(ui)) return;
+                    started = true;
                     action();
-                    return;
-                }
-                // No priority argument, on purpose. WPF has no Invoke(Action, priority)
-                // overload, so adding one re-binds the call to Invoke(Delegate, priority,
-                // params object[]) - the reflection path, with an argument list, which is
-                // what threw TargetParameterCountException on the interface thread and took
-                // 0.6.0.0 down on start-up. Normal priority is what the queue uses anyway.
-                ui.Invoke(action);
-            } catch (InvalidOperationException) {
-                // Finished processing between the check and the call.
-                action();
+                });
+            } catch (OperationCanceledException) when (!started) {
+                // Dispatcher shutdown can abort a queued invocation.
+            } catch (InvalidOperationException) when (!started && IsShuttingDown(ui)) {
+                // Shutdown started before the dispatcher accepted the invocation.
             }
         }
 
@@ -125,6 +102,7 @@ namespace Zakfo.Unphased.Features.planner {
 
         internal NightPlannerVM(PluginSettings settings, Func<FramingTarget, string> resolveTargetType) {
             this.settings = settings;
+            ui = Dispatcher.CurrentDispatcher;
             this.resolveTargetType = resolveTargetType;
             selectedDate = DateTimeOffset.Now.Date;
             Nights = new ObservableCollection<NightRowVM>();
@@ -132,12 +110,9 @@ namespace Zakfo.Unphased.Features.planner {
             InitializeChartElements();
             settings.PropertyChanged += (_, e) => {
                 if (e.PropertyName is nameof(PluginSettings.SiteLatOverride) or nameof(PluginSettings.SiteLonOverride))
-                    RequestRecompute();
+                    OnUi(RequestRecompute);
                 if (e.PropertyName == nameof(PluginSettings.Scheme))
                     OnUi(() => {
-                        // The chart watches Scheme, the header watches SchemeLabel: both
-                        // have to move together, or the buttons say one thing and the
-                        // chart paints another.
                         RaisePropertyChanged(nameof(Scheme));
                         RaisePropertyChanged(nameof(SchemeLabel));
                         RaisePropertyChanged(nameof(OverlayLegend));
@@ -194,19 +169,22 @@ namespace Zakfo.Unphased.Features.planner {
             set {
                 var day = value.Date;
                 if (selectedDate == day) return;
-                selectedDate = day;
-                RaisePropertyChanged();
-                RaisePropertyChanged(nameof(SelectedDateForPicker));
+                SetSelectedDate(day);
                 ApplySelection();
             }
+        }
+
+        private void SetSelectedDate(DateTime day) {
+            selectedDate = day;
+            RaisePropertyChanged(nameof(SelectedDate));
+            RaisePropertyChanged(nameof(SelectedDateForPicker));
         }
 
         /// <summary>
         /// The face the header date picker binds to. WPF's DatePicker works in plain
         /// <see cref="DateTime"/> while the model keeps its offset-aware date, so this is
-        /// the one-line proxy between them; it raises alongside SelectedDate, so picking a
-        /// date, pressing the arrows and clicking Tonight all leave the picker showing the
-        /// night that is actually highlighted.
+        /// the proxy between them. The picker keeps its date while the chart loads or
+        /// when a night is unavailable.
         /// </summary>
         public DateTime? SelectedDateForPicker {
             get => selectedDate.Date;
@@ -226,20 +204,21 @@ namespace Zakfo.Unphased.Features.planner {
         public NightRowVM SelectedNight {
             get => selectedNight;
             set {
-                if (ReferenceEquals(selectedNight, value)) return;
-                selectedNight = value;
-                RaisePropertyChanged();
-                if (value != null && selectedDate.Date != value.MorningDay) {
-                    selectedDate = value.MorningDay;
-                    RaisePropertyChanged(nameof(SelectedDate));
-                    RaisePropertyChanged(nameof(SelectedDateForPicker));
-                }
-                RaisePropertyChanged(nameof(SelectedDateLabel));
-                // The scrub readout quotes the selected night, so it follows it too.
-                RaisePropertyChanged(nameof(ScrubLabel));
-                RefreshOverlays();
-                RefreshCustomHorizon();
+                if (value != null && selectedDate.Date != value.MorningDay)
+                    SetSelectedDate(value.MorningDay);
+                SetSelectedNight(value);
+                if (value != null) UpdateWindowForSelection();
             }
+        }
+
+        private void SetSelectedNight(NightRowVM row) {
+            if (ReferenceEquals(selectedNight, row)) return;
+            selectedNight = row;
+            RaisePropertyChanged(nameof(SelectedNight));
+            RaisePropertyChanged(nameof(SelectedDateLabel));
+            RaisePropertyChanged(nameof(ScrubLabel));
+            RefreshOverlays();
+            RefreshCustomHorizon();
         }
 
         /// <summary>Header caption; follows the selected row, not just the anchor date.</summary>
@@ -251,29 +230,26 @@ namespace Zakfo.Unphased.Features.planner {
         /// window happens here, because this is where a selection is found not to fit.
         /// </summary>
         private void ApplySelection() {
-            var match = Nights.FirstOrDefault(r => r.MorningDay == selectedDate.Date);
-            if (match != null) {
-                SelectedNight = match;
-                ExtendWindowIfNeeded();
-                return;
+            var match = FindSelectedNight();
+            if (match == null && selectedNight == null) RaisePropertyChanged(nameof(SelectedDateLabel));
+            SetSelectedNight(match);
+            UpdateWindowForSelection();
+        }
+
+        private NightRowVM FindSelectedNight() => Nights.FirstOrDefault(r => r.MorningDay == selectedDate.Date);
+
+        private void UpdateWindowForSelection() {
+            var day = selectedDate.Date;
+            bool outsideWindow = windowKnown && (day < windowFirstDay || day > windowLastDay);
+            bool needsWindow = !windowKnown && computedSite != null && selectedNight == null;
+            if (outsideWindow || needsWindow) {
+                RequestRecompute();
+            } else if (selectedNight != null) {
+                if (StatusText == UnavailableNightStatus) StatusText = string.Empty;
+                if (!Busy) TryExtendWindow();
+            } else if (windowKnown && !Busy) {
+                StatusText = UnavailableNightStatus;
             }
-            if (computedSite == null) {
-                // Nothing has been computed for a site, so there is no wider window to ask
-                // for: the middle of whatever is on screen stands in, which in a panel with
-                // no site configured means nothing at all.
-                SelectedNight = Nights.Count > 0 ? Nights[Nights.Count / 2] : null;
-                return;
-            }
-            // A date picked out of the calendar can land outside the window altogether - a
-            // typed-in date, or Tonight pressed after weeks of paging sideways. Growing one
-            // side by ten nights would not reach that far, so the whole window is re-anchored
-            // on the date that was asked for, on the same background path. The middle of the
-            // old window stands in meanwhile; the new window is matched on the wanted date,
-            // which pulls the header back to what was picked instead of leaving it stranded
-            // on the stand-in.
-            var wanted = selectedDate.Date;
-            RequestRecompute(wanted);
-            SelectedNight = Nights.Count > 0 ? Nights[Nights.Count / 2] : null;
         }
 
         public string StatusText {
@@ -340,8 +316,7 @@ namespace Zakfo.Unphased.Features.planner {
         /// This is the synchronous path (zoom, and the test fixture that hands a window
         /// over directly); a computed window arrives with its rows already stitched.
         /// </summary>
-        private void RebuildRows() =>
-            ApplyWindow(window, Stitch(window, zoomNights), selectedNight?.MorningDay ?? selectedDate.Date);
+        private void RebuildRows() => ApplyWindow(window, Stitch(window, zoomNights));
 
         /// <summary>
         /// Stitch the raw payloads into rows at a zoom, one day per row, each row's frame
@@ -363,17 +338,14 @@ namespace Zakfo.Unphased.Features.planner {
         }
 
         /// <summary>
-        /// Put a window and its stitched rows on the interface thread, keeping the selection
-        /// pointed at the night it was pointed at (<paramref name="keep"/> by morning date),
-        /// and at the middle of the window when that night has gone.
+        /// Put a window on the interface thread and match its rows to the current morning date.
         /// </summary>
-        private void ApplyWindow(List<NightPayload> nights, List<NightRowVM> rows, DateTime keep) {
+        private void ApplyWindow(List<NightPayload> nights, List<NightRowVM> rows) {
             window = nights;
-            SelectedNight = null;
+            SetSelectedNight(null);
             Nights.Clear();
             foreach (var row in rows) Nights.Add(row);
-            var match = Nights.FirstOrDefault(r => r.MorningDay == keep);
-            SelectedNight = match ?? (Nights.Count > 0 ? Nights[Nights.Count / 2] : null);
+            SetSelectedNight(FindSelectedNight());
         }
 
         // ---- The scrub marker -------------------------------------------------------------
@@ -453,7 +425,7 @@ namespace Zakfo.Unphased.Features.planner {
         /// moving, because there is deliberately no Refresh button to ask for one.
         /// </summary>
         public void EnsureComputed() {
-            if (computedSite == null) RequestRecompute();
+            if (computedSite == null && !Busy) RequestRecompute();
         }
 
         /// <summary>
@@ -461,20 +433,19 @@ namespace Zakfo.Unphased.Features.planner {
         /// what a date picked far outside the window needs. There is no command for it - the
         /// panel has no Refresh button - so it stays private.
         /// </summary>
-        private void RequestRecompute() => RequestRecompute(selectedDate.Date);
-
-        /// <summary>
-        /// The same, anchored on a date that is not necessarily what the header is showing:
-        /// <see cref="ApplySelection"/> asks for a window around the date that was picked,
-        /// while a stand-in night is on screen.
-        /// </summary>
-        private void RequestRecompute(DateTime anchor) {
+        private void RequestRecompute() {
             var site = EffectiveSiteOrNull();
-            if (site == null) return;
-            windowFirstDay = new DateTimeOffset(anchor, selectedDate.Offset).AddDays(-PastNights);
-            windowLastDay = new DateTimeOffset(anchor, selectedDate.Offset).AddDays(FutureNights);
+            if (site == null) {
+                ++computeToken;
+                windowKnown = false;
+                Busy = false;
+                return;
+            }
+            var anchor = selectedDate.Date;
+            windowFirstDay = anchor.AddDays(-PastNights);
+            windowLastDay = anchor.AddDays(FutureNights);
             windowKnown = true;
-            StartCompute(site.Value, anchor);
+            StartCompute(site.Value);
         }
 
         /// <summary>
@@ -485,20 +456,21 @@ namespace Zakfo.Unphased.Features.planner {
         /// nights walked. Growing both ends at once - a re-anchored window that is already
         /// short on both sides - is two extensions in one pass rather than a second request.
         /// </summary>
-        private void ExtendWindowIfNeeded() {
-            if (!windowKnown || computedSite == null) return;
+        private bool TryExtendWindow() {
+            if (!windowKnown || computedSite == null) return false;
             var day = selectedDate.Date;
             bool grew = false;
-            if ((day - windowFirstDay).TotalDays <= EdgeNights) {
+            if ((day - windowFirstDay).Days <= EdgeNights) {
                 windowFirstDay = windowFirstDay.AddDays(-ExtensionNights);
                 grew = true;
             }
-            if ((windowLastDay - day).TotalDays <= EdgeNights) {
+            if ((windowLastDay - day).Days <= EdgeNights) {
                 windowLastDay = windowLastDay.AddDays(ExtensionNights);
                 grew = true;
             }
-            if (!grew) return;
-            StartCompute(computedSite.Value, selectedNight?.MorningDay ?? selectedDate.Date);
+            if (!grew) return false;
+            StartCompute(computedSite.Value);
+            return true;
         }
 
         /// <summary>The site to compute for, or null - with the reason on the status line - when none is configured.</summary>
@@ -514,25 +486,22 @@ namespace Zakfo.Unphased.Features.planner {
 
         /// <summary>
         /// Work out the current window and stitch it into rows on a background thread, then
-        /// hand the result over on the interface thread. <paramref name="keep"/> is the night
-        /// the header should end up pointing at once it lands, decided by the caller rather
-        /// than read here: the date that was asked for, or the night currently highlighted.
-        /// A newer request supersedes an older one by token: the older one is not stopped,
-        /// which is why its outcome is discarded rather than applied and why the night cache
-        /// is guarded.
+        /// hand the result over on the interface thread. A newer request supersedes an older
+        /// one by token. The selected date is resolved when the result arrives.
         /// </summary>
-        private void StartCompute(Site site, DateTime keep) {
+        private void StartCompute(Site site, List<NightPayload> existingNights = null) {
             var firstDay = windowFirstDay;
             var lastDay = windowLastDay;
             int zoom = zoomNights;
             int token = ++computeToken;
+            if (!string.IsNullOrEmpty(StatusText)) StatusText = string.Empty;
             Busy = true;
             Task.Run(() => {
                 List<NightPayload> nights = null;
                 List<NightRowVM> rows = null;
                 string error = null;
                 try {
-                    nights = NightsFor(site, firstDay, lastDay);
+                    nights = existingNights ?? NightsFor(site, firstDay, lastDay);
                     rows = Stitch(nights, zoom);
                 } catch (NightException ex) {
                     error = ex.Message;
@@ -540,17 +509,24 @@ namespace Zakfo.Unphased.Features.planner {
                     Logger.Error("Unphased planner calculation failed", ex);
                     error = "Planner calculation failed: " + ex.Message;
                 }
-                if (token != computeToken) return; // a newer request superseded this one
                 OnUi(() => {
-                    Busy = false;
-                    if (nights == null) {
+                    if (token != computeToken) return;
+                    if (rows == null) {
+                        windowKnown = false;
                         StatusText = error;
+                        Busy = false;
+                        return;
+                    }
+                    if (zoom != zoomNights) {
+                        // Stitch the same payloads for the current zoom on the worker.
+                        StartCompute(site, nights);
                         return;
                     }
                     computedSite = site;
-                    ApplyWindow(nights, rows, keep);
-                    StatusText = string.Empty;
+                    ApplyWindow(nights, rows);
+                    StatusText = selectedNight == null ? UnavailableNightStatus : string.Empty;
                     RaisePropertyChanged(nameof(SiteDetails));
+                    if (selectedNight == null || !TryExtendWindow()) Busy = false;
                 });
             });
         }
@@ -560,7 +536,7 @@ namespace Zakfo.Unphased.Features.planner {
         /// cached. Runs on the compute thread. Nights the site cannot produce drop out, and
         /// are remembered as absent so a polar window does not re-derive them every pass.
         /// </summary>
-        private List<NightPayload> NightsFor(Site site, DateTimeOffset firstDay, DateTimeOffset lastDay) {
+        private List<NightPayload> NightsFor(Site site, DateTime firstDay, DateTime lastDay) {
             lock (cacheGate) {
                 if (!cacheSite.HasValue || cacheSite.Value != site) {
                     cache.Clear();
@@ -569,7 +545,7 @@ namespace Zakfo.Unphased.Features.planner {
                 var calc = new NightCalculator(site);
                 var result = new List<NightPayload>();
                 for (var day = firstDay; day <= lastDay; day = day.AddDays(1)) {
-                    var noon = FrameNoonFor(day.Date);
+                    var noon = FrameNoonFor(day);
                     if (!cache.TryGetValue(noon.UtcTicks, out var payload)) {
                         try {
                             payload = calc.Compute(noon);

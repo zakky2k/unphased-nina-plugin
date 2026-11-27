@@ -3,7 +3,7 @@
 **Visualise darkness, twilight and moonlight across consecutive nights in a single interactive
 astronomical chart.**
 
-**[Download the Windows plugin ZIP · v0.8.2.0 Beta](https://github.com/zakky2k/unphased-nina-plugin/releases/download/v0.8.2.0/UnphasedNina.0.8.2.0.zip)**
+**[Download the Windows plugin ZIP · v0.8.3.0 Beta](https://github.com/zakky2k/unphased-nina-plugin/releases/download/v0.8.3.0/UnphasedNina.0.8.3.0.zip)**
 
 Requires N.I.N.A. **3.2.0.9001 or newer**. This beta is available as a manual install.
 
@@ -111,7 +111,7 @@ to check against the installed N.I.N.A. catalogue.
 ## Release and the plugin catalogue
 
 ```powershell
-./build/Build-Release.ps1 -Tag v0.8.2.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta
+./build/Build-Release.ps1 -Tag v0.8.3.0 -Repository zakky2k/unphased-nina-plugin -Channel Beta
 ```
 
 `-Repository` is what the archive's `Installer.URL` and the manifest's `Repository` are built from,
@@ -147,7 +147,7 @@ Then, by hand:
 2. Submit the manifest to the [N.I.N.A. plugin manifests repository](https://github.com/isbeorn/nina.plugin.manifests)
    — that repository *is* the catalogue; it holds JSON only, the binaries stay here. Fork it, add
    the manifest as
-   `manifests/U/Unphased Night Planner/3.2.0.9001/0.8.2.0/manifest.json`, and open a pull request.
+   `manifests/U/Unphased Night Planner/3.2.0.9001/0.8.3.0/manifest.json`, and open a pull request.
    Its CI validates against the schema and re-hashes the download; on merge, `gather.js` publishes
    the file to `https://nighttime-imaging.eu/wp-json/nina/v1/...`, which is what N.I.N.A. fetches
    (`PluginFetcher.cs:38`). A manifest that fails validation is simply never listed, so

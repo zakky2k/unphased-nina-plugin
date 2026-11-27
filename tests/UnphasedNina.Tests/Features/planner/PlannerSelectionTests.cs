@@ -43,15 +43,14 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         }
 
         [Test]
-        public void WithNoSiteToAskForMoreTheMiddleOfTheWindowStandsInForADateOutsideIt() {
-            // The other half of this behaviour lives in PlannerWindowGrowthTests: with a site
-            // the panel asks for a window that really holds the date that was picked. Here
-            // there is no site, so nothing can be worked out and the middle of whatever is on
-            // screen is the only answer the panel has.
+        public void ThePickerKeepsADateOutsideTheWindowWhenNoSiteIsAvailable() {
             var planner = PlannerFixture.WindowOfThreeNights();
-            planner.SelectedDate = PlannerFixture.Local(2026, 12, 30, 0, 0);
+            var wanted = new DateTime(2026, 12, 30);
+            planner.SelectedDateForPicker = wanted;
+            planner.ZoomOut();
 
-            Assert.That(planner.SelectedNight, Is.SameAs(planner.Nights[1]));
+            Assert.That(planner.SelectedDateForPicker, Is.EqualTo(wanted));
+            Assert.That(planner.SelectedNight, Is.Null);
         }
 
         [Test]

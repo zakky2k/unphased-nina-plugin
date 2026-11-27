@@ -4,7 +4,7 @@
     <PluginId>09572065-E196-4DBA-B954-48F84B351DD1</PluginId>
     <!-- Early beta: the panel works and the chart is through several review
          rounds, but the plugin is not feature complete, so the version stays 0.x. -->
-    <Version Condition="'$(Version)' == ''">0.8.2.0</Version>
+    <Version Condition="'$(Version)' == ''">0.8.3.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
     <Title>Unphased Night Planner</Title>

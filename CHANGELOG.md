@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.3.0 Beta
+
+- The date picker keeps the requested date while the chart loads and shows a message when no night is available.
+- Background updates respect the latest date and zoom. The planner extends its window at the same calendar distance across daylight-saving changes.
+- Planner updates run on the UI thread, and queued callbacks are dropped when N.I.N.A. shuts down.
+
 ## 0.8.2.0 Beta
 
 - The repository homepage now links directly to the manual installer.

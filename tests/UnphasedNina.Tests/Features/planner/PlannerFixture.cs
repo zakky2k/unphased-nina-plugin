@@ -109,9 +109,7 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 Night(2026, 11, 25, 692, 0.97, MoonGrid(2026, 11, 25)),
                 Night(2026, 11, 26, 694, 0.92, MoonGrid(2026, 11, 26)),
             });
-            // Start from a date outside the window so every test navigation is a
-            // real change no matter when the suite runs.
-            planner.SelectedDate = new DateTime(2026, 1, 1);
+            planner.SelectedDate = new DateTime(2026, 11, 26);
             return planner;
         }
 

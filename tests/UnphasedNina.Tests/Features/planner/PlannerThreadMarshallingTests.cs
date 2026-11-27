@@ -6,6 +6,7 @@ using NINA.Profile.Interfaces;
 using NUnit.Framework;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Threading;
 using Zakfo.Unphased.Features.planner;
 using Zakfo.Unphased.Features.settings;
@@ -30,42 +31,42 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             return profiles.Object;
         }
 
-        [Test, Timeout(20000)]
-        public void ASettingsChangeFromAnotherThreadReachesThePlannerOnTheInterfaceThread() {
+        [TestCase(false), TestCase(true)]
+        public void ASettingsChangeFromAnotherThreadReachesThePlannerOnTheInterfaceThread(bool changeSite) {
             Exception uiFailure = null, workerFailure = null;
             bool onInterfaceThread = false;
             bool workerFinished = false;
 
             var uiThread = new Thread(() => {
-                // No Application here: the test process may only ever hold one, and
-                // CompositionTests owns it. Without one the view model falls back to this
-                // thread's own dispatcher, which is what Dispatcher.Run turns into the real
-                // message loop - the pumping that N.I.N.A. provides. A hand-pushed
-                // DispatcherFrame is no substitute: it either returns before the worker has
-                // queued anything or never returns at all, and both read as a hung run.
                 var ui = Dispatcher.CurrentDispatcher;
                 PluginSettings settings = null;
                 try {
                     settings = new PluginSettings(MockProfiles());
                     settings.Initialize();
                     var planner = new NightPlannerVM(settings);
+                    var property = changeSite ? nameof(NightPlannerVM.StatusText) : nameof(NightPlannerVM.SunColor);
                     planner.PropertyChanged += (_, e) => {
-                        if (e.PropertyName == nameof(NightPlannerVM.SunColor))
+                        if (e.PropertyName == property)
                             onInterfaceThread = ReferenceEquals(Dispatcher.CurrentDispatcher, ui);
                     };
+                    using var workerDone = new ManualResetEventSlim();
 
                     var worker = new Thread(() => {
-                        try { settings.SunColor = "#FFD700"; } catch (Exception e) { workerFailure = e; }
+                        try {
+                            if (changeSite) settings.SiteLatOverride = "50.0875";
+                            else settings.SunColor = "#FFD700";
+                        } catch (Exception e) { workerFailure = e; }
                         workerFinished = true;
                         Stop(ui);
+                        workerDone.Set();
                     });
+                    worker.IsBackground = true;
                     worker.Start();
 
                     // Watchdog: if the change never lands, close the loop anyway so the
                     // assertions below report the miss instead of the run hanging.
                     var watchdog = new Thread(() => {
-                        Thread.Sleep(5000);
-                        Stop(ui);
+                        if (!workerDone.Wait(TimeSpan.FromSeconds(5))) Stop(ui);
                     });
                     watchdog.Start();
 
@@ -82,8 +83,9 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 }
             });
             uiThread.SetApartmentState(ApartmentState.STA);
+            uiThread.IsBackground = true;
             uiThread.Start();
-            uiThread.Join();
+            Assert.That(uiThread.Join(TimeSpan.FromSeconds(15)), Is.True, "dispatcher thread finished");
 
             Assert.Multiple(() => {
                 Assert.That(uiFailure, Is.Null,
@@ -94,6 +96,56 @@ namespace Zakfo.Unphased.Tests.Features.planner {
                 Assert.That(onInterfaceThread, Is.True,
                     "the announcement has to arrive on the interface thread, or the chart is touched from the wrong one");
             });
+        }
+
+        [Test, Apartment(ApartmentState.STA)]
+        public void APlannerCallbackThatThrowsRunsOnlyOnce() {
+            using var settings = new PluginSettings(MockProfiles());
+            var planner = new NightPlannerVM(settings);
+            var failure = new InvalidOperationException("Subscriber failed.");
+            int calls = 0;
+            planner.PropertyChanged += (_, e) => {
+                if (e.PropertyName != nameof(NightPlannerVM.StatusText)) return;
+                calls++;
+                throw failure;
+            };
+
+            Assert.That(Assert.Throws<InvalidOperationException>(() => settings.SiteLatOverride = "50"), Is.SameAs(failure));
+            Assert.That(calls, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void DispatcherShutdownDropsQueuedAndLaterSettingsChanges() {
+            using var queued = new ManualResetEventSlim();
+            bool wasQueued = false, workerFinished = false;
+            Exception failure = null;
+            int notifications = 0;
+            var owner = new Thread(() => {
+                try {
+                    var ui = Dispatcher.CurrentDispatcher;
+                    using var settings = new PluginSettings(MockProfiles());
+                    var planner = new NightPlannerVM(settings);
+                    planner.PropertyChanged += (_, _) => notifications++;
+                    ui.Hooks.OperationPosted += (_, _) => queued.Set();
+                    var worker = Task.Run(() => {
+                        settings.SiteLatOverride = "50";
+                        settings.SiteLonOverride = "14";
+                    });
+                    // Shut down before pumping the queue so the first change is aborted.
+                    wasQueued = queued.Wait(TimeSpan.FromSeconds(5));
+                    ui.InvokeShutdown();
+                    workerFinished = worker.Wait(TimeSpan.FromSeconds(5));
+                } catch (Exception ex) { failure = ex; }
+            });
+            owner.SetApartmentState(ApartmentState.STA);
+            owner.IsBackground = true;
+            owner.Start();
+
+            Assert.That(owner.Join(TimeSpan.FromSeconds(15)), Is.True, "dispatcher thread finished");
+            Assert.That(failure, Is.Null);
+            Assert.That(wasQueued, Is.True);
+            Assert.That(workerFinished, Is.True);
+            Assert.That(notifications, Is.Zero);
         }
 
         /// <summary>End the dispatcher loop of the thread under test, from wherever we are.</summary>

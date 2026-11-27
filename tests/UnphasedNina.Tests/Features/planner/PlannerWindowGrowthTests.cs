@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Windows;
 using System.Windows.Threading;
 using Zakfo.Unphased.Core;
 using Zakfo.Unphased.Features.planner;
@@ -26,25 +25,24 @@ namespace Zakfo.Unphased.Tests.Features.planner {
     [NonParallelizable, Apartment(ApartmentState.STA)]
     public class PlannerWindowGrowthTests {
         /// <summary>
-        /// The suite's single WPF Application, on this thread. Not because these tests draw
-        /// anything, but because it is what makes the planner's OnUi land on the thread that is
-        /// waiting for it: without it the planner would fall back to a dispatcher belonging to
-        /// whichever thread last happened to ask for one.
-        /// </summary>
-        [SetUp]
-        public void SetUp() => WpfHost.Ensure();
-
-        /// <summary>
         /// A planner for a real site with its first window worked out. The date is set before
         /// the window is asked for, so the tests are not probing the edges of tonight's own
         /// window and the anchor is a date they can name in an assertion.
         /// </summary>
         private static NightPlannerVM PlannerWithAWindow(out DateTime anchor) {
+            anchor = new DateTime(2026, 2, 15);
+            var planner = CreatePlanner(anchor);
+            Assert.That(WaitFor(() => !planner.Busy && planner.Nights.Count > 0),
+                "the panel works a first window out for itself, with nothing pressed");
+            return planner;
+        }
+
+        private static NightPlannerVM CreatePlanner(DateTime anchor, double latitude = 50.0875) {
             var profiles = new Mock<IProfileService>();
             var profile = new Mock<IProfile>();
             profile.SetupGet(p => p.PluginSettings).Returns(new NINA.Profile.PluginSettings());
             var astro = new Mock<IAstrometrySettings>();
-            astro.SetupGet(a => a.Latitude).Returns(50.0875);
+            astro.SetupGet(a => a.Latitude).Returns(latitude);
             astro.SetupGet(a => a.Longitude).Returns(14.4213);
             profile.SetupGet(p => p.AstrometrySettings).Returns(astro.Object);
             profiles.SetupGet(p => p.ActiveProfile).Returns(profile.Object);
@@ -52,11 +50,8 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             settings.Initialize();
 
             var planner = new NightPlannerVM(settings);
-            planner.SelectedDate = DateTimeOffset.Now.Date.AddDays(3);
-            anchor = planner.SelectedDate.Date;
+            planner.SelectedDateForPicker = anchor;
             planner.EnsureComputed();
-            Assert.That(WaitFor(() => !planner.Busy && planner.Nights.Count > 0),
-                "the panel works a first window out for itself, with nothing pressed");
             return planner;
         }
 
@@ -147,19 +142,62 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             int before = planner.Nights.Count;
             var wanted = anchor.AddDays(60);
 
-            planner.SelectedDate = wanted;
+            planner.SelectedDateForPicker = wanted;
+
+            Assert.That(planner.Busy, Is.True);
+            Assert.That(planner.SelectedDateForPicker, Is.EqualTo(wanted));
+            Assert.That(planner.SelectedNight, Is.Null);
 
             Assert.That(WaitFor(() => !planner.Busy && planner.SelectedNight != null
                     && planner.SelectedNight.MorningDay == wanted),
                 "the re-anchored window arrives holding the night that was picked");
             Assert.Multiple(() => {
-                // The middle of the old window stands in while the new one is worked out, so
-                // the header briefly reads another night. It has to come back to the picked
-                // one, or the calendar quietly gives up an hour of paging.
                 Assert.That(planner.SelectedDate.Date, Is.EqualTo(wanted));
                 Assert.That(planner.Nights, Has.Count.EqualTo(before),
                     "a date too far away re-anchors the window instead of growing it by ten");
             });
+        }
+
+        [Test]
+        public void ARecomputeKeepsTheLatestDateAndZoom() {
+            var planner = PlannerWithAWindow(out var anchor);
+            var wanted = anchor.AddDays(61);
+            planner.SelectedDateForPicker = anchor.AddDays(-60);
+            planner.SelectedDateForPicker = anchor.AddDays(60);
+            planner.SelectedDateForPicker = wanted;
+            planner.SetZoom(3);
+
+            Assert.That(WaitFor(() => !planner.Busy), "the latest window arrives");
+            Assert.That(planner.SelectedDateForPicker, Is.EqualTo(wanted));
+            Assert.That(planner.SelectedNight?.MorningDay, Is.EqualTo(wanted));
+            Assert.That(planner.SelectedNight?.Chart.ZoomNights, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void ADateWithoutANightStaysInThePickerAfterCompute() {
+            var wanted = new DateTime(2026, 6, 21);
+            var planner = CreatePlanner(wanted, latitude: 89);
+
+            Assert.That(WaitFor(() => !planner.Busy), "the polar window finishes loading");
+            Assert.That(planner.SelectedDateForPicker, Is.EqualTo(wanted));
+            Assert.That(planner.SelectedNight, Is.Null);
+            Assert.That(planner.StatusText, Is.EqualTo("No night is available for the selected date."));
+        }
+
+        [TestCase(3, 24)]
+        [TestCase(10, 20)]
+        public void TheWindowGrowsAtTheSameCalendarDistanceInSpringAndAutumn(int month, int day) {
+            var anchor = new DateTime(2026, month, day);
+            var planner = CreatePlanner(anchor);
+            Assert.That(WaitFor(() => !planner.Busy), "the first window arrives");
+            var last = anchor.AddDays(NightPlannerVM.FutureNights);
+
+            planner.SelectedDateForPicker = last.AddDays(-NightPlannerVM.EdgeNights - 1);
+            Assert.That(planner.Busy, Is.False);
+            planner.SelectedDateForPicker = last.AddDays(-NightPlannerVM.EdgeNights);
+            Assert.That(planner.Busy, Is.True);
+            Assert.That(WaitFor(() => !planner.Busy), "the extended window arrives");
+            Assert.That(planner.Nights[^1].MorningDay, Is.EqualTo(last.AddDays(NightPlannerVM.ExtensionNights)));
         }
 
         [Test]
@@ -181,17 +219,13 @@ namespace Zakfo.Unphased.Tests.Features.planner {
         /// callback waits for a thread that is not listening.
         /// </summary>
         private static bool WaitFor(Func<bool> ready, int budgetMs = 20000) {
-            var ui = Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
+            var ui = Dispatcher.CurrentDispatcher;
             var deadline = Environment.TickCount64 + budgetMs;
             while (Environment.TickCount64 < deadline) {
                 if (ready()) return true;
-                if (ui.CheckAccess()) {
-                    var frame = new DispatcherFrame();
-                    ui.BeginInvoke(DispatcherPriority.Background, new Action(() => frame.Continue = false));
-                    Dispatcher.PushFrame(frame);
-                } else {
-                    Thread.Sleep(5);
-                }
+                var frame = new DispatcherFrame();
+                ui.BeginInvoke(DispatcherPriority.Background, new Action(() => frame.Continue = false));
+                Dispatcher.PushFrame(frame);
             }
             return ready();
         }

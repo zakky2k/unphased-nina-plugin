@@ -36,12 +36,12 @@ namespace Zakfo.Unphased.Tests.Features.planner {
             planner.PrevNight();
             Assert.That(planner.SelectedDateForPicker, Is.EqualTo(new DateTime(2026, 11, 25)));
 
-            // One night further back lands outside the three-night window, so the middle
-            // night stands in - and the picker has to show that night rather than the date
-            // the arrows walked to, which is the whole point of it being a proxy.
             planner.PrevNight();
-            Assert.That(planner.SelectedDateForPicker, Is.EqualTo(planner.SelectedNight.MorningDay),
-                "the picker shows the night that is actually highlighted, not where the keys wandered to");
+            Assert.That(planner.SelectedDateForPicker, Is.EqualTo(new DateTime(2026, 11, 24)));
+            Assert.That(planner.SelectedNight, Is.Null, "the requested night lies outside the available window");
+
+            planner.NextNight();
+            Assert.That(planner.SelectedNight?.MorningDay, Is.EqualTo(new DateTime(2026, 11, 25)));
         }
 
         [Test]
