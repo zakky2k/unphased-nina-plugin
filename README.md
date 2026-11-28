@@ -85,8 +85,8 @@ dotnet test UnphasedNina.slnx
 ## Maintenance and disclosure
 
 **zakky2k** maintains the plugin and is responsible for reviewing, testing and approving
-changes. Development has been materially assisted by Anthropic’s Claude, Qwen3.8-FlashNext
-and ChatGPT/Codex.
+changes. Development was assisted by a locally run Qwen3.8-FlashNext model and
+ChatGPT/Codex.
 
 ## Licence
 
