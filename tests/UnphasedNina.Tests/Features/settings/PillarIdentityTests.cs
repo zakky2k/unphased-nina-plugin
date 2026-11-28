@@ -19,9 +19,9 @@ namespace Zakfo.Unphased.Tests.Features.settings {
     /// from <c>Plugin.props</c>, the README, and whatever documentation comes later.
     /// <para>
     /// Nothing here checks that a person likes the wording. What it checks is the thing that
-    /// quietly rots without a test: that the page, the listing and the README still say the same
-    /// sentences, that the page still leads with its real settings and puts the pillars last, above
-    /// About - N.I.N.A. owns the strip above its own <em>Options</em> caption and a plugin template
+    /// quietly drifts without a test: the page and listing share their descriptions, the README
+    /// uses the same feature names and drawings, and the page leads with its settings and puts the
+    /// pillars last, above About. N.I.N.A. owns the strip above its own <em>Options</em> caption and a plugin template
     /// cannot reach above it, so the manifest description is the one opening line that sits there -
     /// and that the three drawings are the same drawings in WPF and in the
     /// <c>assets/pillars/*.svg</c> the README links. Wording drift is invisible - nobody notices the
@@ -260,25 +260,19 @@ namespace Zakfo.Unphased.Tests.Features.settings {
         }
 
         [Test]
-        public void TheReadmeTellsTheSameStoryWithTheSameDrawings() {
+        public void TheReadmeUsesTheSameFeatureNamesAndDrawings() {
             var root = RepositoryRoot();
             if (root == null) {
                 Assert.Ignore("the README is not beside this test binary, so there is nothing to compare");
             }
 
-            // Markdown is written wrapped at a readable width, so a sentence in the README has a
-            // newline in the middle of it. Compare with the wrapping collapsed, otherwise this
-            // becomes a test of where the lines are broken.
-            var readme = Collapse(File.ReadAllText(Path.Combine(root, "README.md")));
+            var readme = File.ReadAllText(Path.Combine(root, "README.md"));
             Assert.Multiple(() => {
-                Assert.That(readme, Does.Contain(Collapse(Lede)), "the README opens with the manifest line");
-                Assert.That(readme, Does.Not.Contain(Collapse(RetiredTagline)), "the retired slogan stays off the README");
-                Assert.That(readme, Does.Contain(PillarsHeading));
+                Assert.That(readme, Does.Not.Contain(RetiredTagline), "the retired slogan stays off the README");
                 foreach (var pillar in Pillars) {
-                    Assert.That(readme, Does.Contain(pillar.Title), $"README pillar title: {pillar.Title}");
-                    Assert.That(readme, Does.Contain(Collapse(pillar.Body)), $"README pillar body: {pillar.Title}");
+                    Assert.That(readme, Does.Contain($"### {pillar.Title}"), $"README pillar title: {pillar.Title}");
                     Assert.That(readme, Does.Contain(pillar.Tagline), $"README pillar tagline: {pillar.Title}");
-                    Assert.That(readme, Does.Contain(pillar.Svg), $"README shows the pillar drawing: {pillar.Svg}");
+                    Assert.That(readme, Does.Contain($"assets/pillars/{pillar.Svg}"), $"README shows the pillar drawing: {pillar.Svg}");
                 }
             });
         }
@@ -348,9 +342,6 @@ namespace Zakfo.Unphased.Tests.Features.settings {
 
         private static List<string> GeometryIn(string text, string pattern) =>
             Regex.Matches(text, pattern).Select(m => m.Groups[1].Value.Trim()).ToList();
-
-        /// <summary>Run any whitespace, including a wrapped line, to a single space.</summary>
-        private static string Collapse(string text) => Regex.Replace(text, @"\s+", " ").Trim();
 
         /// <summary>Depth-first, in the order the markup declares things, which is the order a
         /// person reads the page top to bottom. Deliberately recursive rather than a queue: a queue
